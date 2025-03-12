@@ -2,7 +2,7 @@
 name: quicktype_dart
 description: A build_runner plugin to generate cross-platform models using quicktype
 version: 0.0.1
-homepage: www.simplezen.io
+homepage: https://www.simplezen.io
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 environment:
