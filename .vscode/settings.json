@@ -1,0 +1,11 @@
+{
+    "git.ignoreLimitWarning": true,
+    "cmake.sourceDirectory": "/Users/jake/Development/quicktype_dart/linux",
+    "cSpell.words": [
+        "graphqls",
+        "mocktail",
+        "podspec",
+        "pubspec",
+        "quicktype"
+    ]
+}

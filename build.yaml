@@ -1,0 +1,63 @@
+# # build.yaml - Configuration for build_runner and quicktype code generation
+
+# targets:
+#   $default:
+#     builders:
+#       quicktype_dart:
+#         enabled: true
+#         generate_for:
+#         - "**/models/**[.json|.ts|.yaml|.yml]"
+#         - "**/ios/**[.json|.ts|.yaml|.yml]"
+#         - "**/android/**[.json|.ts|.yaml|.yml]"
+#         - "**/macos/**[.json|.ts|.yaml|.yml]"
+#         - "**/windows/**[.json|.ts|.yaml|.yml]"
+#         - "**/linux/**[.json|.ts|.yaml|.yml]"
+#         - "**/lib/**[.json|.ts|.yaml|.yml]"
+
+# builders:
+#   quicktype_dart:
+#     import: "package:quicktype_dart/builder.dart"
+#     builder_factories: ["quicktypeBuilder"]
+#     build_extensions: {
+#       "**.json": ["*.json"],
+#       "**.ts": ["*.json"],
+#       "**.yaml": ["*.g.json"],
+#       "**.yml": ["*.g.json"],
+#     }
+#     auto_apply: root_package
+#     build_to: source
+#     runs_before: ["json_serializable|json_serializable"]
+#     applies_builders: ["source_gen|combining_builder"]
+
+#     defaults:
+#       options:
+#         # Default options for the quicktype builder
+#         verbose: true
+#         clean_output: true
+#         fail_on_error: true
+#         config_file: "quicktype.config|quicktype.cfg|quicktype.yaml|quicktype.yml|quicktype.json"
+#         blacklist: [
+#           'Content.json',
+#           'pubspec.yaml',
+#           'podspec.yaml',
+#           'package.json',
+#         ]
+
+#         # Default language options
+#         dart_options:
+#           serialization: "json_serializable"
+#           nullable: true
+#           coding_style: "camelCase"
+#           generate_ffi_bridge: true
+
+#         # Advanced options
+#         enable_cache: true
+#         cache_directory: ".dart_tool/quicktype_cache"
+#         parallel_jobs: 4
+
+#         # Schema validation options
+#         validate_schemas: true
+#         schema_version: "draft-07"
+
+#         # If you need to use a custom quicktype executable
+#         # executable_path: "custom/path/to/quicktype"

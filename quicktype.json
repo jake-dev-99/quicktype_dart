@@ -1,0 +1,222 @@
+{
+  "version": "1.0.0",
+  "description": "Configures the quicktype code generation for this project",
+
+  "global-options": {
+    "enable-ffi-bridge": false
+  },
+
+  "quicktime-options": {
+    "all-properties-optional": false,
+    "alphabetize-properties": true,
+    "debug": "print-graph,print-reconstitution,print-times",
+    "graphql-introspect": "https://api.example.com/graphql",
+    "graphql-schema": "schema.graphql",
+    "help": false,
+    "http-header": [
+      "Authorization: Bearer token123",
+      "Content-Type: application/json"
+    ],
+    "http-method": "POST",
+    "lang": "dart",
+    "no-boolean-strings": false,
+    "no-combine-classes": true,
+    "no-date-times": false,
+    "no-enums": false,
+    "no-ignore-json-refs": false,
+    "no-integer-strings": true,
+    "no-maps": true,
+    "no-uuids": true,
+    "out": "models/output.dart",
+    "quiet": false,
+    "src": "input.json",
+    "src-lang": "json",
+    "src-urls": [
+      "https://api.example.com/schema1",
+      "https://api.example.com/schema2"
+    ],
+    "telemetry": "disable",
+    "top-level": "RootType",
+    "version": false
+  },
+
+  "sources": {
+    "json": [
+      {
+        "path": "**/models/**"
+      }
+    ],
+    "jsonschema": [
+      {
+        "path": "**/models/**"
+      }
+    ],
+    "graphql": [
+      {
+        "path": "**/models/**"
+      }
+    ],
+    "typescript": [
+      {
+        "path": "**/models/**"
+      }
+    ]
+  },
+
+  "targets": {
+    "c": [
+      {
+        "path": "models/",
+        "description": "C Model Classes",
+        "options": {
+          "enumerator-style": "upper-underscore-case",
+          "hashtable-size": "64",
+          "integer-size": "int64_t",
+          "member-style": "underscore-case",
+          "print-style": "print-formatted",
+          "source-style": "single-source",
+          "type-style": "pascal-case",
+          "typedef-alias": "no-typedef"
+        }
+      }
+    ],
+    "cpp": [
+      {
+        "path": "models/",
+        "description": "C++ Model Classes",
+        "options": {
+          "boost": true,
+          "code-format": "with-struct",
+          "const-style": "west-const",
+          "enum-type": "",
+          "enumerator-style": "upper-underscore-case",
+          "hide-null-optional": false,
+          "include-location": "local-include",
+          "just-types": false,
+          "member-style": "underscore-case",
+          "namespace": "",
+          "source-style": "single-source",
+          "type-style": "pascal-case",
+          "wstring": "use-string"
+        }
+      }
+    ],
+    "dart": [
+      {
+        "path": "models/",
+        "description": "Dart Model Classes",
+        "options": {
+          "coders-in-class": false,
+          "copy-with": false,
+          "final-props": false,
+          "from-map": false,
+          "just-types": false,
+          "null-safety": true,
+          "part-name": "",
+          "required-props": false,
+          "use-freezed": false,
+          "use-hive": false,
+          "use-json-annotation": false
+        }
+      }
+    ],
+    "java": [
+      {
+        "path": "models/",
+        "description": "Java Model Classes",
+        "options": {
+          "acronym-style": "original",
+          "array-type": "array",
+          "datetime-provider": "java8",
+          "just-types": false,
+          "lombok": false,
+          "lombok-copy-annotations": true,
+          "package": ""
+        }
+      }
+    ],
+    "javascript": [
+      {
+        "path": "models/",
+        "description": "JavaScript Model Classes",
+        "options": {
+          "acronym-style": "original",
+          "converters": "top-level",
+          "raw-type": "json",
+          "runtime-typecheck": true,
+          "runtime-typecheck-ignore-unknown-properties": false
+        }
+      }
+    ],
+    "kotlin": [
+      {
+        "path": "models/",
+        "description": "Kotlin Model Classes",
+        "options": {
+          "acronym-style": "original",
+          "framework": "just-types",
+          "package": ""
+        }
+      }
+    ],
+    "objc": [
+      {
+        "path": "models/",
+        "description": "Objective-C Model Classes",
+        "options": {
+          "class-prefix": "",
+          "extra-comments": false,
+          "features": "all",
+          "functions": false,
+          "just-types": false
+        }
+      }
+    ],
+    "swift": [
+      {
+        "path": "models/",
+        "description": "Swift Model Classes",
+        "options": {
+          "access-level": "internal",
+          "acronym-style": "original",
+          "alamofire": false,
+          "coding-keys": true,
+          "coding-keys-protocol": "",
+          "density": "normal",
+          "initializers": true,
+          "just-types": false,
+          "multi-file-output": false,
+          "mutable-properties": false,
+          "objective-c-support": false,
+          "optional-enums": false,
+          "protocol": "none",
+          "sendable": false,
+          "struct-or-class": "struct",
+          "support-linux": false,
+          "swift-5-support": false,
+          "type-prefix": ""
+        }
+      }
+    ],
+    "typescript": [
+      {
+        "path": "models/",
+        "description": "TypeScript Model Classes",
+        "options": {
+          "acronym-style": "original",
+          "converters": "top-level",
+          "explicit-unions": false,
+          "just-types": false,
+          "nice-property-names": false,
+          "prefer-const-values": false,
+          "prefer-types": false,
+          "prefer-unions": false,
+          "raw-type": "json",
+          "readonly": false,
+          "runtime-typecheck": true,
+          "runtime-typecheck-ignore-unknown-properties": false
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+sourceType: directory
+source: lib/src/models/*.json
+targets:
+  dart:
+    targetDir: lib/models/generated
+    options:
+      # Validation
+      validateSchema: true
+
+      # Serialization library
+      serialization: json_serializable
+
+      # Custom template
+      template: templates/dart_model.mustache
+
+      # FFI bridge
+      generateFfiBridge: true
+
+      # Language-specific options
+      nullSafety: true
+      copyWith: true
+      equatable: true
+      immutable: true
+
+  kotlin:
+    targetDir: android/app/src/main/kotlin/com/example/app/models
+    options:
+      serialization: kotlinx.serialization
+      packageName: com.example.app.models
+      generateFfiBridge: true
+
+  kotlin:
+    targetDir: android/app/src/main/kotlin/com/example/app/models
+    options:
+      serialization: kotlinx.serialization
+      packageName: com.example.app.models
+      generateFfiBridge: true
+
+  kotlin:
+    targetDir: android/app/src/main/kotlin/com/example/app/models
+    options:
+      serialization: kotlinx.serialization
+      packageName: com.example.app.models
+      generateFfiBridge: true
+
+  swift:
+    targetDir: ios/Runner/Models
+    options:
+      serialization: codable
+      struct: true
+      generateFfiBridge: true
+
+  typescript:
+    targetDir: web/src/models
+    options:
+      interfaces: true
+      strictNullChecks: true
+
+watchPaths:
+  - json_models/**/*.json
+  - json_models/**/*.yaml
+  - json_models/**/*.yml

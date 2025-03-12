@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "quicktype": "^23.0.171",
+    "quicktype-core": "^23.0.171"
+  }
+}
