@@ -5,12 +5,13 @@
 
 export 'args/main_args.dart';
 export 'args/enums.dart';
+export 'args/lang_c.dart';
+export 'args/lang_cpp.dart';
 export 'args/lang_dart.dart';
 export 'args/lang_java.dart';
 export 'args/lang_javascript.dart';
 export 'args/lang_kotlin.dart';
 export 'args/lang_objc.dart';
-export 'args/lang_php.dart';
 export 'args/lang_swift.dart';
 export 'args/lang_typescript.dart';
 

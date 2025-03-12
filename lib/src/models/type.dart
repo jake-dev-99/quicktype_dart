@@ -89,6 +89,10 @@ enum TargetType implements TypeEnum {
     switch (this) {
       case TargetType.dart:
         return DartArgs.args;
+      case TargetType.c:
+        return CArgs.args;
+      case TargetType.cpp:
+        return CppArgs.args;
       case TargetType.java:
         return JavaArgs.args;
       case TargetType.javascript:
