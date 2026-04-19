@@ -4,7 +4,7 @@ description: >-
   Produces Dart, Kotlin, Swift, TypeScript, and 18 other languages — at build
   time via build_runner, or at runtime from in-memory data. A pigeon-analogue
   for arbitrarily-nested typed data.
-version: 0.6.0
+version: 0.6.1
 homepage: https://www.simplezen.io
 repository: https://github.com/jake-dev-99/quicktype_dart
 issue_tracker: https://github.com/jake-dev-99/quicktype_dart/issues

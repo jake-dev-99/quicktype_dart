@@ -3,7 +3,7 @@
 //
 // Run after `cmake --build build/native` has produced libqt_shim.dylib.
 //
-//   dart run bin/ffi_smoke.dart
+//   dart run tool/smoke/ffi_smoke.dart
 
 import 'dart:io';
 
