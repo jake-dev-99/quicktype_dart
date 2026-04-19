@@ -73,12 +73,18 @@ Future<String> fetchAndCacheBundle(Uri url, String? integrity) async {
   return utf8.decode(bytes);
 }
 
+/// Number of leading hex chars of `sha256(url)` used as the on-disk
+/// cache-directory name. 16 hex chars = 64 bits of entropy — far more
+/// than enough to avoid collisions across the handful of bundle URLs a
+/// single machine would ever cache, while keeping the path short.
+const int _cacheKeyLength = 16;
+
 /// On-disk cache path for [url].
 Future<File> _cacheFileFor(Uri url) async {
   final key = crypto.sha256
       .convert(utf8.encode(url.toString()))
       .toString()
-      .substring(0, 16);
+      .substring(0, _cacheKeyLength);
   return File(
     p.join(
         Directory.systemTemp.path, 'quicktype_dart_bundles', key, 'bundle.js'),

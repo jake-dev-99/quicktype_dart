@@ -6,9 +6,11 @@
 // Node CLI (`Process.run`) per the caller's [GenerateTransport] choice.
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
 
 import 'ffi/ffi_runtime.dart';
@@ -245,9 +247,22 @@ String? _findOnPath(String name) {
   return null;
 }
 
+/// Makes [label] safe to use as a filename stem. Non-alphanumeric chars
+/// collapse to `_`; a leading digit gets a `T_` prefix. When any
+/// substitution actually happened, a short content-hash suffix is
+/// appended so two different inputs that sanitize to the same string
+/// (e.g. `'User:Data'` and `'User-Data'`) don't silently collide on
+/// disk.
 String _sanitizeLabel(String label) {
   final cleaned = label.replaceAll(RegExp(r'[^A-Za-z0-9_]'), '_');
-  if (cleaned.isEmpty) return 'Generated';
-  if (RegExp(r'^[0-9]').hasMatch(cleaned)) return 'T_$cleaned';
-  return cleaned;
+  final modified = cleaned != label || cleaned.isEmpty;
+  final base = cleaned.isEmpty
+      ? 'Generated'
+      : RegExp(r'^[0-9]').hasMatch(cleaned)
+          ? 'T_$cleaned'
+          : cleaned;
+  if (!modified) return base;
+  final hash =
+      crypto.sha1.convert(utf8.encode(label)).toString().substring(0, 6);
+  return '${base}_$hash';
 }
