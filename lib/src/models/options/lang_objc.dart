@@ -1,4 +1,3 @@
-
 library;
 
 import '../enums.dart';
@@ -6,7 +5,10 @@ import '../renderer_options.dart';
 
 /// Named-parameter options for the ObjectiveC target.
 ///
-/// Pass to [QuicktypeDart.generate] via `options:`. See quicktype-core's docs for the authoritative list of flags.
+/// Pass to [QuicktypeDart.generate] via `options:`.
+///
+/// See quicktype-core's documentation for the authoritative list of
+/// flags per language.
 class ObjectiveCRendererOptions extends RendererOptions {
   const ObjectiveCRendererOptions({
     this.justTypes,
@@ -16,10 +18,15 @@ class ObjectiveCRendererOptions extends RendererOptions {
     this.functions,
   });
 
+  /// Maps to the `--just-types` flag.
   final bool? justTypes;
+  /// Maps to the `--class-prefix` flag.
   final String? classPrefix;
+  /// Maps to the `--features` flag.
   final ObjectiveCFeatures? features;
+  /// Maps to the `--extra-comments` flag.
   final bool? extraComments;
+  /// Maps to the `--functions` flag.
   final bool? functions;
 
   @override

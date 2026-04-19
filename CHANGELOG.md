@@ -7,6 +7,47 @@ conventions. Until v1.0.0, breaking changes may land on minor-version
 bumps — they're always flagged explicitly under **Removed** or
 **Breaking**.
 
+## 0.4.3
+
+CI, native polish, and per-field documentation. Final release in the
+0.4.x RC cycle.
+
+### Added
+
+- `.github/workflows/ci.yml` — runs `dart analyze --fatal-infos` and
+  `dart test --exclude-tags integration` on every push to Master and
+  every PR.
+- `.github/workflows/build.yml` — cross-platform native build matrix
+  (ubuntu-latest + macos-latest) that exercises `cmake --build` with
+  both the default embedded bundle and `-DQT_EMBED_BUNDLE=OFF`, plus
+  the `ffi_smoke` / `ffi_isolate_smoke` / `ffi_remote_smoke` scripts
+  against the freshly-built shared library.
+- `native/README.md` — architecture and regeneration guide for
+  contributors touching the C side.
+- Per-field `///` dartdoc on every `*RendererOptions` field — e.g.
+  `DartRendererOptions.useFreezed` now carries `Maps to the
+  --use-freezed flag.`, giving IDE hover and `dart doc` output the
+  authoritative CLI-flag mapping.
+- SPDX headers on `native/shim/qt_shim.h` and `native/shim/qt_shim.c`,
+  and a self-contained thread-safety / return-code contract block in
+  the public header.
+
+### Changed
+
+- `QT_EXPORT` macro in `native/shim/qt_shim.h` uses
+  `__has_attribute(visibility)` to gracefully fall through on
+  compilers that lack the attribute (Windows, TinyCC, etc.).
+- `native/CMakeLists.txt` sets `VERSION`/`SOVERSION` on the
+  `quicktype_dart` target (matters for standalone Linux consumers; a
+  no-op on macOS/iOS/Windows).
+- Warning-suppression flags consolidated to the shim target in CMake;
+  podspec `OTHER_CFLAGS` lines trimmed to just the two upstream
+  quickjs-ng warnings not covered by the compile target options.
+- iOS deployment target bumped from 12.0 → 13.0.
+- macOS deployment target bumped from 10.14 → 10.15.
+- `pump()` in `qt_shim.c` gained a comment explaining the
+  1,000,000-iteration safety cap.
+
 ## 0.4.2
 
 Documentation-polish release. Zero public API changes; README, CHANGELOG,

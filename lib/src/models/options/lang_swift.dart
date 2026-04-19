@@ -1,4 +1,3 @@
-
 library;
 
 import '../enums.dart';
@@ -6,7 +5,10 @@ import '../renderer_options.dart';
 
 /// Named-parameter options for the Swift target.
 ///
-/// Pass to [QuicktypeDart.generate] via `options:`. See quicktype-core's docs for the authoritative list of flags.
+/// Pass to [QuicktypeDart.generate] via `options:`.
+///
+/// See quicktype-core's documentation for the authoritative list of
+/// flags per language.
 class SwiftRendererOptions extends RendererOptions {
   const SwiftRendererOptions({
     this.justTypes,
@@ -29,23 +31,41 @@ class SwiftRendererOptions extends RendererOptions {
     this.mutableProperties,
   });
 
+  /// Maps to the `--just-types` flag.
   final bool? justTypes;
+  /// Maps to the `--struct-or-class` flag.
   final StructOrClass? structOrClass;
+  /// Maps to the `--density` flag.
   final Density? density;
+  /// Maps to the `--initializers` flag.
   final bool? initializers;
+  /// Maps to the `--coding-keys` flag.
   final bool? codingKeys;
+  /// Maps to the `--coding-keys-protocol` flag.
   final String? codingKeysProtocol;
+  /// Maps to the `--access-level` flag.
   final SwiftAccessLevel? accessLevel;
+  /// Maps to the `--alamofire` flag.
   final bool? alamofire;
+  /// Maps to the `--support-linux` flag.
   final bool? supportLinux;
+  /// Maps to the `--type-prefix` flag.
   final String? typePrefix;
+  /// Maps to the `--protocol` flag.
   final SwiftProtocol? protocol;
+  /// Maps to the `--acronym-style` flag.
   final AcronymStyle? acronymStyle;
+  /// Maps to the `--objective-c-support` flag.
   final bool? objectiveCSupport;
+  /// Maps to the `--optional-enums` flag.
   final bool? optionalEnums;
+  /// Maps to the `--sendable` flag.
   final bool? sendable;
+  /// Maps to the `--swift-5-support` flag.
   final bool? swift5Support;
+  /// Maps to the `--multi-file-dest` flag.
   final bool? multiFileTarget;
+  /// Maps to the `--mutable-properties` flag.
   final bool? mutableProperties;
 
   @override

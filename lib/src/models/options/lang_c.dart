@@ -1,4 +1,3 @@
-
 library;
 
 import '../enums.dart';
@@ -6,7 +5,10 @@ import '../renderer_options.dart';
 
 /// Named-parameter options for the C target.
 ///
-/// Pass to [QuicktypeDart.generate] via `options:`. See quicktype-core's docs for the authoritative list of flags.
+/// Pass to [QuicktypeDart.generate] via `options:`.
+///
+/// See quicktype-core's documentation for the authoritative list of
+/// flags per language.
 class CRendererOptions extends RendererOptions {
   const CRendererOptions({
     this.printStyle,
@@ -19,13 +21,21 @@ class CRendererOptions extends RendererOptions {
     this.enumeratorStyle,
   });
 
+  /// Maps to the `--print-style` flag.
   final PrintStyle? printStyle;
+  /// Maps to the `--hashtable-size` flag.
   final String? hashtableSize;
+  /// Maps to the `--typedef-alias` flag.
   final TypedefAlias? typedefAlias;
+  /// Maps to the `--source-style` flag.
   final SourceStyle? sourceStyle;
+  /// Maps to the `--integer-size` flag.
   final IntegerSize? integerSize;
+  /// Maps to the `--type-style` flag.
   final NamingStyle? typeStyle;
+  /// Maps to the `--member-style` flag.
   final NamingStyle? memberStyle;
+  /// Maps to the `--enumerator-style` flag.
   final NamingStyle? enumeratorStyle;
 
   @override

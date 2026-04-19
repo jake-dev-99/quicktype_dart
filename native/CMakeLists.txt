@@ -80,6 +80,19 @@ target_link_libraries(quicktype_dart PRIVATE qjs)
 set_target_properties(quicktype_dart PROPERTIES
   C_VISIBILITY_PRESET hidden
   OUTPUT_NAME "quicktype_dart"
+  # VERSION/SOVERSION matters when the library is consumed standalone
+  # (not wrapped by Flutter). On Linux these drive the .so.<major>
+  # symlink chain ld.so expects; on other platforms CMake quietly
+  # ignores them, which is fine.
+  VERSION "0.4.3"
+  SOVERSION "0"
+)
+# Quiet expected quickjs-ng warnings at the shim level too, so consumers
+# that compile this target (directly or via CocoaPods) don't see them.
+target_compile_options(quicktype_dart PRIVATE
+  -Wno-unused-parameter
+  -Wno-unused-variable
+  -Wno-unused-function
 )
 if(NOT QT_EMBED_BUNDLE)
   target_compile_definitions(quicktype_dart PRIVATE QT_NO_EMBEDDED_BUNDLE)

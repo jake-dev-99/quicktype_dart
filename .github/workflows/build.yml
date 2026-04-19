@@ -1,0 +1,52 @@
+name: Native build
+
+# Exercises the C shim + QuickJS build on Linux and macOS, and runs the
+# FFI smoke test against the freshly-built shared library. Intentionally
+# two-platform only for the first RC cycle — Windows and Android can be
+# added in a follow-up when we have green baseline signal.
+
+on:
+  push:
+    branches: [Master]
+  pull_request:
+    branches: [Master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: cmake build + ffi smoke (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Configure (embedded bundle)
+        run: cmake -S native -B build/native -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build (embedded bundle)
+        run: cmake --build build/native
+
+      - name: FFI smoke
+        run: dart run bin/ffi_smoke.dart
+
+      - name: FFI isolate smoke
+        run: dart run bin/ffi_isolate_smoke.dart
+
+      - name: FFI remote smoke (file:// URL)
+        run: dart run bin/ffi_remote_smoke.dart
+
+      - name: Configure (QT_EMBED_BUNDLE=OFF)
+        run: cmake -S native -B build/native-noembed -DCMAKE_BUILD_TYPE=Release -DQT_EMBED_BUNDLE=OFF
+
+      - name: Build (QT_EMBED_BUNDLE=OFF)
+        run: cmake --build build/native-noembed

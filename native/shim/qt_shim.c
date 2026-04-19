@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2024 Jake Allen and quicktype_dart contributors.
+//
 // quicktype_dart native bridge.
 //
 // Public surface documented in qt_shim.h. Each caller creates its own
@@ -55,7 +58,18 @@ struct QtRuntime {
   JSContext* ctx;
 };
 
-// Pump QuickJS's pending job queue until drained.
+// Drain QuickJS's pending job queue until empty or the hard cap is hit.
+//
+// qt_runtime_convert schedules an async IIFE that resolves into a global
+// slot; the result isn't visible until the microtask queue fully drains.
+// JS_ExecutePendingJob returns 1 when it ran a job, 0 when the queue was
+// already empty, or a negative value on error. We loop until the queue
+// is empty (non-positive return) or the guard trips.
+//
+// The 1,000,000-iteration cap is a tripwire against pathological input —
+// a promise chain that never terminates — not a production limit.
+// quicktype-core's normal generation path drains in a few thousand jobs
+// for even large inputs.
 static void pump(JSContext* ctx) {
   JSContext* cctx = NULL;
   const int MAX = 1000000;

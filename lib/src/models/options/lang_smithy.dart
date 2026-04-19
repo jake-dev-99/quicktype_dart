@@ -1,4 +1,3 @@
-
 library;
 
 import '../enums.dart';
@@ -6,14 +5,19 @@ import '../renderer_options.dart';
 
 /// Named-parameter options for the Smithy target.
 ///
-/// Pass to [QuicktypeDart.generate] via `options:`. See quicktype-core's docs for the authoritative list of flags.
+/// Pass to [QuicktypeDart.generate] via `options:`.
+///
+/// See quicktype-core's documentation for the authoritative list of
+/// flags per language.
 class SmithyRendererOptions extends RendererOptions {
   const SmithyRendererOptions({
     this.framework,
     this.package,
   });
 
+  /// Maps to the `--framework` flag.
   final SmithyFramework? framework;
+  /// Maps to the `--package` flag.
   final String? package;
 
   @override

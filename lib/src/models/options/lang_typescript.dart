@@ -1,4 +1,3 @@
-
 library;
 
 import '../enums.dart';
@@ -6,7 +5,10 @@ import '../renderer_options.dart';
 
 /// Named-parameter options for the TypeScript target.
 ///
-/// Pass to [QuicktypeDart.generate] via `options:`. See quicktype-core's docs for the authoritative list of flags.
+/// Pass to [QuicktypeDart.generate] via `options:`.
+///
+/// See quicktype-core's documentation for the authoritative list of
+/// flags per language.
 class TypeScriptRendererOptions extends RendererOptions {
   const TypeScriptRendererOptions({
     this.justTypes,
@@ -23,17 +25,29 @@ class TypeScriptRendererOptions extends RendererOptions {
     this.readonly,
   });
 
+  /// Maps to the `--just-types` flag.
   final bool? justTypes;
+  /// Maps to the `--nice-property-names` flag.
   final bool? nicePropertyNames;
+  /// Maps to the `--explicit-unions` flag.
   final bool? explicitUnions;
+  /// Maps to the `--runtime-typecheck` flag.
   final bool? runtimeTypecheck;
+  /// Maps to the `--runtime-typecheck-ignore-unknown-properties` flag.
   final bool? runtimeTypecheckIgnoreUnknownProperties;
+  /// Maps to the `--acronym-style` flag.
   final AcronymStyle? acronymStyle;
+  /// Maps to the `--converters` flag.
   final ConverterType? converters;
+  /// Maps to the `--raw-type` flag.
   final RawType? rawType;
+  /// Maps to the `--prefer-unions` flag.
   final bool? preferUnions;
+  /// Maps to the `--prefer-types` flag.
   final bool? preferTypes;
+  /// Maps to the `--prefer-const-values` flag.
   final bool? preferConstValues;
+  /// Maps to the `--readonly` flag.
   final bool? readonly;
 
   @override

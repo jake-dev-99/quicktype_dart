@@ -1,4 +1,3 @@
-
 library;
 
 import '../enums.dart';
@@ -6,7 +5,10 @@ import '../renderer_options.dart';
 
 /// Named-parameter options for the Cpp target.
 ///
-/// Pass to [QuicktypeDart.generate] via `options:`. See quicktype-core's docs for the authoritative list of flags.
+/// Pass to [QuicktypeDart.generate] via `options:`.
+///
+/// See quicktype-core's documentation for the authoritative list of
+/// flags per language.
 class CppRendererOptions extends RendererOptions {
   const CppRendererOptions({
     this.justTypes,
@@ -24,18 +26,31 @@ class CppRendererOptions extends RendererOptions {
     this.enumeratorStyle,
   });
 
+  /// Maps to the `--just-types` flag.
   final bool? justTypes;
+  /// Maps to the `--wstring` flag.
   final WStringType? wstring;
+  /// Maps to the `--const-style` flag.
   final ConstStyle? constStyle;
+  /// Maps to the `--enum-type` flag.
   final String? enumType;
+  /// Maps to the `--namespace` flag.
   final String? namespace;
+  /// Maps to the `--code-format` flag.
   final CodeFormat? codeFormat;
+  /// Maps to the `--include-style` flag.
   final IncludeStyle? includeStyle;
+  /// Maps to the `--source-style` flag.
   final SourceStyle? sourceStyle;
+  /// Maps to the `--boost` flag.
   final bool? boost;
+  /// Maps to the `--hide-null-optional` flag.
   final bool? hideNullOptional;
+  /// Maps to the `--type-style` flag.
   final NamingStyle? typeStyle;
+  /// Maps to the `--member-style` flag.
   final NamingStyle? memberStyle;
+  /// Maps to the `--enumerator-style` flag.
   final NamingStyle? enumeratorStyle;
 
   @override

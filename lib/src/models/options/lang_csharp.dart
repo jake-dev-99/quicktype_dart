@@ -1,4 +1,3 @@
-
 library;
 
 import '../enums.dart';
@@ -6,7 +5,10 @@ import '../renderer_options.dart';
 
 /// Named-parameter options for the CSharp target.
 ///
-/// Pass to [QuicktypeDart.generate] via `options:`. See quicktype-core's docs for the authoritative list of flags.
+/// Pass to [QuicktypeDart.generate] via `options:`.
+///
+/// See quicktype-core's documentation for the authoritative list of
+/// flags per language.
 class CSharpRendererOptions extends RendererOptions {
   const CSharpRendererOptions({
     this.framework,
@@ -23,17 +25,29 @@ class CSharpRendererOptions extends RendererOptions {
     this.keepPropertyName,
   });
 
+  /// Maps to the `--framework` flag.
   final CSharpFramework? framework;
+  /// Maps to the `--namespace` flag.
   final String? namespace;
+  /// Maps to the `--csharp-version` flag.
   final CSharpVersion? csharpVersion;
+  /// Maps to the `--density` flag.
   final Density? density;
+  /// Maps to the `--array-type` flag.
   final ArrayType? arrayType;
+  /// Maps to the `--number-type` flag.
   final NumberType? numberType;
+  /// Maps to the `--any-type` flag.
   final AnyType? anyType;
+  /// Maps to the `--virtual` flag.
   final bool? virtual;
+  /// Maps to the `--features` flag.
   final Features? features;
+  /// Maps to the `--base-class` flag.
   final BaseClass? baseClass;
+  /// Maps to the `--check-required` flag.
   final bool? checkRequired;
+  /// Maps to the `--keep-property-name` flag.
   final bool? keepPropertyName;
 
   @override

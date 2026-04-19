@@ -1,4 +1,3 @@
-
 library;
 
 import '../enums.dart';
@@ -6,7 +5,10 @@ import '../renderer_options.dart';
 
 /// Named-parameter options for the Python target.
 ///
-/// Pass to [QuicktypeDart.generate] via `options:`. See quicktype-core's docs for the authoritative list of flags.
+/// Pass to [QuicktypeDart.generate] via `options:`.
+///
+/// See quicktype-core's documentation for the authoritative list of
+/// flags per language.
 class PythonRendererOptions extends RendererOptions {
   const PythonRendererOptions({
     this.pythonVersion,
@@ -15,9 +17,13 @@ class PythonRendererOptions extends RendererOptions {
     this.pydanticBaseModel,
   });
 
+  /// Maps to the `--python-version` flag.
   final PythonVersion? pythonVersion;
+  /// Maps to the `--just-types` flag.
   final bool? justTypes;
+  /// Maps to the `--nice-property-names` flag.
   final bool? nicePropertyNames;
+  /// Maps to the `--pydantic-base-model` flag.
   final bool? pydanticBaseModel;
 
   @override

@@ -1,11 +1,13 @@
-
 library;
 
 import '../renderer_options.dart';
 
 /// Named-parameter options for the Go target.
 ///
-/// Pass to [QuicktypeDart.generate] via `options:`. See quicktype-core's docs for the authoritative list of flags.
+/// Pass to [QuicktypeDart.generate] via `options:`.
+///
+/// See quicktype-core's documentation for the authoritative list of
+/// flags per language.
 class GoRendererOptions extends RendererOptions {
   const GoRendererOptions({
     this.justTypes,
@@ -16,11 +18,17 @@ class GoRendererOptions extends RendererOptions {
     this.omitEmpty,
   });
 
+  /// Maps to the `--just-types` flag.
   final bool? justTypes;
+  /// Maps to the `--just-types-and-package` flag.
   final bool? justTypesAndPackage;
+  /// Maps to the `--package` flag.
   final String? package;
+  /// Maps to the `--multi-file-dest` flag.
   final bool? multiFileTarget;
+  /// Maps to the `--field-tags` flag.
   final String? fieldTags;
+  /// Maps to the `--omit-empty` flag.
   final bool? omitEmpty;
 
   @override

@@ -1,4 +1,3 @@
-
 library;
 
 import '../enums.dart';
@@ -6,7 +5,10 @@ import '../renderer_options.dart';
 
 /// Named-parameter options for the Elm target.
 ///
-/// Pass to [QuicktypeDart.generate] via `options:`. See quicktype-core's docs for the authoritative list of flags.
+/// Pass to [QuicktypeDart.generate] via `options:`.
+///
+/// See quicktype-core's documentation for the authoritative list of
+/// flags per language.
 class ElmRendererOptions extends RendererOptions {
   const ElmRendererOptions({
     this.justTypes,
@@ -14,8 +16,11 @@ class ElmRendererOptions extends RendererOptions {
     this.arrayType,
   });
 
+  /// Maps to the `--just-types` flag.
   final bool? justTypes;
+  /// Maps to the `--module` flag.
   final String? module;
+  /// Maps to the `--array-type` flag.
   final ArrayType? arrayType;
 
   @override

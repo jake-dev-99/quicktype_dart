@@ -1,0 +1,35 @@
+name: CI
+
+# Analyze + unit tests on every push to Master and every PR targeting Master.
+# Kept intentionally lean: the Dart-side analyze + test suite covers most
+# regressions without requiring per-platform native toolchains. Heavier
+# platform-matrix builds live in build.yml (on-demand / scheduled).
+
+on:
+  push:
+    branches: [Master]
+  pull_request:
+    branches: [Master]
+
+jobs:
+  analyze-and-test:
+    name: dart analyze + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Static analysis
+        run: dart analyze --fatal-infos lib bin
+
+      - name: Unit tests (non-integration)
+        # Skip the integration suite on CI — it requires the quicktype Node
+        # CLI, which we don't bother provisioning in this lean workflow.
+        # The FFI + native build paths are covered by build.yml when run.
+        run: dart test --exclude-tags integration

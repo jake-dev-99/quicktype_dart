@@ -1,11 +1,13 @@
-
 library;
 
 import '../renderer_options.dart';
 
 /// Named-parameter options for the Dart target.
 ///
-/// Pass to [QuicktypeDart.generate] via `options:`. See quicktype-core's docs for the authoritative list of flags.
+/// Pass to [QuicktypeDart.generate] via `options:`.
+///
+/// See quicktype-core's documentation for the authoritative list of
+/// flags per language.
 class DartRendererOptions extends RendererOptions {
   const DartRendererOptions({
     this.nullSafety,
@@ -21,16 +23,27 @@ class DartRendererOptions extends RendererOptions {
     this.partName,
   });
 
+  /// Maps to the `--null-safety` flag.
   final bool? nullSafety;
+  /// Maps to the `--just-types` flag.
   final bool? justTypes;
+  /// Maps to the `--coders-in-class` flag.
   final bool? codersInClass;
+  /// Maps to the `--from-map` flag.
   final bool? fromMap;
+  /// Maps to the `--required-props` flag.
   final bool? requiredProps;
+  /// Maps to the `--final-props` flag.
   final bool? finalProps;
+  /// Maps to the `--copy-with` flag.
   final bool? copyWith;
+  /// Maps to the `--use-freezed` flag.
   final bool? useFreezed;
+  /// Maps to the `--use-hive` flag.
   final bool? useHive;
+  /// Maps to the `--use-json-annotation` flag.
   final bool? useJsonAnnotation;
+  /// Maps to the `--part-name` flag.
   final String? partName;
 
   @override

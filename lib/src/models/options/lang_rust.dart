@@ -1,4 +1,3 @@
-
 library;
 
 import '../enums.dart';
@@ -6,7 +5,10 @@ import '../renderer_options.dart';
 
 /// Named-parameter options for the Rust target.
 ///
-/// Pass to [QuicktypeDart.generate] via `options:`. See quicktype-core's docs for the authoritative list of flags.
+/// Pass to [QuicktypeDart.generate] via `options:`.
+///
+/// See quicktype-core's documentation for the authoritative list of
+/// flags per language.
 class RustRendererOptions extends RendererOptions {
   const RustRendererOptions({
     this.density,
@@ -19,13 +21,21 @@ class RustRendererOptions extends RendererOptions {
     this.skipSerializingNone,
   });
 
+  /// Maps to the `--density` flag.
   final Density? density;
+  /// Maps to the `--visibility` flag.
   final RustVisibility? visibility;
+  /// Maps to the `--derive-debug` flag.
   final bool? deriveDebug;
+  /// Maps to the `--derive-clone` flag.
   final bool? deriveClone;
+  /// Maps to the `--derive-partial-eq` flag.
   final bool? derivePartialEq;
+  /// Maps to the `--edition-2018` flag.
   final bool? edition2018;
+  /// Maps to the `--leading-comments` flag.
   final bool? leadingComments;
+  /// Maps to the `--skip-serializing-none` flag.
   final bool? skipSerializingNone;
 
   @override
