@@ -21,6 +21,8 @@
 /// Null-valued fields are omitted from the serialized output, so any
 /// option you don't explicitly set inherits quicktype-core's default.
 abstract class RendererOptions {
+  /// Subclass constructor hook. Concrete languages expose their own
+  /// typed constructor (`DartRendererOptions`, etc.).
   const RendererOptions();
 
   /// Serializes this options instance to the `Map<String, String>` shape

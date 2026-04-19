@@ -9,7 +9,7 @@ import 'src/version.dart';
 
 /// Entry point for the `quicktype_dart` CLI.
 ///
-/// Wired up from [bin/quicktype_dart.dart] — run it with:
+/// Wired up from `bin/quicktype_dart.dart` — run it with:
 ///
 /// ```bash
 /// dart run quicktype_dart            # uses ./quicktype.json

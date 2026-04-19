@@ -11,6 +11,8 @@ import 'utils/logging.dart';
 /// Thrown when a `quicktype.json` can't be parsed or is semantically invalid.
 @immutable
 class ConfigException implements Exception {
+  /// Creates a config-load failure with a human-readable [message] and
+  /// an optional underlying [cause].
   const ConfigException(this.message, [this.cause]);
 
   /// Human-readable description of the failure.

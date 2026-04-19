@@ -1,3 +1,7 @@
+// ignore_for_file: public_member_api_docs
+// Enum values (`TargetType.dart`, `SourceType.json`, …) are
+// self-documenting; a one-liner per value restates the name.
+
 import 'package:meta/meta.dart';
 
 import '../config.dart';
@@ -8,11 +12,22 @@ class DefaultPaths {
   /// Private — use the static constants.
   DefaultPaths._();
 
+  /// Default output glob for generated C sources.
   static const String c = 'src/**/models';
+
+  /// Default output glob for generated Dart sources.
   static const String dart = 'lib/**/models';
+
+  /// Default output glob for generated Kotlin sources in an Android app.
   static const String kotlin = 'android/app/src/main/kotlin/**/models/';
+
+  /// Default output glob for generated Java sources in an Android app.
   static const String java = 'android/app/src/main/java/**/models/';
+
+  /// Default output glob for generated Swift sources in an iOS app.
   static const String swift = 'ios/**/models/';
+
+  /// Default output glob for generated JS/TS sources in a web app.
   static const String web = 'web/**/models/';
 }
 
@@ -201,7 +216,7 @@ class TypeConfig {
   /// Validates raw `args:`-style values and normalizes them to the
   /// `Map<String, String>` shape quicktype-core's renderer expects.
   /// Accepts `bool`, `String`, or `null` (skipped); anything else throws
-  /// [ConfigException] so typos like `use-freezed: 1` or `part-name: []`
+  /// `ConfigException` so typos like `use-freezed: 1` or `part-name: []`
   /// fail loud at config-load time instead of silently coercing via
   /// `toString()` and producing mystery output.
   static Map<String, String> _coerceRendererOptions(Map<String, dynamic> raw) {

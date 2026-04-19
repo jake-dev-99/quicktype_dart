@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 import '../enums.dart';
 import '../renderer_options.dart';
 

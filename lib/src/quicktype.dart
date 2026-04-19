@@ -24,6 +24,8 @@ const String _quicktypeExe = './tool/node_modules/.bin/quicktype';
 /// error so callers can diagnose without losing context.
 @immutable
 class QuicktypeException implements Exception {
+  /// Creates a subprocess failure with a human-readable [message] plus
+  /// optional diagnostic context.
   const QuicktypeException(
     this.message, {
     this.command,
