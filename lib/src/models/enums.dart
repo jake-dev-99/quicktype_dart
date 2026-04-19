@@ -1,11 +1,16 @@
-library quicktype.models.enums;
-
-import '../args.dart';
+/// Typed enums used by the language-specific `*RendererOptions` classes
+/// (see `lib/src/models/options/lang_*.dart`) for options that accept a
+/// bounded set of values — e.g.
+/// `CSharpRendererOptions(framework: CSharpFramework.netstandard)`.
+///
+/// Each enum's `toString()` returns the exact string quicktype-core's
+/// `rendererOptions` expects for that flag.
+library;
 
 //===== SHARED ENUMS =====
 
 /// HTTP method options for API endpoints
-/// Serves: [JavaScriptArgs], [TypeScriptArgs]
+// (used by the corresponding *RendererOptions class)
 enum HttpMethod {
   get,
   post,
@@ -19,8 +24,8 @@ enum HttpMethod {
   String toString() => name;
 }
 
-/// Debug options for quicktype command-line interface
-/// Serves: All languages (global option)
+/// Debug options for quicktype command-line interface.
+/// Global across all target languages.
 enum DebugArgs {
   /// Prints the type inference graph
   printGraph('print-graph'),
@@ -67,7 +72,7 @@ enum DebugArgs {
 }
 
 /// Converter generation options
-/// Serves: [JavaScriptArgs], [TypeScriptArgs], [PropTypesArgs]
+// (used by the corresponding *RendererOptions class)
 enum ConverterType {
   /// Generate converters only for top-level types
   topLevel('top-level'),
@@ -86,7 +91,7 @@ enum ConverterType {
 }
 
 /// Raw input type options
-/// Serves: [JavaScriptArgs], [TypeScriptArgs], [FlowArgs]
+// (used by the corresponding *RendererOptions class)
 enum RawType {
   /// Use 'json' as the raw input type
   json('json'),
@@ -105,7 +110,7 @@ enum RawType {
 }
 
 /// Array type options
-/// Serves: [CSharpArgs], [ElmArgs], [HaskellArgs], [JavaArgs]
+// (used by the corresponding *RendererOptions class)
 enum ArrayType {
   /// Use native array types (T[])
   array('array'),
@@ -124,7 +129,7 @@ enum ArrayType {
 }
 
 /// Acronym style options for property naming
-/// Serves: [FlowArgs], [PHPArgs], [PropTypesArgs], [SwiftArgs]
+// (used by the corresponding *RendererOptions class)
 enum AcronymStyle {
   /// Keep acronyms as they appear in JSON
   original('original'),
@@ -152,7 +157,7 @@ enum AcronymStyle {
 }
 
 /// Naming style options for code identifiers
-/// Serves: [CArgs], [CPPArgs]
+// (used by the corresponding *RendererOptions class)
 enum NamingStyle {
   /// Use pascal case (MyIdentifier)
   pascalCase('pascal-case'),
@@ -193,7 +198,7 @@ enum NamingStyle {
 }
 
 /// Source code organization options
-/// Serves: [CArgs], [CPPArgs]
+// (used by the corresponding *RendererOptions class)
 enum SourceStyle {
   /// Generate a single source file
   singleSource('single-source'),
@@ -213,7 +218,7 @@ enum SourceStyle {
 }
 
 /// Code density options
-/// Serves: [CSharpArgs], [RustArgs], [SwiftArgs]
+// (used by the corresponding *RendererOptions class)
 enum Density {
   /// Standard spacing and line breaks for readability
   normal('normal'),
@@ -232,7 +237,7 @@ enum Density {
 //===== C LANGUAGE SPECIFIC ENUMS =====
 
 /// Integer size type for C code generation
-/// Serves: [CArgs]
+// (used by the corresponding *RendererOptions class)
 enum IntegerSize {
   /// Use 8-bit integers (int8_t)
   int8('int8_t'),
@@ -255,7 +260,7 @@ enum IntegerSize {
 }
 
 /// Typedef alias option for C code generation
-/// Serves: [CArgs]
+// (used by the corresponding *RendererOptions class)
 enum TypedefAlias {
   /// Don't generate typedefs (default)
   noTypedef('no-typedef'),
@@ -272,7 +277,7 @@ enum TypedefAlias {
 }
 
 /// Print style option for C code generation
-/// Serves: [CArgs]
+// (used by the corresponding *RendererOptions class)
 enum PrintStyle {
   /// Format the code with proper indentation (default)
   formatted('print-formatted'),
@@ -291,7 +296,7 @@ enum PrintStyle {
 //===== C++ LANGUAGE SPECIFIC ENUMS =====
 
 /// C++ code format options for quicktype generation
-/// Serves: [CPPArgs]
+// (used by the corresponding *RendererOptions class)
 enum CodeFormat {
   /// Generate classes with public member variables
   withStruct('with-struct'),
@@ -308,7 +313,7 @@ enum CodeFormat {
 }
 
 /// String type handling options for C++ code generation
-/// Serves: [CPPArgs]
+// (used by the corresponding *RendererOptions class)
 enum WStringType {
   /// Use standard std::string (UTF-8)
   useString('use-string'),
@@ -325,7 +330,7 @@ enum WStringType {
 }
 
 /// Const placement style for C++ code generation
-/// Serves: [CPPArgs]
+// (used by the corresponding *RendererOptions class)
 enum ConstStyle {
   /// Place const to the left of the type (const Type)
   westConst('west-const'),
@@ -342,7 +347,7 @@ enum ConstStyle {
 }
 
 /// Include statement style for C++ code generation
-/// Serves: [CPPArgs]
+// (used by the corresponding *RendererOptions class)
 enum IncludeStyle {
   /// Use quotes for includes ("header.h")
   localInclude('local-include'),
@@ -361,7 +366,7 @@ enum IncludeStyle {
 //===== C# LANGUAGE SPECIFIC ENUMS =====
 
 /// C# serialization framework options
-/// Serves: [CSharpArgs]
+// (used by the corresponding *RendererOptions class)
 enum CSharpFramework {
   /// Use Newtonsoft.Json for serialization (JSON.NET)
   newtonSoft('NewtonSoft'),
@@ -377,7 +382,7 @@ enum CSharpFramework {
 }
 
 /// C# version options
-/// Serves: [CSharpArgs]
+// (used by the corresponding *RendererOptions class)
 enum CSharpVersion {
   /// Target C# 5.0
   v5('5'),
@@ -393,7 +398,7 @@ enum CSharpVersion {
 }
 
 /// Number type options for C#
-/// Serves: [CSharpArgs]
+// (used by the corresponding *RendererOptions class)
 enum NumberType {
   /// Use double for numeric values
   double('double'),
@@ -409,7 +414,7 @@ enum NumberType {
 }
 
 /// Any type options for C#
-/// Serves: [CSharpArgs]
+// (used by the corresponding *RendererOptions class)
 enum AnyType {
   /// Use object type for any/dynamic values
   object('object'),
@@ -425,7 +430,7 @@ enum AnyType {
 }
 
 /// Target features options for C#
-/// Serves: [CSharpArgs]
+// (used by the corresponding *RendererOptions class)
 enum Features {
   /// Generate complete serialization support
   complete('complete'),
@@ -447,7 +452,7 @@ enum Features {
 }
 
 /// Base class options for C#
-/// Serves: [CSharpArgs]
+// (used by the corresponding *RendererOptions class)
 enum BaseClass {
   /// Use EntityData as base class
   entityData('EntityData'),
@@ -465,7 +470,7 @@ enum BaseClass {
 //===== JAVA LANGUAGE SPECIFIC ENUMS =====
 
 /// Date time provider options for Java code generation
-/// Serves: [JavaArgs]
+// (used by the corresponding *RendererOptions class)
 enum DateTimeProvider {
   /// Use Java 8 java.time.* classes (modern approach)
   java8('java8'),
@@ -484,7 +489,7 @@ enum DateTimeProvider {
 //===== KOTLIN LANGUAGE SPECIFIC ENUMS =====
 
 /// Serialization framework options for Kotlin code generation
-/// Serves: [KotlinArgs]
+// (used by the corresponding *RendererOptions class)
 enum KotlinFramework {
   /// Generate types only without serialization code
   justTypes('just-types'),
@@ -509,7 +514,7 @@ enum KotlinFramework {
 //===== OBJECTIVE-C LANGUAGE SPECIFIC ENUMS =====
 
 /// Features options for Objective-C code generation
-/// Serves: [ObjectiveCArgs]
+// (used by the corresponding *RendererOptions class)
 enum ObjectiveCFeatures {
   /// Generate both interface (.h) and implementation (.m) files
   all('all'),
@@ -531,7 +536,7 @@ enum ObjectiveCFeatures {
 //===== PYTHON LANGUAGE SPECIFIC ENUMS =====
 
 /// Python version options for code generation
-/// Serves: [PythonArgs]
+// (used by the corresponding *RendererOptions class)
 enum PythonVersion {
   /// Target Python 3.5 compatibility
   v35('3.5'),
@@ -553,7 +558,7 @@ enum PythonVersion {
 //===== RUBY LANGUAGE SPECIFIC ENUMS =====
 
 /// Type strictness options for Ruby code generation
-/// Serves: [RubyArgs]
+// (used by the corresponding *RendererOptions class)
 enum RubyStrictness {
   /// Generate strict type checking (uses dry-types strict)
   strict('strict'),
@@ -575,7 +580,7 @@ enum RubyStrictness {
 //===== RUST LANGUAGE SPECIFIC ENUMS =====
 
 /// Field visibility options for Rust code generation
-/// Serves: [RustArgs]
+// (used by the corresponding *RendererOptions class)
 enum RustVisibility {
   /// Private fields (no visibility modifier)
   private,
@@ -593,7 +598,7 @@ enum RustVisibility {
 //===== SCALA LANGUAGE SPECIFIC ENUMS =====
 
 /// Serialization framework options for Scala 3 code generation
-/// Serves: [Scala3Args]
+// (used by the corresponding *RendererOptions class)
 enum Scala3Framework {
   /// Generate types only without serialization code
   justTypes('just-types'),
@@ -615,7 +620,7 @@ enum Scala3Framework {
 //===== SMITHY LANGUAGE SPECIFIC ENUMS =====
 
 /// Serialization framework options for Smithy code generation
-/// Serves: [SmithyArgs]
+// (used by the corresponding *RendererOptions class)
 enum SmithyFramework {
   /// Generate types only without serialization code
   justTypes('just-types');
@@ -631,7 +636,7 @@ enum SmithyFramework {
 //===== SWIFT LANGUAGE SPECIFIC ENUMS =====
 
 /// Options for defining Swift type as struct or class
-/// Serves: [SwiftArgs]
+// (used by the corresponding *RendererOptions class)
 enum StructOrClass {
   /// Use structs for generated types (value semantics)
   struct('struct'),
@@ -648,7 +653,7 @@ enum StructOrClass {
 }
 
 /// Access level options for Swift code generation
-/// Serves: [SwiftArgs]
+// (used by the corresponding *RendererOptions class)
 enum SwiftAccessLevel {
   /// Use 'internal' access level (visible within module)
   internal('internal'),
@@ -665,7 +670,7 @@ enum SwiftAccessLevel {
 }
 
 /// Protocol implementation options for Swift code generation
-/// Serves: [SwiftArgs]
+// (used by the corresponding *RendererOptions class)
 enum SwiftProtocol {
   /// Don't implement additional protocols beyond Codable
   none('none'),

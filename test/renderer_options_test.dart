@@ -1,12 +1,8 @@
-// Unit tests for the typed `RendererOptions` surface introduced in v0.3.0.
+// Unit tests for the typed [RendererOptions] surface.
 //
-// Parallels `args_renderer_options_test.dart` — verifies each subclass
-// serializes to the same `Map<String, String>` shape quicktype-core's
-// `rendererOptions` param expects, with null fields omitted.
-
-// ignore_for_file: deprecated_member_use_from_same_package
-// Some assertions compare the typed path against the legacy Arg path —
-// that's the point of the test, but the legacy classes are @Deprecated.
+// Verifies each subclass serializes to the `Map<String, String>` shape
+// quicktype-core's `rendererOptions` parameter expects, with null fields
+// omitted.
 
 import 'package:quicktype_dart/quicktype_dart.dart';
 import 'package:test/test.dart';
@@ -35,27 +31,23 @@ void main() {
       );
     });
 
-    test('round-trip matches the legacy Arg path', () {
-      final typed = const DartRendererOptions(
+    test('combines multiple field types in a single map', () {
+      final out = const DartRendererOptions(
         useFreezed: true,
         nullSafety: true,
         partName: 'user.g.dart',
       ).toRendererOptions();
 
-      final argsEntries = <Arg>[
-        DartArgs.useFreezed..value = true,
-        DartArgs.nullSafety..value = true,
-        DartArgs.partName..value = 'user.g.dart',
-      ].map((a) => a.toRendererOption()!);
-
-      expect(typed, {
-        for (final e in argsEntries) e.key: e.value,
+      expect(out, {
+        'use-freezed': 'true',
+        'null-safety': 'true',
+        'part-name': 'user.g.dart',
       });
     });
   });
 
   group('CSharpRendererOptions (enum fields)', () {
-    test('serializes EnumArg fields via enum.toString()', () {
+    test('serializes enum-typed fields via their toString()', () {
       final out = const CSharpRendererOptions(
         framework: CSharpFramework.newtonSoft,
         csharpVersion: CSharpVersion.v6,
@@ -65,13 +57,11 @@ void main() {
     });
   });
 
-  group('SwiftRendererOptions (largest option class)', () {
-    test('has at least 18 fields (matches SwiftArgs coverage)', () {
-      // 18 static getters on SwiftArgs — the generator produced this count
-      // at v0.3.0. If SwiftArgs grows, keep this in sync.
+  group('SwiftRendererOptions', () {
+    test('serializes a single bool field as a one-entry map', () {
       expect(
         const SwiftRendererOptions(justTypes: true).toRendererOptions(),
-        hasLength(1),
+        {'just-types': 'true'},
       );
     });
   });

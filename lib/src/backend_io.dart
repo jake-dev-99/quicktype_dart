@@ -82,8 +82,9 @@ Future<String> _runViaProcess({
       '--lang', target.argName,
       '--out', targetFile.path,
     ];
-    // Serialize renderer options as CLI flags. BoolArg-style "false" values
-    // become --no-<name>; everything else is --<name> <value>.
+    // Serialize renderer options as CLI flags. Boolean-style "false" values
+    // become --no-<name>; "true" collapses to --<name>; everything else
+    // is --<name> <value>.
     for (final entry in rendererOptions.entries) {
       if (entry.value == 'true') {
         argv.add('--${entry.key}');

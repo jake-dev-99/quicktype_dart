@@ -1,5 +1,64 @@
 # Changelog
 
+## 0.4.0
+
+**Breaking-change release.** Removes the `*Args` surface deprecated in v0.3.0
+and converges on typed `*RendererOptions` as the single public API for
+language-specific flags.
+
+### Removed — breaking
+
+- Deleted all 22 `*Args` classes (`DartArgs`, `KotlinArgs`, …) and their
+  base types (`Arg`, `SimpleArg`, `BoolArg`, `StringArg`, `EnumArg`,
+  `RepeatableArg`, `MainArgs`). Replace with the matching
+  `*RendererOptions` class — e.g. `DartArgs.useFreezed..value = true` →
+  `DartRendererOptions(useFreezed: true)`.
+- Removed the `args:` parameter from `QuicktypeDart.generate` and
+  `QuicktypeDart.generateFromString`. Pass a `RendererOptions` subclass
+  via `options:` instead.
+- `TypeConfig.args` (`List<Arg>`) is now `TypeConfig.rendererOptions`
+  (`Map<String, String>`). The `quicktype.json` `args:` block still
+  parses, but values round-trip as strings rather than typed `Arg`
+  instances.
+- `QuicktypeCommand.args` is now `QuicktypeCommand.rendererOptions`
+  (`Map<String, String>`).
+- `TypeEnum.args` getter removed. Callers doing arg-key validation
+  against the registry should check `quicktype-core`'s own docs or the
+  corresponding `*RendererOptions` field names.
+- `tool/gen_options.py` deleted — the typed `*RendererOptions` classes
+  are the source of truth going forward; edit them directly when adding
+  fields.
+
+### Changed
+
+- Enum types previously under `lib/src/models/args/enums.dart` moved to
+  `lib/src/models/enums.dart`. Re-exported from the main barrel, so most
+  consumers don't need to update imports.
+
+### Fixed
+
+- Resolved three stale `TODO` comments in `lib/src/quicktype.dart`.
+
+### Migration
+
+```dart
+// before (v0.3.x)
+await QuicktypeDart.generate(
+  label: 'User',
+  data: data,
+  target: TargetType.dart,
+  args: [DartArgs.useFreezed..value = true, DartArgs.nullSafety..value = true],
+);
+
+// after (v0.4.0)
+await QuicktypeDart.generate(
+  label: 'User',
+  data: data,
+  target: TargetType.dart,
+  options: const DartRendererOptions(useFreezed: true, nullSafety: true),
+);
+```
+
 ## 0.3.1
 
 Native remote-bundle support + opt-out embedding. Finishes the remote-bundle

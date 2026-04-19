@@ -29,12 +29,14 @@ Future<void> main() async {
   );
   print('--- same data → Kotlin ---\n$kotlin');
 
-  // 3) Pass language-specific flags via typed args (BoolArg/EnumArg/StringArg).
+  // 3) Pass language-specific flags via a typed [RendererOptions] subclass.
+  //    Every target language has its own — DartRendererOptions,
+  //    KotlinRendererOptions, SwiftRendererOptions, etc.
   final justTypes = await QuicktypeDart.generate(
     label: 'User',
     data: {'id': 42, 'name': 'Jake'},
     target: TargetType.dart,
-    args: [DartArgs.justTypes..value = true],
+    options: const DartRendererOptions(justTypes: true),
   );
   print('--- Dart with --just-types ---\n$justTypes');
 }

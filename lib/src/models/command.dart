@@ -1,15 +1,18 @@
 import 'package:build/build.dart';
-import 'package:path/path.dart' as Path;
+import 'package:path/path.dart' as path;
 
 import '../utils/type_infer.dart';
-import 'args.dart';
 import 'type.dart';
 
 /// A single quicktype invocation — one source file, one target file, plus any
-/// extra typed [Arg]s (language-specific flags, options, etc).
+/// extra renderer options (language-specific flags).
 ///
 /// The command builds `--src/--src-lang/--lang/--out` itself; callers supply
-/// the rest via [args] using typed arg classes like `DartArgs.useFreezed`.
+/// the rest via [rendererOptions] — a `Map<String, String>` matching
+/// quicktype-core's `rendererOptions` shape. The typed
+/// `*RendererOptions` classes (e.g. `DartRendererOptions`) expose
+/// `toRendererOptions()` for converting their named parameters into this
+/// map.
 class QuicktypeCommand {
   /// Source file path.
   final String sourcePath;
@@ -23,15 +26,17 @@ class QuicktypeCommand {
   /// `--lang` value (e.g. `'dart'`).
   final String targetArg;
 
-  /// Extra typed arguments — e.g. `[DartArgs.useFreezed..value = true]`.
-  final Iterable<Arg> args;
+  /// Renderer options applied to this invocation. Each entry becomes
+  /// `--key value` on the argv list; bool entries (`'true'`/`'false'`)
+  /// collapse to `--key` / `--no-key` to match quicktype's CLI conventions.
+  final Map<String, String> rendererOptions;
 
-  QuicktypeCommand({
+  const QuicktypeCommand({
     required this.sourcePath,
     required this.sourceArg,
     required this.targetPath,
     required this.targetArg,
-    this.args = const [],
+    this.rendererOptions = const {},
   });
 
   /// Convenience builder: infer source and target types from each file's
@@ -40,7 +45,7 @@ class QuicktypeCommand {
   static QuicktypeCommand createCommandForFiles({
     required AssetId sourceFile,
     required AssetId targetFile,
-    Iterable<Arg> args = const [],
+    Map<String, String> rendererOptions = const {},
   }) {
     final sourceType =
         inferLangType<SourceType>(SourceType.values, sourceFile.path) ??
@@ -57,7 +62,7 @@ class QuicktypeCommand {
       sourceArg: sourceType.argName,
       targetPath: targetFile.path,
       targetArg: targetType.argName,
-      args: args,
+      rendererOptions: rendererOptions,
     );
   }
 
@@ -69,13 +74,19 @@ class QuicktypeCommand {
 
   List<String> _toArgv() {
     final out = <String>[
-      '--src', Path.canonicalize(sourcePath),
+      '--src', path.canonicalize(sourcePath),
       '--src-lang', sourceArg,
       '--lang', targetArg,
-      '--out', Path.canonicalize(targetPath),
+      '--out', path.canonicalize(targetPath),
     ];
-    for (final arg in args) {
-      out.addAll(arg.argv());
+    for (final entry in rendererOptions.entries) {
+      if (entry.value == 'true') {
+        out.add('--${entry.key}');
+      } else if (entry.value == 'false') {
+        out.add('--no-${entry.key}');
+      } else {
+        out.addAll(['--${entry.key}', entry.value]);
+      }
     }
     return out;
   }

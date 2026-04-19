@@ -2,8 +2,8 @@
 /// [QuicktypeDart.generate] via `options:`.
 ///
 /// Each target language has a concrete subclass under
-/// `lib/src/models/options/lang_*.dart` — e.g. [DartRendererOptions],
-/// [KotlinRendererOptions], [SwiftRendererOptions]. Construct one and pass
+/// `lib/src/models/options/lang_*.dart` — e.g. `DartRendererOptions`,
+/// `KotlinRendererOptions`, `SwiftRendererOptions`. Construct one and pass
 /// it directly:
 ///
 /// ```dart
@@ -18,10 +18,8 @@
 /// );
 /// ```
 ///
-/// The older `Arg`-list API (`args: [DartArgs.useFreezed..value = true]`)
-/// is still supported but deprecated — the typed options classes provide
-/// compile-time field names + IDE autocomplete for every flag the
-/// underlying renderer accepts.
+/// Null-valued fields are omitted from the serialized output, so any
+/// option you don't explicitly set inherits quicktype-core's default.
 abstract class RendererOptions {
   const RendererOptions();
 

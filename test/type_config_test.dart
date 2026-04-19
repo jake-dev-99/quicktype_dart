@@ -15,13 +15,6 @@ void main() {
       }
     });
 
-    test('args registry resolves for every value', () {
-      for (final t in TargetType.values) {
-        expect(() => t.args, returnsNormally,
-            reason: '${t.name}.args throws');
-      }
-    });
-
     test('argName values are unique enough to route unambiguously', () {
       final argNames = TargetType.values.map((t) => t.argName).toList();
       // javascript ('js') and flow ('flow') both exist, but they're distinct.
@@ -31,29 +24,31 @@ void main() {
   });
 
   group('TypeConfig.fromJson', () {
-    test('parses path and args', () {
+    test('parses path and coerces the args map to rendererOptions', () {
       final cfg = TypeConfig.fromJson(TargetType.dart, {
         'path': 'lib/models/',
-        'args': {'use-freezed': true, 'null-safety': true},
+        'args': {'use-freezed': true, 'null-safety': false, 'part-name': 'user.g.dart'},
       });
       expect(cfg.path, 'lib/models/');
-      expect(cfg.args, hasLength(2));
-      expect(cfg.args.map((a) => a.name),
-          containsAll(['use-freezed', 'null-safety']));
+      expect(cfg.rendererOptions, {
+        'use-freezed': 'true',
+        'null-safety': 'false',
+        'part-name': 'user.g.dart',
+      });
     });
 
     test('falls back to defaultPath when path is omitted', () {
       final cfg = TypeConfig.fromJson(TargetType.dart, {});
       expect(cfg.path, isNotEmpty);
+      expect(cfg.rendererOptions, isEmpty);
     });
 
-    test('silently skips unknown arg keys (logs warning)', () {
+    test('omits null-valued entries', () {
       final cfg = TypeConfig.fromJson(TargetType.dart, {
         'path': 'lib/',
-        'args': {'totally-made-up-flag': true, 'use-freezed': true},
+        'args': {'use-freezed': true, 'part-name': null},
       });
-      expect(cfg.args, hasLength(1));
-      expect(cfg.args.first.name, 'use-freezed');
+      expect(cfg.rendererOptions, {'use-freezed': 'true'});
     });
   });
 }

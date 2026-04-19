@@ -11,9 +11,10 @@
 ///   label: 'User',
 ///   data: [{'id': 1, 'name': 'Jake'}],
 ///   target: TargetType.dart,
+///   options: const DartRendererOptions(useFreezed: true),
 /// );
 /// ```
-library quicktype_dart;
+library;
 
 export 'src/bundle_source.dart'
     show BundleSource, EmbeddedBundleSource, RemoteBundleSource;
@@ -27,14 +28,12 @@ export 'src/models/type.dart'
 export 'src/models/command.dart' show QuicktypeCommand;
 export 'src/models/result.dart' show QuicktypeResult;
 
-// Typed renderer options (preferred) — `DartRendererOptions`,
-// `KotlinRendererOptions`, `SwiftRendererOptions`, etc.
+// Typed renderer options — `DartRendererOptions`, `KotlinRendererOptions`,
+// `SwiftRendererOptions`, etc. Plus the enums they reference
+// (`CSharpFramework`, `NamingStyle`, etc.).
 export 'src/models/options/options.dart';
-
-// Args surface (Arg base classes + all lang_*.dart + main_args + enums).
-// Deprecated since v0.3.0 — use the typed RendererOptions classes above.
-// Full removal planned for v0.4.0.
-export 'src/models/args.dart';
+export 'src/models/renderer_options.dart' show RendererOptions;
+export 'src/models/enums.dart';
 
 // Config + orchestration
 export 'src/config.dart' show Config, ConfigException;

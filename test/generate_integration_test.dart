@@ -30,7 +30,7 @@ void main() {
         label: 'Foo',
         data: {'x': 1},
         target: TargetType.dart,
-        args: [DartArgs.justTypes..value = true],
+        options: const DartRendererOptions(justTypes: true),
       );
       expect(withSerde, contains('fromJson'));
       expect(justTypes, isNot(contains('fromJson')));
