@@ -1,0 +1,4 @@
+// Intentionally empty — Flutter plugin Gradle config lives in build.gradle.
+// This file exists so `gradle` commands at this directory don't warn about
+// missing settings.
+rootProject.name = "quicktype_dart"
