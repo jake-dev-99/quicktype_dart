@@ -6,4 +6,4 @@
 library;
 
 /// The semver string for the currently-built copy of `quicktype_dart`.
-const String packageVersion = '0.4.1';
+const String packageVersion = '0.4.2';

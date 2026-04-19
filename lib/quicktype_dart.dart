@@ -1,8 +1,21 @@
-/// Cross-platform type generation from JSON.
+/// Typed data classes generated from JSON, on every platform Flutter runs on.
 ///
-/// Use [QuicktypeDart.generate] for runtime, in-memory JSON → code, or wire
-/// up the `build_runner` builders declared in [build.yaml] for build-time
-/// generation from `*.qt.json` files.
+/// Give `quicktype_dart` a JSON sample and a target language (Dart, Kotlin,
+/// Swift, TypeScript, and 18 others) and it produces an idiomatic typed
+/// model with `fromJson` / `toJson`.
+///
+/// Two entry points:
+///
+///   * [QuicktypeDart.generate] — runtime generation from any JSON-encodable
+///     Dart value. Use this for on-demand conversions.
+///   * The `build_runner` builders (see `build.yaml`) — compile-time
+///     generation from `*.qt.json` files. Use this for permanent models
+///     that should live next to your source files.
+///
+/// Pass language-specific options via a typed [RendererOptions] subclass —
+/// `DartRendererOptions`, `KotlinRendererOptions`, `SwiftRendererOptions`,
+/// and so on. Null fields are omitted, so anything you don't set inherits
+/// quicktype-core's default.
 ///
 /// ```dart
 /// import 'package:quicktype_dart/quicktype_dart.dart';
@@ -14,6 +27,12 @@
 ///   options: const DartRendererOptions(useFreezed: true),
 /// );
 /// ```
+///
+/// Under the hood, `quicktype_dart` runs the full quicktype-core JS engine
+/// in-process: via an embedded QuickJS runtime on native platforms (loaded
+/// through FFI) and via `dart:js_interop` on Flutter Web. See the package
+/// README for platform support, remote-bundle configuration, and the
+/// `BundleSource` API.
 library;
 
 export 'src/bundle_source.dart'

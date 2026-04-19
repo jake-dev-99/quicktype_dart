@@ -1,5 +1,37 @@
 # Changelog
 
+All notable changes to this project are documented here.
+
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+conventions. Until v1.0.0, breaking changes may land on minor-version
+bumps — they're always flagged explicitly under **Removed** or
+**Breaking**.
+
+## 0.4.2
+
+Documentation-polish release. Zero public API changes; README, CHANGELOG,
+and pubspec metadata rewritten for the first release-candidate cycle.
+
+### Changed
+
+- README rewritten end-to-end: platform support matrix, copy-paste
+  quickstart, typed-options walkthrough, bundle-source guidance,
+  migration guide from 0.3.x, FAQ, attribution section, full-glossary
+  first-use definitions for FFI / QuickJS / Subresource Integrity.
+- `pubspec.yaml` `homepage:` points at the GitHub repo instead of the
+  orphaned `simplezen.io` URL.
+- CHANGELOG reformatted to [Keep a Changelog] sections
+  (`### Added` / `### Changed` / `### Deprecated` / `### Removed` /
+  `### Fixed`) across all entries, with explicit **Breaking** callouts
+  on applicable releases.
+
+### Added
+
+- Attribution section in the README crediting `quicktype-core`
+  (Apache 2.0) and `QuickJS-NG` (MIT).
+- FAQ covering the most common pre-adoption questions (binary size,
+  offline operation, engine choice, testability).
+
 ## 0.4.1
 
 Housekeeping release: license swap, tooling cleanup, and style-guide
@@ -89,139 +121,89 @@ await QuicktypeDart.generate(
 
 ## 0.3.1
 
-Native remote-bundle support + opt-out embedding. Finishes the remote-bundle
-story started in v0.3.0, where only Flutter Web honored
-`BundleSource.remote`. Apps that lean on remote bundles now have a path to
-~2.9MB native-binary savings.
+Native remote-bundle parity + opt-out embedding. Finishes the
+remote-bundle story started in v0.3.0, where only Flutter Web honored
+`BundleSource.remote`. Apps that lean on remote bundles now have a path
+to ~2.9MB native-binary savings.
 
-### Remote bundle on native (macOS / iOS / Linux / Windows / Android)
+### Added
 
-- `QtFfiRuntime.create({BundleSource? bundleSource})` now dispatches on
-  the configured source. `BundleSource.remote(Uri, {integrity})` fetches
-  the JS via `dart:io` `HttpClient`, caches it under the system temp dir
-  keyed by a URL hash, and verifies an optional Subresource-Integrity
-  token (`sha256-…`, `sha384-…`, or `sha512-…`) before loading it into
-  QuickJS. `file://` URLs are supported for tests and tooling.
-- `QuicktypeDart.setBundleSource(...)` now affects native as well as web.
-  The default remains `BundleSource.embedded()` — zero behavior change
-  for callers that don't touch it.
+- Native `BundleSource.remote(Uri, {integrity})` — macOS / iOS / Linux /
+  Windows / Android fetch the JS via `HttpClient`, cache it under the
+  system temp dir keyed by URL hash, and verify an optional
+  Subresource-Integrity token (`sha256-…`, `sha384-…`, `sha512-…`) before
+  loading it into QuickJS. `file://` URLs supported for tests.
+- CMake option `QT_EMBED_BUNDLE` (default `ON`). `-DQT_EMBED_BUNDLE=OFF`
+  skips the embedded bundle; `libquicktype_dart.dylib` goes from **~4.0MB
+  → ~1.1MB** on macOS.
+- `qt_runtime_load_embedded(QtRuntime*)` and
+  `qt_runtime_load_bundle(QtRuntime*, const char*, size_t)` C entry
+  points, splitting the bundle-load phase out of `qt_runtime_create`.
+- `test/native_bundle_cache_test.dart` covers sha256/384/512 integrity
+  matching, mismatch rejection, and malformed tokens.
+- `bin/ffi_remote_smoke.dart` and `bin/ffi_noembed_smoke.dart` exercise
+  the remote and no-embed paths end-to-end.
+- `crypto: ^3.0.0` dependency, for on-disk SRI verification.
 
-### Opt-out embedding — shed ~2.9MB per-platform
+### Changed
 
-- New CMake option `QT_EMBED_BUNDLE` (default `ON`). Build with
-  `-DQT_EMBED_BUNDLE=OFF` to skip the embedded prelude+bundle; the
-  library then requires a runtime `BundleSource.remote(...)` before the
-  first generate call. Covers Linux / Windows / Android (all CMake-driven).
-- libquicktype_dart.dylib: **~4.0MB → ~1.1MB** with `QT_EMBED_BUNDLE=OFF`
-  on a local macOS build.
-- macOS / iOS use the CocoaPods podspec rather than CMake. To strip the
-  bundle there, define `QT_NO_EMBEDDED_BUNDLE` in the pod's
-  `OTHER_CFLAGS` and remove `Classes/bundle_data.c` from the source set.
+- `QuicktypeDart.setBundleSource(…)` now affects native targets as well
+  as Flutter Web.
+- `qt_runtime_create` now loads only the prelude; callers must invoke
+  `qt_runtime_load_embedded` or `qt_runtime_load_bundle` before
+  `qt_runtime_convert`. `QtFfiRuntime.create()` does this automatically.
 
-### Native C API refactor
+### No breaking changes
 
-- `qt_runtime_create` now loads only the prelude — embedded-bundle
-  loading moved to a new `qt_runtime_load_embedded(QtRuntime*)` (returns
-  `-2` when the library was built with `QT_NO_EMBEDDED_BUNDLE`), and a
-  new `qt_runtime_load_bundle(QtRuntime*, const char*, size_t)` accepts
-  caller-provided JS. No Dart API change — `QtFfiRuntime.create()` still
-  returns a fully-initialized runtime.
-
-### Dependencies
-
-- Adds `crypto: ^3.0.0` for on-disk SRI integrity verification.
-
-### Tests
-
-- `test/native_bundle_cache_test.dart` covers sha256/384/512 integrity,
-  mismatch rejection, malformed tokens, and unsupported algorithms.
-- `bin/ffi_remote_smoke.dart` + `bin/ffi_noembed_smoke.dart` exercise
-  the remote path end-to-end — the latter against a library built with
-  `QT_EMBED_BUNDLE=OFF`.
-- 48/48 test suite passing; all three legacy FFI smokes
-  (`ffi_smoke`, `ffi_args_smoke`, `ffi_isolate_smoke`) still green.
+- Default behavior unchanged: embedded bundle still used unless
+  `BundleSource.remote(…)` is configured.
+- On macOS / iOS (CocoaPods), the embedded bundle ships by default;
+  strip it by defining `QT_NO_EMBEDDED_BUNDLE` in `OTHER_CFLAGS` and
+  removing `Classes/bundle_data.c`.
 
 ## 0.3.0
 
-API-shape release — typed renderer options + web remote-bundle option —
-plus a small C-side cleanup. No Dart behavior changes for callers who
-stay on the existing `args:` path.
+API-shape release — typed renderer options and web remote-bundle
+support — plus legacy C-API cleanup. No Dart behavior changes for
+callers already on the `args:` path (deprecated here, removed in v0.4.0).
 
-### Typed renderer options (preferred going forward)
+### Added
 
-- New `RendererOptions` base class + 22 concrete subclasses
-  (`DartRendererOptions`, `KotlinRendererOptions`, `SwiftRendererOptions`,
-  etc.), one per target language. Each mirrors the fields of its matching
-  `*Args` class but as named constructor parameters with proper nullable
-  types (`bool? useFreezed`, `CSharpFramework? framework`, …).
-- `QuicktypeDart.generate` / `generateFromString` gain an
-  `options: RendererOptions?` parameter:
-  ```dart
-  await QuicktypeDart.generate(
-    label: 'User',
-    data: {'id': 1, 'name': 'Jake'},
-    target: TargetType.dart,
-    options: const DartRendererOptions(
-      useFreezed: true,
-      nullSafety: true,
-    ),
-  );
-  ```
-- The old `args: Iterable<Arg>` parameter still works. When both are
-  supplied, `args` overrides `options` on key collision (legacy wins to
-  reduce surprise for callers mid-migration).
-- All 22 `*Args` classes now carry `@Deprecated('Use *RendererOptions
-  instead — removal planned for v0.4.0')`. Removal **in v0.4.0**.
+- `RendererOptions` base class + 22 concrete `*RendererOptions`
+  subclasses (`DartRendererOptions`, `KotlinRendererOptions`,
+  `SwiftRendererOptions`, …), one per target language. Each exposes
+  every renderer flag as a named constructor parameter with proper
+  nullable types.
+- `options: RendererOptions?` parameter on `QuicktypeDart.generate` and
+  `generateFromString`.
+- `sealed class BundleSource` with `BundleSource.embedded()` (default)
+  and `BundleSource.remote(Uri, {integrity})`. Flutter Web honors both;
+  native always uses embedded in v0.3.0 (remote parity lands in v0.3.1).
+- `QuicktypeDart.setBundleSource(…)` for switching before the first
+  generate.
+- `tool/gen_options.py` — dev-only scaffolding that parsed the
+  `*Args` classes to emit the matching `*RendererOptions` classes.
+  Removed in v0.4.0 once the generated classes became the source of
+  truth.
 
-### Flutter Web — remote bundle option
+### Deprecated
 
-- New `sealed class BundleSource` with two variants:
-  - `BundleSource.embedded()` — default, loads the plugin asset
-    (current v0.2.1 behavior).
-  - `BundleSource.remote(Uri url, {String? integrity})` — loads via a
-    `<script src="…">` tag pointing at any URL. Optional Subresource
-    Integrity hash for safety with third-party CDNs.
-- `QuicktypeDart.setBundleSource(…)` to switch. Call before the first
-  generate; Flutter Web caches the loaded bundle for the page lifetime.
-- **Platform scope:** Flutter Web honors both variants. Native targets
-  (macOS / iOS / Linux / Windows / Android) always use the embedded
-  QuickJS bundle — remote bundle on native ships in v0.3.1 once we
-  split `qt_runtime_create` into create + load phases and add a
-  build-time flag to strip the embedded blob.
+- All 22 `*Args` classes (`DartArgs`, `KotlinArgs`, etc.) annotated with
+  `@Deprecated('Use *RendererOptions — removal planned for v0.4.0')`.
 
-### Legacy FFI API removal
+### Removed
 
-- The v0.2.0-dev.1…dev.6 process-global C API (`qt_init` / `qt_convert`
-  / `qt_shutdown`) has been removed. The per-runtime API
-  (`qt_runtime_create` / `_convert` / `_destroy`), public since
-  v0.2.0-dev.7, is now the only surface. No Dart API change.
-
-### Tooling
-
-- `tool/gen_options.py` — parses `lib/src/models/args/lang_*.dart` and
-  emits the matching `lib/src/models/options/lang_*.dart` classes. Run
-  after adding a new flag to the Arg registry to keep the typed
-  surface in sync. Excluded from the published tarball.
+- Process-global C FFI (`qt_init` / `qt_convert` / `qt_shutdown`),
+  superseded by the per-runtime API (`qt_runtime_create` / `_convert` /
+  `_destroy`) shipped in v0.2.0-dev.7. No Dart API change.
+- `QtShimBindings.qtInit`, `qtConvertGlobal`, `qtShutdown` fields; C
+  library exports reduced from 7 to 4 symbols. Dart callers unaffected.
 
 ### Tests
 
-- 41/41 pass — up from 29 (v0.2.1). Additions cover `RendererOptions`
-  serialization, `BundleSource` construction + round-trip, and
-  typed-vs-Arg output equivalence.
-
-### Breaking (pre-1.0, no Dart source changes required)
-
-- `QtShimBindings` dropped `qtInit`, `qtConvertGlobal`, `qtShutdown`
-  fields — consumers that instantiated it directly (shouldn't be any)
-  now have fewer fields. `QtFfiRuntime` is unchanged.
-- C library exports reduced from 7 to 4 symbols. Anyone dlopen'ing the
-  dylib directly is affected; Dart callers are not.
-
-### Deferred to v0.3.1
-
-- Native remote-bundle support.
-- Binary-size reduction on native (strip the embedded 2.9MB JS when
-  remote is configured).
+- 41/41 passing (was 29 in v0.2.1). Added coverage for
+  `RendererOptions` serialization, `BundleSource` round-trip, and
+  typed-vs-`Arg` output equivalence.
 
 ## 0.2.1
 
