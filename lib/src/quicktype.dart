@@ -2,6 +2,7 @@ library;
 
 import 'dart:io';
 
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as path;
 
 import 'config.dart';
@@ -21,7 +22,16 @@ const String _quicktypeExe = './tool/node_modules/.bin/quicktype';
 /// consumed. Carries the failing command and exit code when available,
 /// plus the underlying [cause] and its [stackTrace] when wrapping another
 /// error so callers can diagnose without losing context.
+@immutable
 class QuicktypeException implements Exception {
+  const QuicktypeException(
+    this.message, {
+    this.command,
+    this.exitCode,
+    this.cause,
+    this.stackTrace,
+  });
+
   /// Human-readable description of the failure.
   final String message;
 
@@ -36,14 +46,6 @@ class QuicktypeException implements Exception {
 
   /// The stack trace of [cause], if captured.
   final StackTrace? stackTrace;
-
-  QuicktypeException(
-    this.message, {
-    this.command,
-    this.exitCode,
-    this.cause,
-    this.stackTrace,
-  });
 
   @override
   String toString() {
@@ -61,43 +63,27 @@ class QuicktypeException implements Exception {
   }
 }
 
-/// Singleton orchestrator that pairs a loaded [Config] with command
-/// execution. Used by the CLI and programmatic callers that want the
-/// `quicktype.json`-driven flow.
+/// Pairs a [Config] with command execution. Used by the CLI and
+/// programmatic callers that want the `quicktype.json`-driven flow.
 ///
-/// For one-shot in-memory conversions, use [QuicktypeDart.generate]
+/// One instance per config. Constructing multiple `Quicktype`s with
+/// different configs in the same process is supported — they share no
+/// mutable state.
+///
+/// For one-shot in-memory conversions, use `QuicktypeDart.generate`
 /// instead — it skips the config layer entirely.
 ///
 /// ```dart
-/// final qt = Quicktype.initialize(); // loads quicktype.json, or defaults
+/// final qt = Quicktype(Config.loadOrDefaults('quicktype.json'));
 /// final commands = await qt.buildCommandsFromConfig();
 /// final results = await qt.executeAll(commands);
 /// ```
 class Quicktype {
-  static Quicktype? _instance;
+  /// Creates a new orchestrator bound to [config].
+  Quicktype(this.config);
 
-  /// The [Config] that was loaded when the singleton was created.
-  late Config config;
-
-  /// Creates (or returns) the singleton, optionally loading config from
-  /// [configPath]. First call wins — use [Quicktype.reset] to reload.
-  factory Quicktype.initialize([String? configPath]) {
-    _instance ??= Quicktype._initialize(configPath);
-    return _instance!;
-  }
-
-  /// Clears the cached singleton so a subsequent [Quicktype.initialize] call
-  /// can load a fresh [Config]. Also resets the underlying [Config] singleton.
-  static void reset() {
-    _instance = null;
-    Config.reset();
-  }
-
-  Quicktype._initialize([String? configPath]) {
-    config = configPath == null
-        ? Config.initialize()
-        : Config.initialize(configPath);
-  }
+  /// The [Config] this orchestrator was constructed with.
+  final Config config;
 
   /// Expands [config]'s sources × targets into concrete [QuicktypeCommand]s.
   ///
@@ -107,31 +93,26 @@ class Quicktype {
   Future<List<QuicktypeCommand>> buildCommandsFromConfig() async {
     final results = <QuicktypeCommand>[];
 
-    // Loop each Source Type
     for (final source in config.sources.entries) {
       final sourceType = source.key;
       final sourcePaths = source.value;
 
-      // Retrieve all matched Source Type files
-      final Set<String> sourceFiles = sourcePaths
+      final sourceFiles = sourcePaths
           .expand((typeConfig) =>
               FileResolver.getFiles(typeConfig.path, sourceType.extensions))
           .toSet();
 
-      // Generate all targets for each source file found
       for (final sourceFile in sourceFiles) {
         for (final target in config.targets.entries) {
           final targetType = target.key;
           final targetConfigs = target.value;
 
-          // Loop all target configs for the current target type
           for (final targetConfig in targetConfigs) {
             final targetFile = FileResolver.resolveTargetPath(
               sourceFile,
               targetType,
               targetConfig,
             );
-
             results.add(QuicktypeCommand(
               sourcePath: sourceFile,
               targetPath: targetFile,
@@ -148,12 +129,13 @@ class Quicktype {
 
   /// Runs [commands] serially via [execute], aggregating results.
   Future<List<QuicktypeResult>> executeAll(
-      List<QuicktypeCommand> commands) async {
+    List<QuicktypeCommand> commands,
+  ) async {
     final results = <QuicktypeResult>[];
     Log.off('');
     Log.off('========================================');
 
-    for (final QuicktypeCommand command in commands) {
+    for (final command in commands) {
       final result = await execute(command);
       results.add(result);
     }
@@ -205,7 +187,7 @@ class Quicktype {
       );
     } catch (e, s) {
       Log.severe('Error: $e');
-      for (final String line in s.toString().split('\n')) {
+      for (final line in s.toString().split('\n')) {
         Log.severe(line);
       }
       return QuicktypeResult.failure(

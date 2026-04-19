@@ -2,7 +2,7 @@ import 'package:build/build.dart';
 
 import 'src/models/renderer_options.dart';
 import 'src/models/type.dart';
-import 'src/quicktype_dart.dart';
+import 'src/facade.dart';
 import 'src/utils/logging.dart';
 
 /// Top-level factory referenced from `build.yaml`.

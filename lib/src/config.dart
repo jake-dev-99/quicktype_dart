@@ -1,19 +1,23 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
+import 'package:meta/meta.dart';
+
 import 'models/type.dart';
 import 'utils/logging.dart';
 
 /// Thrown when a `quicktype.json` can't be parsed or is semantically invalid.
+@immutable
 class ConfigException implements Exception {
+  const ConfigException(this.message, [this.cause]);
+
   /// Human-readable description of the failure.
   final String message;
 
   /// The underlying error, if this exception wraps one.
   final Object? cause;
-
-  const ConfigException(this.message, [this.cause]);
 
   @override
   String toString() => cause != null
@@ -21,170 +25,142 @@ class ConfigException implements Exception {
       : 'ConfigException: $message';
 }
 
-/// Singleton holder for a loaded `quicktype.json` (or the built-in defaults).
+/// Loaded `quicktype.json` (or the built-in defaults). Pure value class —
+/// construct one per unit of work; multiple configs can coexist in the
+/// same process without stepping on each other.
 ///
-/// Sources are keyed by [SourceType] (json / jsonschema / graphql / typescript)
-/// and map to one or more [TypeConfig]s describing where to find input files.
-/// Targets are keyed by [TargetType] and describe where generated code lands
-/// plus any language-specific [Arg]s.
+/// Sources are keyed by [SourceType] (json / jsonschema / graphql /
+/// typescript) and map to one or more [TypeConfig]s describing where to
+/// find input files. Targets are keyed by [TargetType] and describe
+/// where generated code lands plus any language-specific renderer
+/// options.
 ///
-/// Used transparently by [Quicktype.initialize]; direct interaction is only
-/// needed for testing or advanced callers.
+/// Consumers usually reach [Config] through [Quicktype.new]:
 ///
 /// ```dart
-/// final config = Config.initialize('quicktype.json');
-/// for (final entry in config.targets.entries) { ... }
+/// final quicktype = Quicktype(Config.loadOrDefaults('quicktype.json'));
+/// await quicktype.executeAll(await quicktype.buildCommandsFromConfig());
 /// ```
+///
+/// For tests or advanced flows, build a `Config` directly via
+/// [Config.fromFile], [Config.fromMap], or [Config.defaults].
+@immutable
 class Config {
-  // Default constants
-  static const String _defaultModelPath = 'models/';
-  static const String _defaultConfigFile = 'quicktype.json';
-  static const String _quicktypeExe = './tool/node_modules/.bin/quicktype';
-
-  // Singleton instance
-  static Config? _instance;
-
-  // Path the singleton was loaded from — used to detect conflicting re-inits.
-  static String? _instancePath;
-
-  /// Input file declarations, keyed by format.
-  late final Map<SourceType, Set<TypeConfig>> sources;
-
-  /// Output file declarations, keyed by target language.
-  late final Map<TargetType, Set<TypeConfig>> targets;
+  const Config._(this.sources, this.targets);
 
   /// The default config file name — `quicktype.json`.
-  static String get defaultConfigFile => _defaultConfigFile;
+  static const String defaultConfigFile = 'quicktype.json';
 
-  /// Relative path to the bundled quicktype executable. Only used when
-  /// running from a dev checkout of quicktype_dart; consumers installed
-  /// from pub.dev should have `quicktype` on PATH.
-  static String get quicktypeExe => _quicktypeExe;
+  /// Default on-disk model directory for generated [TypeConfig]s.
+  static const String _defaultModelPath = 'models/';
 
-  /// Fetches the underlying quicktype CLI's version string. Returns
-  /// `'unknown'` if the executable isn't runnable.
-  static Future<String> get quicktypeVersion async {
+  /// Input file declarations, keyed by format.
+  final Map<SourceType, Set<TypeConfig>> sources;
+
+  /// Output file declarations, keyed by target language.
+  final Map<TargetType, Set<TypeConfig>> targets;
+
+  /// Loads a config from [path]. Throws [ConfigException] on parse or
+  /// shape errors. The caller is responsible for deciding what to do
+  /// when the file is missing — use [Config.loadOrDefaults] for the
+  /// "missing = defaults" convenience.
+  factory Config.fromFile(String path) {
+    final file = File(path);
+    if (!file.existsSync()) {
+      throw ConfigException('Config file "$path" not found.');
+    }
+    final dynamic decoded;
     try {
-      final result = await Process.run(quicktypeExe, ['--version']);
-      return result.stdout.toString().split('\n').first.trim();
+      decoded = jsonDecode(file.readAsStringSync());
     } catch (e) {
-      Log.warning('Unable to retrieve quicktype version: $e');
-      return 'unknown';
+      throw ConfigException('Failed to parse "$path": $e', e);
     }
+    if (decoded is! Map<String, dynamic>) {
+      throw ConfigException(
+        'Config root must be a JSON object, got ${decoded.runtimeType} '
+        'in "$path".',
+      );
+    }
+    return Config.fromMap(decoded);
   }
 
-  /// Create or retrieve the `Config` singleton.
-  ///
-  /// Loads from [filePath] if it exists, otherwise falls back to defaults.
-  /// If a second call passes a different [filePath] than the one that built
-  /// the cached instance, throws [ConfigException] — call [Config.reset]
-  /// first to reload from a new path.
-  factory Config.initialize([String filePath = _defaultConfigFile]) {
-    if (_instance != null) {
-      if (_instancePath != null && _instancePath != filePath) {
-        throw ConfigException(
-          'Config already initialized from "$_instancePath"; refusing to '
-          'silently ignore new path "$filePath". Call Config.reset() first.',
-        );
-      }
-      return _instance!;
-    }
-
-    _instancePath = filePath;
-    final configFile = File(filePath);
-    if (configFile.existsSync()) {
-      try {
-        return _instance = Config._fromFile(configFile);
-      } catch (e) {
-        Log.info('Failed to load config file "$filePath". Using defaults: $e');
-        return _instance = Config._default();
-      }
-    } else {
-      Log.info('Config file "$filePath" not found. Loading defaults...');
-      return _instance = Config._default();
-    }
+  /// Builds a config from an already-parsed JSON object shape. Useful
+  /// for tests and for config pipelines that load from sources other
+  /// than the filesystem.
+  factory Config.fromMap(Map<String, dynamic> map) {
+    return Config._(
+      _parseSources(map['sources']),
+      _parseTargets(map['targets']),
+    );
   }
 
-  /// Clears the cached singleton so a subsequent [Config.initialize] call
-  /// can load a fresh configuration. Primarily for tests and runtime reload.
-  static void reset() {
-    _instance = null;
-    _instancePath = null;
-  }
-
-  /// Build default configuration
-  Config._default() {
-    // Ensure default model directory exists
+  /// Returns the built-in default config — every [SourceType] points at
+  /// `models/` and every [TargetType] with a [TargetType.defaultPath]
+  /// globs for matching files.
+  factory Config.defaults() {
+    // The legacy singleton also created `models/` on disk here; preserve
+    // that behavior since build.yaml setups rely on the directory
+    // existing by the time commands are built.
     final modelDir = Directory(_defaultModelPath);
     if (!modelDir.existsSync()) {
       modelDir.createSync(recursive: true);
       Log.info('Created default models directory at: ${modelDir.path}');
     }
-
-    sources = _defaultSources(modelDir.path);
-    targets = _defaultTargets();
+    return Config._(
+      _defaultSources(modelDir.path),
+      _defaultTargets(),
+    );
   }
 
-  /// Generates default source configurations
+  /// Convenience for the common "load from disk, fall back to defaults
+  /// if absent or unparseable" flow used by the CLI.
+  factory Config.loadOrDefaults([String path = defaultConfigFile]) {
+    final file = File(path);
+    if (!file.existsSync()) {
+      Log.info('Config file "$path" not found. Loading defaults...');
+      return Config.defaults();
+    }
+    try {
+      return Config.fromFile(path);
+    } on ConfigException catch (e) {
+      Log.info('Failed to load config file "$path": $e. Using defaults.');
+      return Config.defaults();
+    }
+  }
+
   static Map<SourceType, Set<TypeConfig>> _defaultSources(String modelPath) {
     return {
       for (final source in SourceType.values)
         source: {
-          TypeConfig(
-            path: modelPath,
-            type: source,
-          )
-        }
+          TypeConfig(path: modelPath, type: source),
+        },
     };
   }
 
-  /// Generates default target configurations
   static Map<TargetType, Set<TypeConfig>> _defaultTargets() {
     final targets = <TargetType, Set<TypeConfig>>{};
-
     for (final target in TargetType.values) {
-      final configs = <TypeConfig>{};
-      if (target.defaultPath != null) {
-        try {
-          final targetFiles = Glob(target.defaultPath!).listSync();
-          for (final entity in targetFiles) {
-            configs.add(TypeConfig(
-              path: entity.path,
-              type: target,
-            ));
-          }
-        } catch (e) {
-          Log.warning('Could not detect files for ${target.name}: $e');
-        }
-      }
-      targets[target] = configs;
+      targets[target] = _detectFilesForTarget(target);
     }
-
     return targets;
   }
 
-  /// Construct configuration from a file (JSON or YAML)
-  Config._fromFile(File configFile) {
+  static Set<TypeConfig> _detectFilesForTarget(TargetType target) {
+    final configs = <TypeConfig>{};
+    final pattern = target.defaultPath;
+    if (pattern == null) return configs;
     try {
-      final content = configFile.readAsStringSync();
-      final decoded = jsonDecode(content);
-      if (decoded is! Map<String, dynamic>) {
-        throw ConfigException(
-          'Config root must be a JSON object, got ${decoded.runtimeType} '
-          'in "${configFile.path}".',
-        );
+      final files = Glob(pattern).listSync();
+      for (final entity in files) {
+        configs.add(TypeConfig(path: entity.path, type: target));
       }
-      sources = _parseSources(decoded['sources']);
-      targets = _parseTargets(decoded['targets']);
-    } on ConfigException {
-      rethrow;
     } catch (e) {
-      throw ConfigException('Failed to parse configuration file', e);
+      Log.warning('Could not detect files for ${target.name}: $e');
     }
+    return configs;
   }
 
-  /// Parse source configurations from Map
-  Map<SourceType, Set<TypeConfig>> _parseSources(dynamic sourcesMap) {
+  static Map<SourceType, Set<TypeConfig>> _parseSources(dynamic sourcesMap) {
     if (sourcesMap == null) {
       Log.warning('Sources missing in config file. Using default sources.');
       return _defaultSources(_defaultModelPath);
@@ -201,8 +177,7 @@ class Config {
     );
   }
 
-  /// Parse target configurations from Map
-  Map<TargetType, Set<TypeConfig>> _parseTargets(dynamic targetsMap) {
+  static Map<TargetType, Set<TypeConfig>> _parseTargets(dynamic targetsMap) {
     if (targetsMap == null) {
       Log.warning('Targets missing in config file. Using default targets.');
       return _defaultTargets();
@@ -219,8 +194,7 @@ class Config {
     );
   }
 
-  /// Parse configurations for a given type (source or target)
-  Map<T, Set<TypeConfig>> _parseTypeConfigs<T extends TypeEnum>(
+  static Map<T, Set<TypeConfig>> _parseTypeConfigs<T extends TypeEnum>(
     Map<String, dynamic> configMap,
     List<T> validTypes,
     String section,
@@ -229,9 +203,8 @@ class Config {
 
     for (final entry in configMap.entries) {
       final key = entry.key.toLowerCase();
-
       T? matchingType;
-      for (final T validType in validTypes) {
+      for (final validType in validTypes) {
         if (validType.toString().toLowerCase() == key ||
             validType.argName.toLowerCase() == key) {
           matchingType = validType;
@@ -261,7 +234,6 @@ class Config {
         }
         configs.add(TypeConfig.fromJson(matchingType, config));
       }
-
       result[matchingType] = configs;
     }
 

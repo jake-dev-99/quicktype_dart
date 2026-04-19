@@ -1,8 +1,11 @@
+import 'package:meta/meta.dart';
+
 /// The outcome of a single [Quicktype.execute] call — success or failure,
 /// plus captured stdout/stderr from the underlying quicktype subprocess.
 ///
 /// Constructed via [QuicktypeResult.success] or [QuicktypeResult.failure];
 /// use [success] to branch.
+@immutable
 class QuicktypeResult {
   /// Source file that was converted.
   final String sourcePath;

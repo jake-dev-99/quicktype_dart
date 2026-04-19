@@ -10,7 +10,7 @@ import 'package:path/path.dart' as p;
 import '../bundle_source.dart';
 import '../models/type.dart';
 import '../quicktype.dart';
-import '../quicktype_dart.dart';
+import '../facade.dart';
 import 'native_bundle_cache.dart';
 import 'qt_shim_bindings.dart';
 

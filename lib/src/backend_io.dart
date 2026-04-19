@@ -14,7 +14,7 @@ import 'package:path/path.dart' as p;
 import 'ffi/ffi_runtime.dart';
 import 'models/type.dart';
 import 'quicktype.dart';
-import 'quicktype_dart.dart' show GenerateTransport, QuicktypeDart;
+import 'facade.dart' show GenerateTransport, QuicktypeDart;
 import 'utils/logging.dart';
 import 'utils/shell.dart';
 
