@@ -37,22 +37,27 @@ class TypeScriptRendererOptions extends RendererOptions {
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
     if (justTypes != null) m['just-types'] = justTypes.toString();
-    if (nicePropertyNames != null)
+    if (nicePropertyNames != null) {
       m['nice-property-names'] = nicePropertyNames.toString();
-    if (explicitUnions != null)
+    }
+    if (explicitUnions != null) {
       m['explicit-unions'] = explicitUnions.toString();
-    if (runtimeTypecheck != null)
+    }
+    if (runtimeTypecheck != null) {
       m['runtime-typecheck'] = runtimeTypecheck.toString();
-    if (runtimeTypecheckIgnoreUnknownProperties != null)
+    }
+    if (runtimeTypecheckIgnoreUnknownProperties != null) {
       m['runtime-typecheck-ignore-unknown-properties'] =
           runtimeTypecheckIgnoreUnknownProperties.toString();
+    }
     if (acronymStyle != null) m['acronym-style'] = acronymStyle!.toString();
     if (converters != null) m['converters'] = converters!.toString();
     if (rawType != null) m['raw-type'] = rawType!.toString();
     if (preferUnions != null) m['prefer-unions'] = preferUnions.toString();
     if (preferTypes != null) m['prefer-types'] = preferTypes.toString();
-    if (preferConstValues != null)
+    if (preferConstValues != null) {
       m['prefer-const-values'] = preferConstValues.toString();
+    }
     if (readonly != null) m['readonly'] = readonly.toString();
     return m;
   }

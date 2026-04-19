@@ -47,8 +47,9 @@ class CSharpRendererOptions extends RendererOptions {
     if (features != null) m['features'] = features!.toString();
     if (baseClass != null) m['base-class'] = baseClass!.toString();
     if (checkRequired != null) m['check-required'] = checkRequired.toString();
-    if (keepPropertyName != null)
+    if (keepPropertyName != null) {
       m['keep-property-name'] = keepPropertyName.toString();
+    }
     return m;
   }
 }

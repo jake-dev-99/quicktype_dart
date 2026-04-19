@@ -27,7 +27,8 @@ Future<void> main() async {
   _assert(outA.contains('class Alpha'), 'Alpha missing class');
   _assert(outA.contains('fromJson'), 'Alpha should have default fromJson');
   _assert(outB.contains('class Beta'), 'Beta missing class');
-  _assert(!outB.contains('fromJson'), 'Beta --just-types should strip fromJson');
+  _assert(
+      !outB.contains('fromJson'), 'Beta --just-types should strip fromJson');
 
   // Independence check: calling back into A shouldn't be affected by B's
   // prior call with different options.
@@ -45,8 +46,7 @@ Future<void> main() async {
 
   // And after disposal, a method call should throw cleanly (not crash).
   try {
-    await a.generate(
-        label: 'PostDispose', json: '{}', target: TargetType.dart);
+    await a.generate(label: 'PostDispose', json: '{}', target: TargetType.dart);
     stderr.writeln('FAIL: expected StateError after dispose');
     exit(1);
   } on StateError {

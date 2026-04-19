@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: Format + Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Install deps
+        run: dart pub get
+      - name: dart format
+        run: dart format --set-exit-if-changed lib test tool bin
+      - name: dart analyze
+        run: dart analyze --fatal-infos --fatal-warnings
+      - name: Version stamps in sync
+        run: dart run tool/sync_version.dart
+      - name: Pub publish dry-run
+        run: dart pub publish --dry-run
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Install deps
+        run: dart pub get
+      - name: Unit + integration tests
+        run: dart test --reporter=expanded
+        env:
+          # Integration test skips cleanly when `quicktype` isn't on PATH;
+          # CI doesn't pre-install it yet — that lands in Batch F once
+          # we add a dedicated integration-test job.
+          QUICKTYPE_OPTIONAL: '1'

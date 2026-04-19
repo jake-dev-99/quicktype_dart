@@ -20,7 +20,8 @@ Future<void> main() async {
     target: TargetType.dart,
   );
   _assert(fromList.contains('class Smoke'), 'list-shape missing `class Smoke`');
-  _assert(fromList.contains('fromJson'), 'list-shape missing default `fromJson`');
+  _assert(
+      fromList.contains('fromJson'), 'list-shape missing default `fromJson`');
 
   // 2) Single object (widened signature accepts this)
   final fromMap = await QuicktypeDart.generate(
@@ -36,7 +37,8 @@ Future<void> main() async {
     json: '{"name":"Jake","age":42,"active":true}',
     target: TargetType.dart,
   );
-  _assert(fromString.contains('class Smoke'), 'string-shape missing `class Smoke`');
+  _assert(
+      fromString.contains('class Smoke'), 'string-shape missing `class Smoke`');
 
   // 4) Typed options plumbing: --just-types strips the serialization
   //    scaffolding.
@@ -51,8 +53,7 @@ Future<void> main() async {
       'typesOnly contained `fromJson` — --just-types was NOT plumbed through');
 
   stdout.writeln('---');
-  stdout.writeln(
-      'OK — list(${fromList.length}) map(${fromMap.length}) '
+  stdout.writeln('OK — list(${fromList.length}) map(${fromMap.length}) '
       'string(${fromString.length}) justTypes(${typesOnly.length}) chars');
 }
 

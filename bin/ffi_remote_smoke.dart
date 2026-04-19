@@ -17,7 +17,8 @@ Future<void> main() async {
   final pkgRoot = Directory.current.path;
   final bundleFile = File(p.join(pkgRoot, 'assets', 'quicktype_bundle.js'));
   if (!bundleFile.existsSync()) {
-    stderr.writeln('FAIL: ${bundleFile.path} not found — build the bundle first');
+    stderr
+        .writeln('FAIL: ${bundleFile.path} not found — build the bundle first');
     exit(1);
   }
   final url = Uri.file(bundleFile.absolute.path);

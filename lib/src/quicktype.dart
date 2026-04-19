@@ -113,7 +113,7 @@ class Quicktype {
       final sourcePaths = source.value;
 
       // Retrieve all matched Source Type files
-      Set<String> sourceFiles = sourcePaths
+      final Set<String> sourceFiles = sourcePaths
           .expand((typeConfig) =>
               FileResolver.getFiles(typeConfig.path, sourceType.extensions))
           .toSet();
@@ -153,7 +153,7 @@ class Quicktype {
     Log.off('');
     Log.off('========================================');
 
-    for (QuicktypeCommand command in commands) {
+    for (final QuicktypeCommand command in commands) {
       final result = await execute(command);
       results.add(result);
     }
@@ -205,8 +205,8 @@ class Quicktype {
       );
     } catch (e, s) {
       Log.severe('Error: $e');
-      for (String line in s.toString().split('\n')) {
-        Log.severe('$line');
+      for (final String line in s.toString().split('\n')) {
+        Log.severe(line);
       }
       return QuicktypeResult.failure(
         sourcePath: sourcePath,

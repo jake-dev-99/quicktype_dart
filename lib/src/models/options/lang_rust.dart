@@ -32,13 +32,16 @@ class RustRendererOptions extends RendererOptions {
     if (visibility != null) m['visibility'] = visibility!.toString();
     if (deriveDebug != null) m['derive-debug'] = deriveDebug.toString();
     if (deriveClone != null) m['derive-clone'] = deriveClone.toString();
-    if (derivePartialEq != null)
+    if (derivePartialEq != null) {
       m['derive-partial-eq'] = derivePartialEq.toString();
+    }
     if (edition2018 != null) m['edition-2018'] = edition2018.toString();
-    if (leadingComments != null)
+    if (leadingComments != null) {
       m['leading-comments'] = leadingComments.toString();
-    if (skipSerializingNone != null)
+    }
+    if (skipSerializingNone != null) {
       m['skip-serializing-none'] = skipSerializingNone.toString();
+    }
     return m;
   }
 }

@@ -35,8 +35,9 @@ class CRendererOptions extends RendererOptions {
     if (integerSize != null) m['integer-size'] = integerSize!.toString();
     if (typeStyle != null) m['type-style'] = typeStyle!.toString();
     if (memberStyle != null) m['member-style'] = memberStyle!.toString();
-    if (enumeratorStyle != null)
+    if (enumeratorStyle != null) {
       m['enumerator-style'] = enumeratorStyle!.toString();
+    }
     return m;
   }
 }

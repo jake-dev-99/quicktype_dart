@@ -15,12 +15,11 @@ native/bundle/package-lock.json
 native/bundle/empty.cjs
 native/bundle/quicktype_bundle.js
 
-# Internal smoke tests (not part of the public surface).
+# Internal smoke tests (not part of the public surface). Glob so new
+# smoke files added in `bin/` are automatically excluded — only
+# `bin/quicktype_dart.dart` (the published CLI entry point) ships.
 bin/smoke.dart
-bin/ffi_smoke.dart
-bin/ffi_args_smoke.dart
-bin/ffi_isolate_smoke.dart
-bin/options_smoke.dart
+bin/*_smoke.dart
 
 # Generator tool — dev-only, not needed at runtime or pub consumption.
 tool/gen_options.py
