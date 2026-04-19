@@ -1,6 +1,6 @@
 // Smoke test: multiple QtFfiRuntime instances don't interfere.
 //
-//   dart run bin/ffi_isolate_smoke.dart
+//   dart run tool/smoke/ffi_isolate_smoke.dart
 
 import 'dart:io';
 

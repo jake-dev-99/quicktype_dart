@@ -8,16 +8,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
 
+import 'facade.dart' show GenerateTransport, QuicktypeDart;
 import 'ffi/ffi_runtime.dart';
 import 'models/type.dart';
 import 'quicktype.dart';
-import 'facade.dart' show GenerateTransport, QuicktypeDart;
 import 'utils/logging.dart';
+import 'utils/paths.dart';
 import 'utils/shell.dart';
 
 /// Backend entry point. Platform-independent argument handling already
@@ -201,34 +201,19 @@ void _sweepOrphans() {
 /// Checks the bundled `tool/node_modules/.bin/quicktype` first; falls back
 /// to a `quicktype` found on `PATH`.
 Future<String> _resolveQuicktypeExecutable() async {
-  final bundled = await _resolveBundledExecutable();
+  final bundled = await bundledQuicktypeExe();
   if (bundled != null) return bundled;
 
   final onPath = _findOnPath('quicktype');
   if (onPath != null) return onPath;
 
-  throw QuicktypeException(
+  throw const QuicktypeException(
     'quicktype not found. Install it with `npm install -g quicktype`, or '
     'make sure the bundled binary exists at '
-    '<package-root>/tool/node_modules/.bin/quicktype. Alternatively, use '
+    '<package-root>/$bundledQuicktypeExeRelative. Alternatively, use '
     '`transport: GenerateTransport.ffi` to run via the embedded '
     'QuickJS runtime.',
   );
-}
-
-Future<String?> _resolveBundledExecutable() async {
-  try {
-    final packageUri = await Isolate.resolvePackageUri(
-      Uri.parse('package:quicktype_dart/quicktype_dart.dart'),
-    );
-    if (packageUri == null) return null;
-    final packageRoot = p.dirname(p.dirname(packageUri.toFilePath()));
-    final exe =
-        p.join(packageRoot, 'tool', 'node_modules', '.bin', 'quicktype');
-    return File(exe).existsSync() ? exe : null;
-  } catch (_) {
-    return null;
-  }
 }
 
 String? _findOnPath(String name) {

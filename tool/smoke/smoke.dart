@@ -1,7 +1,7 @@
 // Throwaway smoke test — not part of the published package (excluded via
 // .pubignore). Run during local development with:
 //
-//   dart run bin/smoke.dart
+//   dart run tool/smoke/smoke.dart
 
 import 'dart:io';
 

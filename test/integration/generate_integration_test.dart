@@ -52,6 +52,11 @@ void main() {
 }
 
 /// Returns a skip message if quicktype isn't resolvable, else null.
+///
+/// By default a missing `quicktype` CLI hard-fails so CI notices. Set
+/// `QUICKTYPE_OPTIONAL=1` in the environment to opt into the old
+/// "skip quietly" behavior — useful for local runs on a machine
+/// without Node installed.
 String? _quicktypeUnavailable() {
   final pathEnv = Platform.environment['PATH'] ?? '';
   final sep = Platform.isWindows ? ';' : ':';
@@ -66,5 +71,19 @@ String? _quicktypeUnavailable() {
   }
   // Bundled fallback.
   if (File('tool/node_modules/.bin/quicktype').existsSync()) return null;
-  return 'quicktype CLI not on PATH or bundled; skipping integration tests';
+
+  const msg =
+      'quicktype CLI not on PATH or bundled at tool/node_modules/.bin/quicktype';
+  final optional = Platform.environment['QUICKTYPE_OPTIONAL'] == '1';
+  if (optional) {
+    stderr.writeln('integration tests skipped: $msg '
+        '(QUICKTYPE_OPTIONAL=1 opt-in)');
+    return '$msg (QUICKTYPE_OPTIONAL=1 opt-in skip)';
+  }
+  // Hard-fail path: return a skip message that loudly flags CI misconfig.
+  // Actual enforcement happens inside the group via an explicit fail()
+  // call on the first test, so CI logs contain the reason clearly.
+  stderr.writeln('FATAL: $msg. Install quicktype via '
+      '`npm install -g quicktype` or set QUICKTYPE_OPTIONAL=1 to skip.');
+  return null; // Let tests run; they'll fail with a clearer error.
 }
