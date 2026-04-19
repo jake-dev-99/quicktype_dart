@@ -1,3 +1,5 @@
+library;
+
 import '../config.dart';
 import '../utils/logging.dart';
 

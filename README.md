@@ -256,4 +256,4 @@ return an error that the embedded bundle is unavailable.
 
 ## License
 
-BSD-3-Clause. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

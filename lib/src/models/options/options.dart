@@ -1,5 +1,7 @@
 // Barrel — re-exports every language-specific RendererOptions class.
 
+library;
+
 export '../renderer_options.dart';
 export 'lang_c.dart';
 export 'lang_cpp.dart';

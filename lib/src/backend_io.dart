@@ -5,6 +5,8 @@
 // Dispatches between the embedded QuickJS FFI runtime and the `quicktype`
 // Node CLI (`Process.run`) per the caller's [GenerateTransport] choice.
 
+library;
+
 import 'dart:io';
 import 'dart:isolate';
 

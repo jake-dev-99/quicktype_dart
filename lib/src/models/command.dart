@@ -1,3 +1,5 @@
+library;
+
 import 'package:build/build.dart';
 import 'package:path/path.dart' as path;
 

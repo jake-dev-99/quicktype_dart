@@ -27,6 +27,8 @@
 /// Pair `BundleSource.remote` with a native library built using
 /// `-DQT_NO_EMBEDDED_BUNDLE` (or `cmake -DQT_EMBED_BUNDLE=OFF`) to shed
 /// the ~2.9MB embedded bundle from the final binary.
+library;
+
 sealed class BundleSource {
   const BundleSource();
 

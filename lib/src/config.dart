@@ -1,3 +1,5 @@
+library;
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:glob/glob.dart';

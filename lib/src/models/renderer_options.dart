@@ -20,6 +20,8 @@
 ///
 /// Null-valued fields are omitted from the serialized output, so any
 /// option you don't explicitly set inherits quicktype-core's default.
+library;
+
 abstract class RendererOptions {
   const RendererOptions();
 

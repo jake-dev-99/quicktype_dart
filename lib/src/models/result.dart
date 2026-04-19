@@ -3,6 +3,8 @@
 ///
 /// Constructed via [QuicktypeResult.success] or [QuicktypeResult.failure];
 /// use [success] to branch.
+library;
+
 class QuicktypeResult {
   /// Source file that was converted.
   final String sourcePath;

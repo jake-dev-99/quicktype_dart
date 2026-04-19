@@ -1,3 +1,5 @@
+library;
+
 import 'dart:developer';
 
 import 'package:logging/logging.dart';

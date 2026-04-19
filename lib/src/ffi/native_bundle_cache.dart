@@ -9,6 +9,8 @@
 // versions on the same URL automatically get fresh downloads if the
 // `integrity` argument changes or the cached file fails verification.
 
+library;
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';

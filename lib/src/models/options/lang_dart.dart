@@ -1,4 +1,6 @@
 
+library;
+
 import '../renderer_options.dart';
 
 /// Named-parameter options for the Dart target.

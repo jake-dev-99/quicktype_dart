@@ -1,5 +1,7 @@
 // Hand-written FFI bindings to the qt_shim C library.
 
+library;
+
 import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';

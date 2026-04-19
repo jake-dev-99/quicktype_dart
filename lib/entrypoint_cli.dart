@@ -1,10 +1,14 @@
+library;
+
 import 'dart:async';
 import 'dart:io';
+
 import 'package:args/args.dart';
 
 import 'src/config.dart';
 import 'src/quicktype.dart';
 import 'src/utils/logging.dart';
+import 'src/version.dart';
 
 
 /// Entry point for the `quicktype_dart` CLI.
@@ -102,13 +106,13 @@ Examples:
   quicktype                  Generate using quicktype.json
   quicktype -c custom.json   Generate using custom.json
 
-For more details: https://github.com/yourusername/quicktype_dart
+For more details: https://github.com/jake-dev-99/quicktype_dart
 ''');
   }
 
   /// Print version information
   static void _printVersion() {
-    Log.off('Quicktype Dart v1.0.0');
+    Log.off('Quicktype Dart v$packageVersion');
 
     try {
       final result = Process.runSync('quicktype', ['--version']);

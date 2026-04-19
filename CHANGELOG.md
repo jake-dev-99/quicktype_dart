@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.4.1
+
+Housekeeping release: license swap, tooling cleanup, and style-guide
+alignment. No public-API changes.
+
+### Changed
+
+- License changed from Apache 2.0 → MIT. The README and podspecs are
+  updated to match; the LICENSE file in the tarball is authoritative.
+- CLI `--version` now reads from a new `lib/src/version.dart` constant
+  (`packageVersion`) instead of a hardcoded string, eliminating version
+  drift between pubspec and the CLI.
+- Help text URL in the CLI (`dart run quicktype_dart --help`) now points
+  at the real GitHub repo rather than a placeholder.
+- `lib/src/utils/file_resolver.dart` rewritten for Dart style: imports
+  ordered (`dart:` → `package:` → relative), JSDoc-style `@param`
+  blocks replaced with dartdoc, and the `path` prefix normalized.
+
+### Fixed
+
+- `.pubignore` brought up to date: adds `bin/ffi_remote_smoke.dart` and
+  `bin/ffi_noembed_smoke.dart` (added in v0.3.1 but missed from the
+  ignore list); removes stale references to files that no longer exist
+  (`bin/ffi_args_smoke.dart`, `bin/options_smoke.dart`,
+  `tool/gen_options.py`).
+- Every non-part Dart file under `lib/` now carries an explicit
+  `library;` directive, per the Dart 3 style guide.
+
 ## 0.4.0
 
 **Breaking-change release.** Removes the `*Args` surface deprecated in v0.3.0

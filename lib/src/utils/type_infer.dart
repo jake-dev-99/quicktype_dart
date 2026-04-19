@@ -1,3 +1,5 @@
+library;
+
 import 'package:path/path.dart' as p;
 
 import '../models/type.dart';

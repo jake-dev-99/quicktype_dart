@@ -4,6 +4,8 @@
 // Loads the bundled quicktype-core JS as a script asset on first call,
 // then invokes `globalThis.qtConvert` via js_interop. No subprocess, no FFI.
 
+library;
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:js_interop';
