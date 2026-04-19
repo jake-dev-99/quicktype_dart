@@ -1,0 +1,27 @@
+# v0.1.0 ships as a pure-Dart package. The following are either dev-only,
+# pending-for-v0.2.0, or too large for pub.dev.
+
+# Bundled node_modules (≈157MB). Consumers install quicktype via
+# `npm install -g quicktype` or rely on `dart run build_runner`.
+tool/
+
+# Flutter plugin scaffolding — re-added in v0.2.0 when the QuickJS FFI path
+# lands. These dirs are currently empty template code.
+android/
+ios/
+macos/
+linux/
+windows/
+web/
+
+# IDE / tool caches
+.dart_tool/
+.idea/
+.vscode/
+build/
+
+# OS clutter
+.DS_Store
+
+# Local smoke test (not part of the public surface)
+bin/smoke.dart

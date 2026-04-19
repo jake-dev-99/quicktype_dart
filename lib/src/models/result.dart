@@ -1,28 +1,32 @@
-library quicktype.models.quicktype_result;
-
-/// Result of a quicktype execution
+/// The outcome of a single [Quicktype.execute] call — success or failure,
+/// plus captured stdout/stderr from the underlying quicktype subprocess.
+///
+/// Constructed via [QuicktypeResult.success] or [QuicktypeResult.failure];
+/// use [success] to branch.
 class QuicktypeResult {
-  /// Path to the source file
+  /// Source file that was converted.
   final String sourcePath;
 
-  /// Path to the generated target file
+  /// Target file that was (or would have been) generated.
   final String targetPath;
 
-  /// Whether the operation was successful
+  /// `true` when quicktype exited 0.
   final bool success;
 
-  /// Error message if the operation failed
+  /// Error message when [success] is `false`, otherwise `null`.
   final String? errorMessage;
 
-  /// Standard target from the quicktype process
+  /// Captured stdout from the quicktype subprocess, if available.
   final String? stdout;
 
-  /// Standard error from the quicktype process
+  /// Captured stderr from the quicktype subprocess, if available.
   final String? stderr;
 
+  /// The generated target content, if the runner read the output back in.
+  /// Often `null` — prefer reading [targetPath] yourself.
   final String? targetContent;
 
-  /// Creates a successful result
+  /// Constructs a successful result.
   QuicktypeResult.success({
     required this.sourcePath,
     required this.targetPath,
@@ -32,7 +36,7 @@ class QuicktypeResult {
   })  : success = true,
         errorMessage = null;
 
-  /// Creates a failed result
+  /// Constructs a failed result.
   QuicktypeResult.failure({
     required this.sourcePath,
     required this.targetPath,

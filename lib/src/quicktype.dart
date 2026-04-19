@@ -14,18 +14,18 @@ import 'models/result.dart';
 // TODO: Implement all extra args (main and per-Type)
 const String _QUICKTIME_EXE = './tool/node_modules/.bin/quicktype';
 
-/// Exception thrown when quicktype execution fails
+/// Thrown when a quicktype subprocess call fails or its output can't be
+/// consumed. Carries the failing command and exit code when available.
 class QuicktypeException implements Exception {
-  /// The error message
+  /// Human-readable description of the failure.
   final String message;
 
-  /// The underlying command that failed (if available)
+  /// The quicktype command line that triggered the failure, if captured.
   final String? command;
 
-  /// Exit code from the process (if available)
+  /// Subprocess exit code, if the command actually ran.
   final int? exitCode;
 
-  /// Creates a new quicktype exception
   QuicktypeException(this.message, {this.command, this.exitCode});
 
   @override
@@ -41,34 +41,49 @@ class QuicktypeException implements Exception {
   }
 }
 
-/// A combined class that handles both quicktype configuration and execution
+/// Singleton orchestrator that pairs a loaded [Config] with command
+/// execution. Used by the CLI and programmatic callers that want the
+/// `quicktype.json`-driven flow.
+///
+/// For one-shot in-memory conversions, use [QuicktypeDart.generate]
+/// instead — it skips the config layer entirely.
+///
+/// ```dart
+/// final qt = Quicktype.initialize(); // loads quicktype.json, or defaults
+/// final commands = await qt.buildCommandsFromConfig();
+/// final results = await qt.executeAll(commands);
+/// ```
 class Quicktype {
-  /// Singleton instance
   static Quicktype? _instance;
 
-  /// Current configuration
+  /// The [Config] that was loaded when the singleton was created.
   late Config config;
 
-  /// Creates the singleton instance
+  /// Creates (or returns) the singleton, optionally loading config from
+  /// [configPath]. First call wins — use [Quicktype.reset] to reload.
   factory Quicktype.initialize([String? configPath]) {
-    _instance ??= Quicktype._initialize();
+    _instance ??= Quicktype._initialize(configPath);
     return _instance!;
   }
 
-  /// Initializes with a configuration file
-  ///
-  /// @param configPath Path to the configuration file (JSON or YAML)
-  /// @param verbose Whether to enable verbose logging
-  /// @param executablePath Optional path to the quicktype executable
+  /// Clears the cached singleton so a subsequent [Quicktype.initialize] call
+  /// can load a fresh [Config]. Also resets the underlying [Config] singleton.
+  static void reset() {
+    _instance = null;
+    Config.reset();
+  }
+
   Quicktype._initialize([String? configPath]) {
     config = configPath == null
         ? Config.initialize()
         : Config.initialize(configPath);
   }
 
-  /// Executes all commands defined in the configuration
+  /// Expands [config]'s sources × targets into concrete [QuicktypeCommand]s.
   ///
-  /// @return Future with the results of all operations
+  /// For each declared source file (after glob expansion) × each declared
+  /// target language/path, yields one command. Does not execute them —
+  /// pass the result to [executeAll] or [execute] to generate output.
   Future<List<QuicktypeCommand>> buildCommandsFromConfig() async {
     final results = <QuicktypeCommand>[];
 
@@ -97,14 +112,12 @@ class Quicktype {
               targetConfig,
             );
 
-            // Finally add a command for every Source and Target config
             results.add(QuicktypeCommand(
-              mainArgs: [],
               sourcePath: sourceFile,
               targetPath: targetFile,
               sourceArg: sourceType.argName,
               targetArg: targetType.argName,
-              targetArgs: [],
+              args: targetConfig.args,
             ));
           }
         }
@@ -113,14 +126,12 @@ class Quicktype {
     return results;
   }
 
-  /// Executes all commands defined in the configuration
-  ///
-  /// @return Future with the results of all operations
+  /// Runs [commands] serially via [execute], aggregating results.
   Future<List<QuicktypeResult>> executeAll(
       List<QuicktypeCommand> commands) async {
     final results = <QuicktypeResult>[];
-    Log.OFF('');
-    Log.OFF('========================================');
+    Log.off('');
+    Log.off('========================================');
 
     for (QuicktypeCommand command in commands) {
       final result = await execute(command);
@@ -129,15 +140,14 @@ class Quicktype {
     return results;
   }
 
-  /// Executes a quicktype command
-  ///
-  /// @param command The command to execute
-  /// @return Execution result
+  /// Runs a single [command] via `Process.run`. Creates the target
+  /// directory if needed and returns a [QuicktypeResult] describing the
+  /// outcome (success or failure).
   Future<QuicktypeResult> execute(QuicktypeCommand command) async {
     final sourcePath = Path.absolute(command.sourcePath);
     final targetPath = Path.absolute(command.targetPath);
-    Log.OFF('');
-    Log.OFF('Generating $targetPath');
+    Log.off('');
+    Log.off('Generating $targetPath');
 
     try {
       final parentDir = Directory(Path.dirname(targetPath));
@@ -146,17 +156,17 @@ class Quicktype {
       }
 
       final result =
-          await Process.run(_QUICKTIME_EXE, command.args).catchError((e) {
+          await Process.run(_QUICKTIME_EXE, command.argv).catchError((e) {
         throw QuicktypeException('Failed to run quicktype',
             command: 'quicktype');
       });
       if (result.exitCode == 0) {
         if (result.stdout.toString().isNotEmpty) {
-          Log.OFF('${result.stdout}');
+          Log.off('${result.stdout}');
         }
-        Log.OFF('Done!');
+        Log.off('Done!');
       } else {
-        Log.SEVERE('Error: ${result.stderr}');
+        Log.severe('Error: ${result.stderr}');
         return QuicktypeResult.failure(
           sourcePath: sourcePath,
           targetPath: targetPath,
@@ -168,9 +178,9 @@ class Quicktype {
         targetPath: targetPath,
       );
     } catch (e, s) {
-      Log.SEVERE('Error: $e');
+      Log.severe('Error: $e');
       for (String line in s.toString().split('\n')) {
-        Log.SEVERE('$line');
+        Log.severe('$line');
       }
       return QuicktypeResult.failure(
         sourcePath: sourcePath,
@@ -180,30 +190,32 @@ class Quicktype {
     }
   }
 
-  /// Run native quicktype CLI
+  /// Passes [args] straight through to the `quicktype` on `PATH`, bypassing
+  /// config and command construction. Used when the CLI is invoked with
+  /// positional args beyond the known flags.
   static Future<int> executeNative(List<String> args) async {
-    Log.OFF('');
-    Log.OFF('Running native quicktype: ${args.join(' ')}');
+    Log.off('');
+    Log.off('Running native quicktype: ${args.join(' ')}');
 
     try {
       final result = await Process.run('quicktype', args);
 
       if (result.stdout.toString().isNotEmpty) {
-        Log.OFF('Result: ${result.stdout}');
+        Log.off('Result: ${result.stdout}');
       }
 
       if (result.stderr.toString().isNotEmpty) {
-        Log.OFF('Result: ${result.stderr}');
+        Log.off('Result: ${result.stderr}');
       }
 
       return result.exitCode;
     } catch (e) {
       if (e is ProcessException && e.executable == 'quicktype') {
-        Log.OFF('');
-        Log.OFF('Error: Native quicktype not found');
-        Log.OFF('Install with: npm install -g quicktype');
+        Log.off('');
+        Log.off('Error: Native quicktype not found');
+        Log.off('Install with: npm install -g quicktype');
       } else {
-        Log.OFF('Error: $e');
+        Log.off('Error: $e');
       }
       return 1;
     }

@@ -5,9 +5,12 @@ import 'package:glob/list_local_fs.dart';
 import 'models/type.dart';
 import 'utils/logging.dart';
 
-/// Exception to represent configuration errors
+/// Thrown when a `quicktype.json` can't be parsed or is semantically invalid.
 class ConfigException implements Exception {
+  /// Human-readable description of the failure.
   final String message;
+
+  /// The underlying error, if this exception wraps one.
   final Object? cause;
 
   const ConfigException(this.message, [this.cause]);
@@ -18,10 +21,20 @@ class ConfigException implements Exception {
       : 'ConfigException: $message';
 }
 
-/// Configuration for quicktype processing
+/// Singleton holder for a loaded `quicktype.json` (or the built-in defaults).
 ///
-/// Supports both source and target configurations for code generation.
-/// Optionally loads from a configuration file or falls back to default settings.
+/// Sources are keyed by [SourceType] (json / jsonschema / graphql / typescript)
+/// and map to one or more [TypeConfig]s describing where to find input files.
+/// Targets are keyed by [TargetType] and describe where generated code lands
+/// plus any language-specific [Arg]s.
+///
+/// Used transparently by [Quicktype.initialize]; direct interaction is only
+/// needed for testing or advanced callers.
+///
+/// ```dart
+/// final config = Config.initialize('quicktype.json');
+/// for (final entry in config.targets.entries) { ... }
+/// ```
 class Config {
   // Default constants
   static const String _defaultModelPath = 'models/';
@@ -31,47 +44,72 @@ class Config {
   // Singleton instance
   static Config? _instance;
 
-  // Configuration sources and targets
+  // Path the singleton was loaded from — used to detect conflicting re-inits.
+  static String? _instancePath;
+
+  /// Input file declarations, keyed by format.
   late final Map<SourceType, Set<TypeConfig>> sources;
+
+  /// Output file declarations, keyed by target language.
   late final Map<TargetType, Set<TypeConfig>> targets;
 
-  // Package config getters
+  /// The default config file name — `quicktype.json`.
   static String get defaultConfigFile => _defaultConfigFile;
+
+  /// Relative path to the bundled quicktype executable. Only used when
+  /// running from a dev checkout of quicktype_dart; consumers installed
+  /// from pub.dev should have `quicktype` on PATH.
   static String get quicktypeExe => _quicktypeExe;
 
-  /// Fetch quicktype version asynchronously
+  /// Fetches the underlying quicktype CLI's version string. Returns
+  /// `'unknown'` if the executable isn't runnable.
   static Future<String> get quicktypeVersion async {
     try {
       final result = await Process.run(quicktypeExe, ['--version']);
       return result.stdout.toString().split('\n').first.trim();
     } catch (e) {
-      Log.WARNING("Unable to retrieve quicktype version: $e");
+      Log.warning("Unable to retrieve quicktype version: $e");
       return 'unknown';
     }
   }
 
-  /// Create or retrieve the `Config` singleton instance
+  /// Create or retrieve the `Config` singleton.
   ///
-  /// Attempts to load from a file. If the file isn't found or invalid, falls back
-  /// to default configuration.
+  /// Loads from [filePath] if it exists, otherwise falls back to defaults.
+  /// If a second call passes a different [filePath] than the one that built
+  /// the cached instance, throws [ConfigException] — call [Config.reset]
+  /// first to reload from a new path.
   factory Config.initialize([String filePath = _defaultConfigFile]) {
     if (_instance != null) {
+      if (_instancePath != null && _instancePath != filePath) {
+        throw ConfigException(
+          'Config already initialized from "$_instancePath"; refusing to '
+          'silently ignore new path "$filePath". Call Config.reset() first.',
+        );
+      }
       return _instance!;
     }
 
-    // Attempt to load config from file
+    _instancePath = filePath;
     final configFile = File(filePath);
     if (configFile.existsSync()) {
       try {
         return _instance = Config._fromFile(configFile);
       } catch (e) {
-        Log.INFO('Failed to load config file "$filePath". Using defaults: $e');
+        Log.info('Failed to load config file "$filePath". Using defaults: $e');
         return _instance = Config._default();
       }
     } else {
-      Log.INFO('Config file "$filePath" not found. Loading defaults...');
+      Log.info('Config file "$filePath" not found. Loading defaults...');
       return _instance = Config._default();
     }
+  }
+
+  /// Clears the cached singleton so a subsequent [Config.initialize] call
+  /// can load a fresh configuration. Primarily for tests and runtime reload.
+  static void reset() {
+    _instance = null;
+    _instancePath = null;
   }
 
   /// Build default configuration
@@ -80,7 +118,7 @@ class Config {
     final modelDir = Directory(_defaultModelPath);
     if (!modelDir.existsSync()) {
       modelDir.createSync(recursive: true);
-      Log.INFO('Created default models directory at: ${modelDir.path}');
+      Log.info('Created default models directory at: ${modelDir.path}');
     }
 
     this.sources = _defaultSources(modelDir.path);
@@ -116,7 +154,7 @@ class Config {
             ));
           }
         } catch (e) {
-          Log.WARNING('Could not detect files for ${target.name}: $e');
+          Log.warning('Could not detect files for ${target.name}: $e');
         }
       }
       targets[target] = configs;
@@ -140,7 +178,7 @@ class Config {
   /// Parse source configurations from Map
   Map<SourceType, Set<TypeConfig>> _parseSources(dynamic sourcesMap) {
     if (sourcesMap == null) {
-      Log.WARNING('Sources missing in config file. Using default sources.');
+      Log.warning('Sources missing in config file. Using default sources.');
       return _defaultSources(_defaultModelPath);
     }
 
@@ -154,7 +192,7 @@ class Config {
   /// Parse target configurations from Map
   Map<TargetType, Set<TypeConfig>> _parseTargets(dynamic targetsMap) {
     if (targetsMap == null) {
-      Log.WARNING('Targets missing in config file. Using default targets.');
+      Log.warning('Targets missing in config file. Using default targets.');
       return _defaultTargets();
     }
 

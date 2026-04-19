@@ -40,9 +40,9 @@ class FileResolver {
       }
 
       // Build the list of matched files
-      Log.OFF('');
-      Log.OFF('Searching for $searchExtensions');
-      Log.OFF('$pattern');
+      Log.off('');
+      Log.off('Searching for $searchExtensions');
+      Log.off('$pattern');
       try {
         final glob = Glob('$pattern$searchExtensions');
         final files = glob.listSync().toList();
@@ -55,17 +55,17 @@ class FileResolver {
           }
         }
       } catch (e) {
-        Log.SEVERE("Error: $e");
+        Log.severe("Error: $e");
       }
 
       if (matches.isNotEmpty) {
         int counter = 0;
         for (final file in matches) {
           counter++;
-          Log.INFO("     ($counter/${matches.length}): $file");
+          Log.info("     ($counter/${matches.length}): $file");
         }
       } else {
-        Log.INFO("     (0/0): No files found");
+        Log.info("     (0/0): No files found");
       }
       return matches;
     } catch (e) {

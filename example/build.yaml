@@ -1,0 +1,13 @@
+# Enables the quicktype_dart Dart builder for this example app.
+#
+# With this in place, any `*.qt.json` file under `lib/` will be picked up by
+# `dart run build_runner build` and produce a sibling `*.dart` model file.
+targets:
+  $default:
+    builders:
+      quicktype_dart:dart:
+        enabled: true
+        options:
+          target: dart
+          args:
+            just-types: true

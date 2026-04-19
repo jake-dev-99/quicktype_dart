@@ -1,0 +1,5 @@
+tags:
+  integration:
+    description: >-
+      Requires the `quicktype` CLI on PATH or bundled locally. Run with
+      `dart test --tags=integration` (or unskip via environment).

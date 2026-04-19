@@ -7,11 +7,17 @@ import 'src/quicktype.dart';
 import 'src/utils/logging.dart';
 
 
-// TODO: Nest targets under sources in config file
-
-/// CLI entrypoint for quicktype code generation
+/// Entry point for the `quicktype_dart` CLI.
+///
+/// Wired up from [bin/quicktype_dart.dart] — run it with:
+///
+/// ```bash
+/// dart run quicktype_dart            # uses ./quicktype.json
+/// dart run quicktype_dart -c foo.json
+/// dart run quicktype_dart -- --help  # pass-through to the quicktype CLI
+/// ```
 class QuicktypeCLI {
-  /// Runs the CLI with the given arguments
+  /// Runs the CLI with [args] and returns the exit code (0 on success).
   static Future<int> run(List<String> args) async {
     final parser = ArgParser()
       ..addOption('config',
@@ -47,29 +53,31 @@ class QuicktypeCLI {
       final configPath = options['config'];
       return await _generateFromConfig(configPath);
     } catch (e, stackTrace) {
-      Log.OFF('Error: $e');
-      Log.OFF('Stack trace: $stackTrace');
+      Log.off('Error: $e');
+      Log.off('Stack trace: $stackTrace');
       return 1;
     }
   }
 
-  /// Generate code using a config file
+  /// Loads [configPath] into a [Quicktype] singleton, expands into commands,
+  /// and executes them. Returns exit code 0 on full success, 1 if any
+  /// command failed.
   static Future<int> _generateFromConfig(configPath) async {
-    Log.OFF('Running quicktype with config: $configPath');
+    Log.off('Running quicktype with config: $configPath');
 
     final quicktype = Quicktype.initialize();
     final commands = await quicktype.buildCommandsFromConfig();
     final results = await quicktype.executeAll(commands);
 
     final successCount = results.where((r) => r.success).length;
-    Log.OFF('Generated $successCount/${results.length} files successfully');
+    Log.off('Generated $successCount/${results.length} files successfully');
 
     // Print any errors
     final failures = results.where((r) => !r.success).toList();
     if (failures.isNotEmpty) {
-      Log.OFF('\nErrors:');
+      Log.off('\nErrors:');
       for (final f in failures) {
-        Log.OFF('  - ${f.sourcePath} → ${f.targetPath}: ${f.errorMessage}');
+        Log.off('  - ${f.sourcePath} → ${f.targetPath}: ${f.errorMessage}');
       }
       return 1;
     }
@@ -79,7 +87,7 @@ class QuicktypeCLI {
 
   /// Print CLI usage information
   static void _printUsage() {
-    Log.OFF('''
+    Log.off('''
 Quicktype Dart - Generate types from schemas
 
 Usage:
@@ -100,17 +108,17 @@ For more details: https://github.com/yourusername/quicktype_dart
 
   /// Print version information
   static void _printVersion() {
-    Log.OFF('Quicktype Dart v1.0.0');
+    Log.off('Quicktype Dart v1.0.0');
 
     try {
       final result = Process.runSync('quicktype', ['--version']);
       if (result.exitCode == 0) {
-        Log.OFF('Native quicktype: ${result.stdout.toString().trim()}');
+        Log.off('Native quicktype: ${result.stdout.toString().trim()}');
       } else {
-        Log.OFF('Native quicktype: not available');
+        Log.off('Native quicktype: not available');
       }
     } catch (_) {
-      Log.OFF('Native quicktype: not installed');
+      Log.off('Native quicktype: not installed');
     }
   }
 }

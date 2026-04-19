@@ -1,16 +1,28 @@
-# quicktype_dart_example
+# quicktype_dart example
 
-Demonstrates how to use the quicktype_dart plugin.
+Two ways to use `quicktype_dart` — both demonstrated here.
 
-## Getting Started
+## 1. Runtime generation
 
-This project is a starting point for a Flutter application.
+See [example.dart](example.dart). Run with:
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+dart run example.dart
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Converts an in-memory JSON payload into a Dart class via
+`QuicktypeDart.generate`, prints the generated source.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 2. Build-time generation
+
+[lib/models/user.qt.json](lib/models/user.qt.json) is a sample input.
+[build.yaml](build.yaml) wires up the `quicktype_dart:dart` builder.
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+…produces `lib/models/user.dart` alongside the JSON sample.
+
+Both flows shell out to the `quicktype` Node CLI. Install it with
+`npm install -g quicktype` before running.

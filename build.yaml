@@ -1,63 +1,58 @@
-# # build.yaml - Configuration for build_runner and quicktype code generation
+# build.yaml — registers per-target quicktype_dart builders.
+#
+# Consumers opt in by adding to their own build.yaml:
+#
+#   targets:
+#     $default:
+#       builders:
+#         quicktype_dart:dart:
+#           enabled: true
+#           options:
+#             args:
+#               use-freezed: true
+#               null-safety: true
+#
+# Input convention: files named `*.qt.json` are processed. Output is written
+# next to the source with the language's primary extension — e.g.
+# `lib/models/user.qt.json` → `lib/models/user.dart`.
 
-# targets:
-#   $default:
-#     builders:
-#       quicktype_dart:
-#         enabled: true
-#         generate_for:
-#         - "**/models/**[.json|.ts|.yaml|.yml]"
-#         - "**/ios/**[.json|.ts|.yaml|.yml]"
-#         - "**/android/**[.json|.ts|.yaml|.yml]"
-#         - "**/macos/**[.json|.ts|.yaml|.yml]"
-#         - "**/windows/**[.json|.ts|.yaml|.yml]"
-#         - "**/linux/**[.json|.ts|.yaml|.yml]"
-#         - "**/lib/**[.json|.ts|.yaml|.yml]"
+builders:
+  dart:
+    import: "package:quicktype_dart/entrypoint_runner.dart"
+    builder_factories: ["quicktypeBuilder"]
+    build_extensions: {".qt.json": [".dart"]}
+    auto_apply: none
+    build_to: source
+    defaults:
+      options:
+        target: dart
 
-# builders:
-#   quicktype_dart:
-#     import: "package:quicktype_dart/builder.dart"
-#     builder_factories: ["quicktypeBuilder"]
-#     build_extensions: {
-#       "**.json": ["*.json"],
-#       "**.ts": ["*.json"],
-#       "**.yaml": ["*.g.json"],
-#       "**.yml": ["*.g.json"],
-#     }
-#     auto_apply: root_package
-#     build_to: source
-#     runs_before: ["json_serializable|json_serializable"]
-#     applies_builders: ["source_gen|combining_builder"]
+  kotlin:
+    import: "package:quicktype_dart/entrypoint_runner.dart"
+    builder_factories: ["quicktypeBuilder"]
+    build_extensions: {".qt.json": [".kt"]}
+    auto_apply: none
+    build_to: source
+    defaults:
+      options:
+        target: kotlin
 
-#     defaults:
-#       options:
-#         # Default options for the quicktype builder
-#         verbose: true
-#         clean_output: true
-#         fail_on_error: true
-#         config_file: "quicktype.config|quicktype.cfg|quicktype.yaml|quicktype.yml|quicktype.json"
-#         blacklist: [
-#           'Content.json',
-#           'pubspec.yaml',
-#           'podspec.yaml',
-#           'package.json',
-#         ]
+  swift:
+    import: "package:quicktype_dart/entrypoint_runner.dart"
+    builder_factories: ["quicktypeBuilder"]
+    build_extensions: {".qt.json": [".swift"]}
+    auto_apply: none
+    build_to: source
+    defaults:
+      options:
+        target: swift
 
-#         # Default language options
-#         dart_options:
-#           serialization: "json_serializable"
-#           nullable: true
-#           coding_style: "camelCase"
-#           generate_ffi_bridge: true
-
-#         # Advanced options
-#         enable_cache: true
-#         cache_directory: ".dart_tool/quicktype_cache"
-#         parallel_jobs: 4
-
-#         # Schema validation options
-#         validate_schemas: true
-#         schema_version: "draft-07"
-
-#         # If you need to use a custom quicktype executable
-#         # executable_path: "custom/path/to/quicktype"
+  typescript:
+    import: "package:quicktype_dart/entrypoint_runner.dart"
+    builder_factories: ["quicktypeBuilder"]
+    build_extensions: {".qt.json": [".ts"]}
+    auto_apply: none
+    build_to: source
+    defaults:
+      options:
+        target: typescript

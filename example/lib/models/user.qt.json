@@ -1,0 +1,11 @@
+{
+  "id": 42,
+  "name": "Jake",
+  "email": "jake@example.com",
+  "roles": ["admin", "editor"],
+  "profile": {
+    "age": 33,
+    "active": true,
+    "joinedAt": "2024-01-15T10:30:00Z"
+  }
+}

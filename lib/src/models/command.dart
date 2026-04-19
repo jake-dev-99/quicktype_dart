@@ -1,110 +1,82 @@
 import 'package:build/build.dart';
 import 'package:path/path.dart' as Path;
 
+import '../utils/type_infer.dart';
+import 'args.dart';
 import 'type.dart';
 
-/// Represents a single quicktype command with all its arguments
+/// A single quicktype invocation — one source file, one target file, plus any
+/// extra typed [Arg]s (language-specific flags, options, etc).
 ///
-/// Encapsulates all the information needed to run a single quicktype
-/// code generation command.
+/// The command builds `--src/--src-lang/--lang/--out` itself; callers supply
+/// the rest via [args] using typed arg classes like `DartArgs.useFreezed`.
 class QuicktypeCommand {
-  /// Additional args passed through to Quicktype
-  final List<String>? mainArgs;
-
-  /// The source File path
+  /// Source file path.
   final String sourcePath;
 
-  /// Source Type (as Quicktype Arg)
+  /// `--src-lang` value (e.g. `'json'`).
   final String sourceArg;
 
-  /// Target file or directory path
+  /// Output file path.
   final String targetPath;
 
-  /// The target Type (Dart, TypeScript, etc.)
+  /// `--lang` value (e.g. `'dart'`).
   final String targetArg;
 
-  /// Additional target args passed through to Quicktype
-  final List<String>? targetArgs;
+  /// Extra typed arguments — e.g. `[DartArgs.useFreezed..value = true]`.
+  final Iterable<Arg> args;
 
-  /// Creates a new quicktype command
-  ///
-  /// [sourcePath] The source format type
-  /// [sourceArg] Path to source file(s)
-  /// [targetPath] Path for generated target
-  /// [targetArg] The target Type type
   QuicktypeCommand({
-    required this.mainArgs,
     required this.sourcePath,
     required this.sourceArg,
     required this.targetPath,
     required this.targetArg,
-    required this.targetArgs,
+    this.args = const [],
   });
 
-  /// Creates a quicktype command for the given file
+  /// Convenience builder: infer source and target types from each file's
+  /// extension (honouring multi-dot extensions like `.schema.json`).
+  /// Throws [ArgumentError] if either side has an unsupported extension.
   static QuicktypeCommand createCommandForFiles({
     required AssetId sourceFile,
     required AssetId targetFile,
+    Iterable<Arg> args = const [],
   }) {
-    // Determine source type based on extension
-    final sourceType = SourceType.values.firstWhere(
-      (t) => t.extensions.contains(Path.extension(targetFile.path)),
-      orElse: () => throw ArgumentError(
-          'Unsupported target file type: ${targetFile.path}'),
-    );
+    final sourceType =
+        inferLangType<SourceType>(SourceType.values, sourceFile.path) ??
+            (throw ArgumentError(
+                'Unsupported source file type: ${sourceFile.path}'));
 
-    // Determine source type based on extension
-    final targetType = TargetType.values.firstWhere(
-      (t) => t.extensions.contains(Path.extension(targetFile.path)),
-      orElse: () => throw ArgumentError(
-          'Unsupported target file type: ${targetFile.path}'),
-    );
+    final targetType =
+        inferLangType<TargetType>(TargetType.values, targetFile.path) ??
+            (throw ArgumentError(
+                'Unsupported target file type: ${targetFile.path}'));
 
-    // Create command
     return QuicktypeCommand(
-      mainArgs: [],
       sourcePath: sourceFile.path,
       sourceArg: sourceType.argName,
       targetPath: targetFile.path,
       targetArg: targetType.argName,
-      targetArgs: [],
+      args: args,
     );
   }
 
-  /// The full command line string
-  ///
-  /// @return The full command line string
-  get parsed => 'quicktype ${_toArgs().join(' ')}';
-  get args => _toArgs();
+  /// Full command line for display/debugging.
+  String get parsed => 'quicktype ${argv.join(' ')}';
 
-  /// Converts this command to a list of command line arguments
-  ///
-  /// @return A list of formatted command line arguments
-  List<String> _toArgs() {
-    var result = <String>[];
+  /// Argv list suitable for `Process.run`.
+  List<String> get argv => _toArgv();
 
-    // Core arguments
-    result.addAll(mainArgs ?? []);
-    result.addAll(['--src', Path.canonicalize(sourcePath)]);
-    result.addAll(['--src-lang', sourceArg]);
-    result.addAll(['--lang', targetArg]);
-    result.addAll(['--out', Path.canonicalize(targetPath)]);
-    result.addAll(targetArgs ?? []);
-
-    result = _escapeArgs(result);
-    return result;
-  }
-
-  /// Escapes a command line argument if needed
-  ///
-  /// [arg The argument to escape
-  /// @return The escaped argument
-  List<String> _escapeArgs(List<String> args) {
-    for (String arg in args) {
-      if (arg.contains(' ') || arg.contains('"')) {
-        arg = '"${arg.replaceAll('"', '\\"')}"';
-      }
+  List<String> _toArgv() {
+    final out = <String>[
+      '--src', Path.canonicalize(sourcePath),
+      '--src-lang', sourceArg,
+      '--lang', targetArg,
+      '--out', Path.canonicalize(targetPath),
+    ];
+    for (final arg in args) {
+      out.addAll(arg.argv());
     }
-    return args;
+    return out;
   }
 }
