@@ -38,12 +38,13 @@ Future<void> main() async {
   );
   _assert(fromString.contains('class Smoke'), 'string-shape missing `class Smoke`');
 
-  // 4) Arg plumbing: --just-types strips the serialization scaffolding.
+  // 4) Typed options plumbing: --just-types strips the serialization
+  //    scaffolding.
   final typesOnly = await QuicktypeDart.generate(
     label: 'Smoke',
     data: {'name': 'Jake', 'age': 42, 'active': true},
     target: TargetType.dart,
-    args: [DartArgs.justTypes..value = true],
+    options: const DartRendererOptions(justTypes: true),
   );
   _assert(typesOnly.contains('class Smoke'), 'typesOnly missing `class Smoke`');
   _assert(!typesOnly.contains('fromJson'),

@@ -1,6 +1,5 @@
 import '../config.dart';
 import '../utils/logging.dart';
-import 'args.dart';
 
 /// Conventional output directories for common target languages, used when
 /// a [TypeConfig] doesn't specify an explicit `path`.
@@ -29,12 +28,7 @@ abstract class TypeEnum {
 
   /// Default output path when none is given in config, or `null` if this
   /// type doesn't carry a conventional default (e.g. source types).
-  get defaultPath;
-
-  /// The CLI arg registry for this type, keyed by flag name. Produced by
-  /// the language-specific `*Args` class (e.g. [DartArgs.args] for
-  /// [TargetType.dart]).
-  Map<String, Arg> get args;
+  String? get defaultPath;
 }
 
 /// Input formats quicktype can infer types from.
@@ -60,30 +54,27 @@ enum SourceType implements TypeEnum {
   final Set<String> extensions;
 
   @override
-  Map<String, Arg> get args => const {};
-
-  @override
   String toString() => name;
 
   @override
-  get defaultPath => null;
+  String? get defaultPath => null;
 }
 
 /// Output languages quicktype can generate typed code for.
 ///
-/// Each value carries the CLI flag ([argName]), its primary file extensions
-/// ([extensions]), and its typed argument registry ([args] — e.g.
-/// `TargetType.dart.args` returns [DartArgs.args]).
+/// Each value carries the CLI flag ([argName]) and its primary file
+/// extensions ([extensions]). Pass language-specific options via a
+/// [RendererOptions] subclass — e.g. `TargetType.dart` pairs with
+/// `DartRendererOptions`.
 ///
 /// Example:
 ///
 /// ```dart
-/// // Generate Dart with freezed annotations.
 /// await QuicktypeDart.generate(
 ///   label: 'User',
 ///   data: [{'id': 1}],
 ///   target: TargetType.dart,
-///   args: [DartArgs.useFreezed..value = true],
+///   options: const DartRendererOptions(useFreezed: true),
 /// );
 /// ```
 enum TargetType implements TypeEnum {
@@ -140,73 +131,23 @@ enum TargetType implements TypeEnum {
   }
 
   @override
-  Map<String, Arg> get args {
-    switch (this) {
-      case TargetType.dart:
-        return DartArgs.args;
-      case TargetType.c:
-        return CArgs.args;
-      case TargetType.cpp:
-        return CppArgs.args;
-      case TargetType.csharp:
-        return CSharpArgs.args;
-      case TargetType.elixir:
-        return ElixirArgs.args;
-      case TargetType.elm:
-        return ElmArgs.args;
-      case TargetType.flow:
-        return FlowArgs.args;
-      case TargetType.go:
-        return GoArgs.args;
-      case TargetType.haskell:
-        return HaskellArgs.args;
-      case TargetType.java:
-        return JavaArgs.args;
-      case TargetType.javascript:
-        return JavaScriptArgs.args;
-      case TargetType.kotlin:
-        return KotlinArgs.args;
-      case TargetType.objc:
-        return ObjectiveCArgs.args;
-      case TargetType.php:
-        return PHPArgs.args;
-      case TargetType.proptypes:
-        return PropTypesArgs.args;
-      case TargetType.python:
-        return PythonArgs.args;
-      case TargetType.ruby:
-        return RubyArgs.args;
-      case TargetType.rust:
-        return RustArgs.args;
-      case TargetType.scala:
-        return Scala3Args.args;
-      case TargetType.smithy:
-        return SmithyArgs.args;
-      case TargetType.swift:
-        return SwiftArgs.args;
-      case TargetType.typescript:
-        return TypeScriptArgs.args;
-    }
-  }
-
-  @override
   String toString() => name;
 }
 
 /// One source or target slot in a quicktype configuration.
 ///
 /// A [TypeConfig] pairs a [TypeEnum] (source format or output language) with
-/// an output/input path and any language-specific [args]. Typically loaded
-/// from `quicktype.json` via [TypeConfig.fromJson], but can also be built
-/// programmatically.
+/// an input/output path and any language-specific [rendererOptions].
+/// Typically loaded from `quicktype.json` via [TypeConfig.fromJson], but can
+/// also be built programmatically.
 ///
 /// Example:
 ///
 /// ```dart
-/// final dartTarget = TypeConfig(
+/// const dartTarget = TypeConfig(
 ///   type: TargetType.dart,
 ///   path: 'lib/models/',
-///   args: [DartArgs.useFreezed..value = true],
+///   rendererOptions: {'use-freezed': 'true'},
 /// );
 /// ```
 class TypeConfig {
@@ -217,12 +158,16 @@ class TypeConfig {
   final String path;
 
   /// Language-specific flags applied to every generation in this slot.
-  final List<Arg> args;
+  /// Keys are quicktype-core renderer option names (e.g. `'use-freezed'`);
+  /// values are their stringified forms (`'true'`, `'false'`, `'user.g.dart'`,
+  /// etc.). See the target-language `*RendererOptions` class for the typed
+  /// surface.
+  final Map<String, String> rendererOptions;
 
   const TypeConfig({
     required this.type,
     required this.path,
-    this.args = const [],
+    this.rendererOptions = const {},
   });
 
   /// Creates a configuration from JSON data.
@@ -232,70 +177,52 @@ class TypeConfig {
   /// { "path": "lib/models/", "args": { "use-freezed": true, "null-safety": true } }
   /// ```
   ///
-  /// Arg keys are matched against [type.args] (the language's registered arg
-  /// names). Unknown keys are ignored with a log warning. Values are coerced
-  /// to the matching [Arg] subtype: booleans for [BoolArg]/[SimpleArg],
-  /// strings for [StringArg], and enum-name strings for [EnumArg].
+  /// The `args` object is passed straight through to quicktype-core as
+  /// `rendererOptions` — each value is stringified (`true`/`false` for bools,
+  /// verbatim for strings).
   factory TypeConfig.fromJson(TypeEnum type, Map<String, dynamic> json) {
     try {
       final path = json['path'] as String? ?? type.defaultPath ?? 'models/';
-      final argsJson = json['args'];
-      final args = argsJson is Map<String, dynamic>
-          ? _parseArgs(type, argsJson)
-          : const <Arg>[];
+      final raw = json['args'];
+      final rendererOptions = raw is Map<String, dynamic>
+          ? _coerceRendererOptions(raw)
+          : const <String, String>{};
 
-      return TypeConfig(type: type, path: path, args: args);
+      return TypeConfig(
+          type: type, path: path, rendererOptions: rendererOptions);
     } catch (e) {
       if (e is ConfigException) rethrow;
       throw ConfigException('Invalid type configuration', e);
     }
   }
 
-  static List<Arg> _parseArgs(TypeEnum type, Map<String, dynamic> argsJson) {
-    final registry = type.args;
-    final out = <Arg>[];
-    for (final entry in argsJson.entries) {
-      final arg = registry[entry.key];
-      if (arg == null) {
+  static Map<String, String> _coerceRendererOptions(
+      Map<String, dynamic> raw) {
+    final out = <String, String>{};
+    for (final entry in raw.entries) {
+      final v = entry.value;
+      if (v is bool) {
+        out[entry.key] = v.toString();
+      } else if (v is String) {
+        out[entry.key] = v;
+      } else if (v == null) {
+        continue;
+      } else {
         Log.warning(
-          'Unknown arg "${entry.key}" for ${type.argName}; ignoring.',
+          'Renderer option "${entry.key}" has unsupported value type '
+          '${v.runtimeType}; coercing via toString().',
           'TypeConfig',
         );
-        continue;
+        out[entry.key] = v.toString();
       }
-      _assignArgValue(arg, entry.value);
-      out.add(arg);
     }
     return out;
   }
 
-  static void _assignArgValue(Arg arg, dynamic value) {
-    if (arg is BoolArg || arg is SimpleArg) {
-      if (value is bool) {
-        (arg as dynamic).value = value;
-      }
-    } else if (arg is StringArg) {
-      if (value is String) arg.value = value;
-    } else if (arg is EnumArg) {
-      // Config supplies the enum's toString() value. Without enum introspection
-      // at runtime, we can't map a string back to the T — consumers needing
-      // enum args from JSON should set them programmatically for now.
-      Log.warning(
-        'EnumArg "${arg.name}" cannot be set from JSON; set programmatically.',
-        'TypeConfig',
-      );
-    }
-  }
-
   /// Round-trips to the JSON shape accepted by [TypeConfig.fromJson].
-  /// Only args with a non-null value are included.
   Map<String, dynamic> toJson() => {
         'type': type.toString(),
         'path': path,
-        if (args.isNotEmpty)
-          'args': {
-            for (final a in args)
-              if (a.value != null) a.name: a.value,
-          },
+        if (rendererOptions.isNotEmpty) 'args': rendererOptions,
       };
 }

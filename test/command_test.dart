@@ -19,22 +19,49 @@ void main() {
       expect(argv, contains('dart'));
       expect(argv, contains('--out'));
       // Paths are canonicalized to absolute.
-      expect(argv[argv.indexOf('--src') + 1], p.canonicalize('models/user.json'));
+      expect(
+          argv[argv.indexOf('--src') + 1], p.canonicalize('models/user.json'));
       expect(argv[argv.indexOf('--out') + 1], p.canonicalize('lib/user.dart'));
     });
 
-    test('appends extra Arg instances after the core flags', () {
+    test('appends true-valued renderer options as --flag after the core flags',
+        () {
       final cmd = QuicktypeCommand(
         sourcePath: 'in.json',
         sourceArg: 'json',
         targetPath: 'out.dart',
         targetArg: 'dart',
-        args: [DartArgs.useFreezed..value = true],
+        rendererOptions: const {'use-freezed': 'true'},
       );
       expect(cmd.argv, contains('--use-freezed'));
     });
 
-    test('empty args produces just the core flags', () {
+    test('collapses false-valued renderer options to --no-flag', () {
+      final cmd = QuicktypeCommand(
+        sourcePath: 'in.json',
+        sourceArg: 'json',
+        targetPath: 'out.dart',
+        targetArg: 'dart',
+        rendererOptions: const {'null-safety': 'false'},
+      );
+      expect(cmd.argv, contains('--no-null-safety'));
+    });
+
+    test('passes string-valued renderer options as --flag value', () {
+      final cmd = QuicktypeCommand(
+        sourcePath: 'in.json',
+        sourceArg: 'json',
+        targetPath: 'out.dart',
+        targetArg: 'dart',
+        rendererOptions: const {'part-name': 'user.g.dart'},
+      );
+      final argv = cmd.argv;
+      final i = argv.indexOf('--part-name');
+      expect(i, greaterThanOrEqualTo(0));
+      expect(argv[i + 1], 'user.g.dart');
+    });
+
+    test('empty rendererOptions produces just the core flags', () {
       final cmd = QuicktypeCommand(
         sourcePath: 'in.json',
         sourceArg: 'json',

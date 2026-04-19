@@ -1,6 +1,6 @@
 import 'package:build/build.dart';
 
-import 'src/models/args.dart';
+import 'src/models/renderer_options.dart';
 import 'src/models/type.dart';
 import 'src/quicktype_dart.dart';
 import 'src/utils/logging.dart';
@@ -9,31 +9,43 @@ import 'src/utils/logging.dart';
 ///
 /// One `quicktypeBuilder` factory handles all target languages — the
 /// target is selected via `BuilderOptions.config['target']` ('dart',
-/// 'kotlin', 'swift', 'typescript', etc).
+/// 'kotlin', 'swift', 'typescript', etc.).
 ///
 /// Input naming convention: files ending in `.qt.json` are processed.
 /// Output extension is derived from the target language.
 ///
-/// Extra CLI flags can be supplied via `BuilderOptions.config['args']`:
+/// Extra renderer options can be supplied via
+/// `BuilderOptions.config['args']` — each entry is passed straight through
+/// to quicktype-core as a `rendererOptions` key/value pair:
+///
 /// ```yaml
 /// options:
 ///   target: dart
 ///   args:
 ///     use-freezed: true
 ///     null-safety: true
+///     part-name: user.g.dart
 /// ```
+///
+/// See the target-language `*RendererOptions` class (e.g.
+/// `DartRendererOptions`) for the authoritative list of recognized keys.
 Builder quicktypeBuilder(BuilderOptions options) {
   final targetName = options.config['target'] as String? ?? 'dart';
   final targetType = _resolveTarget(targetName);
-  final args = _parseArgs(options.config['args'], targetType);
-  return _QuicktypeBuilder(targetType: targetType, args: args);
+  final rendererOptions = _coerceRendererOptions(
+      options.config['args'], targetType);
+  return _QuicktypeBuilder(
+      targetType: targetType, rendererOptions: rendererOptions);
 }
 
 class _QuicktypeBuilder implements Builder {
-  _QuicktypeBuilder({required this.targetType, required this.args});
+  _QuicktypeBuilder({
+    required this.targetType,
+    required this.rendererOptions,
+  });
 
   final TargetType targetType;
-  final List<Arg> args;
+  final Map<String, String> rendererOptions;
 
   @override
   Map<String, List<String>> get buildExtensions => {
@@ -53,7 +65,7 @@ class _QuicktypeBuilder implements Builder {
         label: label,
         json: json,
         target: targetType,
-        args: args,
+        options: _MapRendererOptions(rendererOptions),
       );
 
       final outputId = _outputAssetId(input, targetType);
@@ -70,6 +82,18 @@ class _QuicktypeBuilder implements Builder {
       rethrow;
     }
   }
+}
+
+/// Thin adapter that lets the builder pass an already-coerced
+/// `Map<String, String>` through the typed [options] parameter on
+/// [QuicktypeDart.generateFromString] without having to pick a
+/// specific `*RendererOptions` subclass per language.
+class _MapRendererOptions extends RendererOptions {
+  const _MapRendererOptions(this._map);
+  final Map<String, String> _map;
+
+  @override
+  Map<String, String> toRendererOptions() => _map;
 }
 
 /// Derives a PascalCase top-level type name from `foo_bar.qt.json`.
@@ -98,36 +122,34 @@ TargetType _resolveTarget(String name) {
   );
 }
 
-List<Arg> _parseArgs(dynamic rawArgs, TargetType targetType) {
-  if (rawArgs is! Map) return const [];
-  final registry = targetType.args;
-  final out = <Arg>[];
+/// Coerces the raw `args:` map from `build.yaml` into the
+/// `Map<String, String>` shape quicktype-core's `rendererOptions`
+/// accepts. Bool → `'true'`/`'false'`; String passes through; null is
+/// skipped; other types are stringified via `toString()` with a warning.
+Map<String, String> _coerceRendererOptions(
+  dynamic rawArgs,
+  TargetType targetType,
+) {
+  if (rawArgs is! Map) return const {};
+  final out = <String, String>{};
   for (final entry in rawArgs.entries) {
     final key = entry.key.toString();
-    final arg = registry[key];
-    if (arg == null) {
+    final value = entry.value;
+    if (value == null) continue;
+    if (value is bool) {
+      out[key] = value.toString();
+    } else if (value is String) {
+      out[key] = value;
+    } else {
       Log.warning(
-        'Unknown arg "$key" for target ${targetType.name}; ignoring.',
+        'Renderer option "$key" for target ${targetType.name} has '
+        'unsupported value type ${value.runtimeType}; '
+        'coercing via toString().',
         'QuicktypeBuilder',
       );
-      continue;
+      out[key] = value.toString();
     }
-    _assignArgValue(arg, entry.value);
-    out.add(arg);
   }
   return out;
 }
 
-void _assignArgValue(Arg arg, dynamic value) {
-  if (arg is BoolArg || arg is SimpleArg) {
-    if (value is bool) (arg as dynamic).value = value;
-  } else if (arg is StringArg) {
-    if (value is String) arg.value = value;
-  } else if (arg is EnumArg) {
-    Log.warning(
-      'EnumArg "${arg.name}" cannot be set from build.yaml; '
-      'configure programmatically.',
-      'QuicktypeBuilder',
-    );
-  }
-}

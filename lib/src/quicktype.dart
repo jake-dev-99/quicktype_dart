@@ -1,18 +1,21 @@
-library quicktype;
+library;
 
 import 'dart:io';
-import 'package:path/path.dart' as Path;
-import 'utils/file_resolver.dart';
-import 'utils/logging.dart';
+
+import 'package:path/path.dart' as path;
 
 import 'config.dart';
 import 'models/command.dart';
 import 'models/result.dart';
+import 'utils/file_resolver.dart';
+import 'utils/logging.dart';
 
-// TODO: "Consolidate" option - loads all files into memory, then outputs to models.py, etc
-// TODO: Normalize Source and Target name patterns
-// TODO: Implement all extra args (main and per-Type)
-const String _QUICKTIME_EXE = './tool/node_modules/.bin/quicktype';
+/// Default path to the bundled quicktype Node CLI relative to the package
+/// root. Used by the `quicktype.json`-driven flow (see [Quicktype.execute])
+/// so dev tooling can exercise the Process transport without requiring
+/// a global install. If the bundled binary isn't present, callers fall
+/// through to a PATH lookup via [Quicktype.executeNative].
+const String _quicktypeExe = './tool/node_modules/.bin/quicktype';
 
 /// Thrown when a quicktype subprocess call fails or its output can't be
 /// consumed. Carries the failing command and exit code when available.
@@ -117,7 +120,7 @@ class Quicktype {
               targetPath: targetFile,
               sourceArg: sourceType.argName,
               targetArg: targetType.argName,
-              args: targetConfig.args,
+              rendererOptions: targetConfig.rendererOptions,
             ));
           }
         }
@@ -144,19 +147,19 @@ class Quicktype {
   /// directory if needed and returns a [QuicktypeResult] describing the
   /// outcome (success or failure).
   Future<QuicktypeResult> execute(QuicktypeCommand command) async {
-    final sourcePath = Path.absolute(command.sourcePath);
-    final targetPath = Path.absolute(command.targetPath);
+    final sourcePath = path.absolute(command.sourcePath);
+    final targetPath = path.absolute(command.targetPath);
     Log.off('');
     Log.off('Generating $targetPath');
 
     try {
-      final parentDir = Directory(Path.dirname(targetPath));
+      final parentDir = Directory(path.dirname(targetPath));
       if (!parentDir.existsSync()) {
         parentDir.createSync(recursive: true);
       }
 
       final result =
-          await Process.run(_QUICKTIME_EXE, command.argv).catchError((e) {
+          await Process.run(_quicktypeExe, command.argv).catchError((e) {
         throw QuicktypeException('Failed to run quicktype',
             command: 'quicktype');
       });

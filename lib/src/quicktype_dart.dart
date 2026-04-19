@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'backend_io.dart'
     if (dart.library.js_interop) 'backend_web.dart' as backend;
 import 'bundle_source.dart';
-import 'models/args.dart';
 import 'models/renderer_options.dart';
 import 'models/type.dart';
 
@@ -50,35 +49,26 @@ enum GenerateTransport { auto, ffi, process }
 ///
 /// ### Passing language options
 ///
-/// Two equivalent ways:
+/// Construct a typed [RendererOptions] subclass and pass it via
+/// [options]:
 ///
-///   * **`options:` (preferred)** — a typed [RendererOptions] subclass
-///     with named parameters per flag:
+/// ```dart
+/// options: const DartRendererOptions(
+///   useFreezed: true,
+///   nullSafety: true,
+/// ),
+/// ```
 ///
-///     ```dart
-///     options: const DartRendererOptions(
-///       useFreezed: true,
-///       nullSafety: true,
-///     ),
-///     ```
-///
-///   * **`args:` (deprecated)** — an iterable of legacy [Arg] instances:
-///
-///     ```dart
-///     args: [DartArgs.useFreezed..value = true, DartArgs.nullSafety..value = true],
-///     ```
-///
-/// Both paths resolve to the same `Map<String, String>` that quicktype-core
-/// consumes internally. The typed [options] path is the long-term API; the
-/// `args:` path will be removed in v0.4.0.
+/// One subclass per target language — `DartRendererOptions`,
+/// `KotlinRendererOptions`, `SwiftRendererOptions`, etc. Null fields
+/// are omitted, so unset options inherit quicktype-core's defaults.
 class QuicktypeDart {
   QuicktypeDart._();
 
   /// The current [BundleSource]. Defaults to [BundleSource.embedded]. Change
   /// via [setBundleSource] before the first `generate` call; afterwards
-  /// Flutter Web caches the loaded bundle so changes have no effect until
-  /// a full page reload. (Native ignores the setting in v0.3.0 — always
-  /// uses the embedded QuickJS bundle.)
+  /// the loaded bundle is cached for the process lifetime (web: the page
+  /// lifetime).
   static BundleSource _bundleSource = const BundleSource.embedded();
 
   /// See [_bundleSource]. Intended for plugin-internal use; callers go
@@ -99,7 +89,6 @@ class QuicktypeDart {
     required Object data,
     required TargetType target,
     RendererOptions? options,
-    Iterable<Arg> args = const [],
     GenerateTransport transport = GenerateTransport.auto,
   }) =>
       generateFromString(
@@ -107,7 +96,6 @@ class QuicktypeDart {
         json: jsonEncode(data),
         target: target,
         options: options,
-        args: args,
         transport: transport,
       );
 
@@ -121,33 +109,16 @@ class QuicktypeDart {
     required String json,
     required TargetType target,
     RendererOptions? options,
-    Iterable<Arg> args = const [],
     GenerateTransport transport = GenerateTransport.auto,
   }) {
-    final merged = _mergeOptions(options, args);
+    final rendererOptions =
+        options?.toRendererOptions() ?? const <String, String>{};
     return backend.generateFromString(
       label: label,
       json: json,
       target: target,
-      rendererOptions: merged,
+      rendererOptions: rendererOptions,
       transport: transport,
     );
-  }
-
-  /// Resolves either-or-both `options:` and `args:` into a single
-  /// `Map<String, String>`. When both are supplied, `args:` entries
-  /// override `options:` entries on key collision (legacy wins so
-  /// callers mid-migration don't surprise themselves).
-  static Map<String, String> _mergeOptions(
-    RendererOptions? options,
-    Iterable<Arg> args,
-  ) {
-    final merged = <String, String>{};
-    if (options != null) merged.addAll(options.toRendererOptions());
-    for (final arg in args) {
-      final entry = arg.toRendererOption();
-      if (entry != null) merged[entry.key] = entry.value;
-    }
-    return merged;
   }
 }
