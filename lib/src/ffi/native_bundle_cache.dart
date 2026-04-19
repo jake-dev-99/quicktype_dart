@@ -136,13 +136,22 @@ bool _matchesIntegrity(List<int> bytes, String integrity) {
 }
 
 /// Parses `'sha256-<base64>'` or `'sha384-<base64>'`. Returns
-/// (algorithm, base64hash) or null on bad format.
+/// (algorithm, base64hash) or null on bad format — including malformed
+/// base64 in the hash portion, so downstream hashing never blows up on
+/// garbage input.
 (String, String)? _parseSri(String token) {
   final idx = token.indexOf('-');
   if (idx <= 0) return null;
   final alg = token.substring(0, idx).toLowerCase();
   if (alg != 'sha256' && alg != 'sha384' && alg != 'sha512') return null;
-  return (alg, token.substring(idx + 1));
+  final hash = token.substring(idx + 1);
+  if (hash.isEmpty) return null;
+  try {
+    base64.decode(hash);
+  } on FormatException {
+    return null;
+  }
+  return (alg, hash);
 }
 
 /// Computes the SRI-format hash for [bytes] under [algorithm]

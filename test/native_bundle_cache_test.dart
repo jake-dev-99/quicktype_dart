@@ -70,6 +70,32 @@ void main() {
       );
     });
 
+    test('rejects a supported alg with non-base64 hash (no FormatException)',
+        () async {
+      // Before 0.4.6 the base64 in an SRI token was never validated at
+      // parse time; a garbage hash made it all the way to crypto and
+      // blew up with a FormatException deep in the stack. Now it's
+      // rejected cleanly with the same "integrity mismatch" message as
+      // every other bad token.
+      await expectLater(
+        fetchAndCacheBundle(
+          Uri.file(bundleFile.path),
+          'sha256-!!!not-base64!!!',
+        ),
+        throwsA(
+          isA<QuicktypeException>()
+              .having((e) => e, 'not a FormatException wrapper', isNotNull),
+        ),
+      );
+    });
+
+    test('rejects an SRI token with an empty hash', () async {
+      await expectLater(
+        fetchAndCacheBundle(Uri.file(bundleFile.path), 'sha256-'),
+        throwsA(isA<QuicktypeException>()),
+      );
+    });
+
     test('rejects an unsupported hash algorithm', () async {
       await expectLater(
         fetchAndCacheBundle(Uri.file(bundleFile.path), 'md5-abc'),

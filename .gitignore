@@ -79,3 +79,7 @@ node_modules/
 # --- Scratch / in-flight work --------------------------------------------
 # Smoke tests shouldn't leave temp dirs around; if they do, ignore.
 /.tmp/
+
+# --- Claude Code local state --------------------------------------------
+# Per-project session state — lock files, local settings. Never shipped.
+.claude/

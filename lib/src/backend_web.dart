@@ -64,6 +64,11 @@ Future<void> _ensureBundleLoaded() {
   return _loadFuture ??= _loadBundle();
 }
 
+/// Wall-clock ceiling for waiting on an already-injected `<script>` tag
+/// whose load event we can't observe directly. Generous enough to cover
+/// cold cache fetches; tight enough to surface real breakage quickly.
+const Duration _bundleLoadTimeout = Duration(seconds: 15);
+
 Future<void> _loadBundle() async {
   if (_qtConvertRaw != null) return;
 
@@ -90,24 +95,61 @@ Future<void> _loadBundle() async {
     }
 
     final completer = Completer<void>();
-    script.onLoad.listen((_) => completer.complete());
-    script.onError.listen((e) =>
-        completer.completeError(QuicktypeException('Failed to load $url: $e')));
+    script.onLoad.listen((_) {
+      if (!completer.isCompleted) completer.complete();
+    });
+    script.onError.listen((e) {
+      if (!completer.isCompleted) {
+        completer.completeError(QuicktypeException('Failed to load $url: $e'));
+      }
+    });
     web.document.head!.appendChild(script);
     await completer.future;
   } else {
-    // Wait for an already-injected script to finish loading.
-    // Budget: 5s should be more than enough for a 2.9MB cached asset.
-    final deadline = DateTime.now().add(const Duration(seconds: 5));
-    while (_qtConvertRaw == null && DateTime.now().isBefore(deadline)) {
-      await Future<void>.delayed(const Duration(milliseconds: 25));
+    // Someone else injected the tag (or we did, in a previous isolate).
+    // We can't rely on listeners — if the script already finished loading
+    // before this code ran, no further event will fire. Race its
+    // (possibly-pending) load/error events against a wall-clock deadline,
+    // with `qtConvert` going live as a third success signal. Uses
+    // exponential backoff instead of a 25ms busy-loop.
+    final completer = Completer<void>();
+    final script = existing as web.HTMLScriptElement;
+    script.onLoad.listen((_) {
+      if (!completer.isCompleted) completer.complete();
+    });
+    script.onError.listen((e) {
+      if (!completer.isCompleted) {
+        completer.completeError(QuicktypeException('Failed to load $url: $e'));
+      }
+    });
+    final start = DateTime.now();
+    var delayMs = 2;
+    while (!completer.isCompleted &&
+        _qtConvertRaw == null &&
+        DateTime.now().difference(start) < _bundleLoadTimeout) {
+      await Future<void>.delayed(Duration(milliseconds: delayMs));
+      if (delayMs < 100) delayMs *= 2;
     }
+    if (!completer.isCompleted) {
+      if (_qtConvertRaw != null) {
+        completer.complete();
+      } else {
+        throw QuicktypeException(
+          'quicktype_dart: timed out after ${_bundleLoadTimeout.inSeconds}s '
+          'waiting for the already-injected <script data-quicktype-dart> tag '
+          'to define globalThis.qtConvert. The script may have errored '
+          'outside our observation window, or the page is under heavy load.',
+        );
+      }
+    }
+    await completer.future;
   }
 
   if (_qtConvertRaw == null) {
     throw QuicktypeException(
-      'quicktype_dart: bundle loaded but globalThis.qtConvert is not '
-      'defined. The JS bundle may be corrupt.',
+      'quicktype_dart: the bundle script finished loading but '
+      'globalThis.qtConvert is not defined. The JS bundle at $url is '
+      'either corrupt or not a quicktype_dart bundle.',
     );
   }
 }

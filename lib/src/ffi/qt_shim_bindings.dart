@@ -18,6 +18,14 @@ typedef QtRuntimeLoadEmbedded = int Function(Pointer<Void>);
 
 /// `int qt_runtime_load_bundle(QtRuntime*, const char* js, size_t len)` —
 /// loads caller-supplied JS into the runtime. Returns 0 on success.
+///
+/// Note: the `len` argument is `size_t` on the C side but `int` here.
+/// On every platform Dart supports, `int` is 64-bit so the effective
+/// cap is ~9 EB — orders of magnitude beyond any quicktype-core bundle
+/// we'd ever hand over. On a hypothetical 32-bit target, `int` is still
+/// 64-bit in Dart, so there is no silent narrowing at the language
+/// level; the only risk is the C `size_t` being 32-bit, which would
+/// cap bundles at ~4 GB. The compiled quicktype bundle is ~3 MB.
 typedef QtRuntimeLoadBundleNative = Int32 Function(
     Pointer<Void>, Pointer<Utf8>, Size);
 typedef QtRuntimeLoadBundle = int Function(Pointer<Void>, Pointer<Utf8>, int);
