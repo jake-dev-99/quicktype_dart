@@ -13,7 +13,7 @@
 #   cmake --build build/native
 
 cmake_minimum_required(VERSION 3.15)
-project(qt_shim LANGUAGES C)
+project(quicktype_dart LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -51,21 +51,28 @@ add_custom_command(
   VERBATIM
 )
 
-# --- qt_shim shared library ----------------------------------------------
-add_library(qt_shim SHARED
+# --- quicktype_dart shared library ---------------------------------------
+# Named to match the pubspec `name`, which is what Flutter's platform build
+# systems look for when embedding the plugin. Produces:
+#   libquicktype_dart.so     (Linux / Android)
+#   libquicktype_dart.dylib  (macOS / iOS, wrapped into a .framework by Pods)
+#   quicktype_dart.dll       (Windows)
+add_library(quicktype_dart SHARED
   shim/qt_shim.c
   "${QT_BUNDLE_C}"
 )
-target_include_directories(qt_shim PRIVATE shim quickjs)
-target_link_libraries(qt_shim PRIVATE qjs)
-set_target_properties(qt_shim PROPERTIES
+target_include_directories(quicktype_dart PRIVATE shim quickjs)
+target_link_libraries(quicktype_dart PRIVATE qjs)
+set_target_properties(quicktype_dart PROPERTIES
   C_VISIBILITY_PRESET hidden
-  OUTPUT_NAME "qt_shim"
+  OUTPUT_NAME "quicktype_dart"
 )
 
-# On macOS, mark symbols used by the Dart plugin so they survive LTO.
+# On Apple platforms, use the explicit exports list so LTO doesn't eat our
+# public symbols. Other platforms get the same effect via visibility("default")
+# on QT_EXPORT-annotated declarations in shim/qt_shim.h.
 if(APPLE)
-  set_target_properties(qt_shim PROPERTIES
+  set_target_properties(quicktype_dart PROPERTIES
     LINK_FLAGS "-Wl,-exported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/shim/qt_shim.exports"
   )
 endif()
