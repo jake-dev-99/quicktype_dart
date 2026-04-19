@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'backend_io.dart'
     if (dart.library.js_interop) 'backend_web.dart' as backend;
+import 'bundle_source.dart';
 import 'models/args.dart';
 import 'models/renderer_options.dart';
 import 'models/type.dart';
@@ -72,6 +73,23 @@ enum GenerateTransport { auto, ffi, process }
 /// `args:` path will be removed in v0.4.0.
 class QuicktypeDart {
   QuicktypeDart._();
+
+  /// The current [BundleSource]. Defaults to [BundleSource.embedded]. Change
+  /// via [setBundleSource] before the first `generate` call; afterwards
+  /// Flutter Web caches the loaded bundle so changes have no effect until
+  /// a full page reload. (Native ignores the setting in v0.3.0 — always
+  /// uses the embedded QuickJS bundle.)
+  static BundleSource _bundleSource = const BundleSource.embedded();
+
+  /// See [_bundleSource]. Intended for plugin-internal use; callers go
+  /// through [setBundleSource].
+  static BundleSource get bundleSource => _bundleSource;
+
+  /// Configures where the quicktype-core JS bundle is loaded from. See
+  /// [BundleSource] for supported variants and platform coverage.
+  static void setBundleSource(BundleSource source) {
+    _bundleSource = source;
+  }
 
   /// Generates typed source code from any JSON-encodable Dart value.
   ///

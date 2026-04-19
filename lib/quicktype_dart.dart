@@ -15,6 +15,8 @@
 /// ```
 library quicktype_dart;
 
+export 'src/bundle_source.dart'
+    show BundleSource, EmbeddedBundleSource, RemoteBundleSource;
 export 'src/quicktype_dart.dart' show GenerateTransport, QuicktypeDart;
 
 // Types

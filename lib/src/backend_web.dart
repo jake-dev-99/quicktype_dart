@@ -10,9 +10,10 @@ import 'dart:js_interop';
 
 import 'package:web/web.dart' as web;
 
+import 'bundle_source.dart';
 import 'models/type.dart';
 import 'quicktype.dart';
-import 'quicktype_dart.dart' show GenerateTransport;
+import 'quicktype_dart.dart' show GenerateTransport, QuicktypeDart;
 
 /// Matches [backend_io.generateFromString] signature. [transport] is
 /// honored as follows on web:
@@ -66,18 +67,32 @@ Future<void> _ensureBundleLoaded() {
 Future<void> _loadBundle() async {
   if (_qtConvertRaw != null) return;
 
+  final source = QuicktypeDart.bundleSource;
+  final url = switch (source) {
+    EmbeddedBundleSource() => _embeddedAssetUrl,
+    RemoteBundleSource(:final url) => url.toString(),
+  };
+  final integrity = switch (source) {
+    EmbeddedBundleSource() => null,
+    RemoteBundleSource(:final integrity) => integrity,
+  };
+
   final existing = web.document
       .querySelector('script[data-quicktype-dart="bundle"]');
   if (existing == null) {
     final script = web.document.createElement('script') as web.HTMLScriptElement
-      ..src = _bundleAssetUrl
+      ..src = url
       ..async = true
       ..setAttribute('data-quicktype-dart', 'bundle');
+    if (integrity != null) {
+      script.setAttribute('integrity', integrity);
+      script.setAttribute('crossorigin', 'anonymous');
+    }
 
     final completer = Completer<void>();
     script.onLoad.listen((_) => completer.complete());
     script.onError.listen((e) => completer.completeError(
-        QuicktypeException('Failed to load $_bundleAssetUrl: $e')));
+        QuicktypeException('Failed to load $url: $e')));
     web.document.head!.appendChild(script);
     await completer.future;
   } else {
@@ -97,8 +112,9 @@ Future<void> _loadBundle() async {
   }
 }
 
-/// Path the Flutter web tool serves plugin assets under.
-const _bundleAssetUrl =
+/// Path the Flutter Web tool serves plugin assets under. Used for
+/// [BundleSource.embedded].
+const _embeddedAssetUrl =
     'assets/packages/quicktype_dart/assets/quicktype_bundle.js';
 
 // --- js_interop bindings --------------------------------------------------
