@@ -53,23 +53,27 @@ class SwiftRendererOptions extends RendererOptions {
     if (density != null) m['density'] = density!.toString();
     if (initializers != null) m['initializers'] = initializers.toString();
     if (codingKeys != null) m['coding-keys'] = codingKeys.toString();
-    if (codingKeysProtocol != null)
+    if (codingKeysProtocol != null) {
       m['coding-keys-protocol'] = codingKeysProtocol!;
+    }
     if (accessLevel != null) m['access-level'] = accessLevel!.toString();
     if (alamofire != null) m['alamofire'] = alamofire.toString();
     if (supportLinux != null) m['support-linux'] = supportLinux.toString();
     if (typePrefix != null) m['type-prefix'] = typePrefix!;
     if (protocol != null) m['protocol'] = protocol!.toString();
     if (acronymStyle != null) m['acronym-style'] = acronymStyle!.toString();
-    if (objectiveCSupport != null)
+    if (objectiveCSupport != null) {
       m['objective-c-support'] = objectiveCSupport.toString();
+    }
     if (optionalEnums != null) m['optional-enums'] = optionalEnums.toString();
     if (sendable != null) m['sendable'] = sendable.toString();
     if (swift5Support != null) m['swift-5-support'] = swift5Support.toString();
-    if (multiFileTarget != null)
+    if (multiFileTarget != null) {
       m['multi-file-dest'] = multiFileTarget.toString();
-    if (mutableProperties != null)
+    }
+    if (mutableProperties != null) {
       m['mutable-properties'] = mutableProperties.toString();
+    }
     return m;
   }
 }

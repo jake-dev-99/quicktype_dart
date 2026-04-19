@@ -112,10 +112,10 @@ enum RawType {
 /// Array type options
 // (used by the corresponding *RendererOptions class)
 enum ArrayType {
-  /// Use native array types (T[])
+  /// Use native array types (`T[]`).
   array('array'),
 
-  /// Use collection types (List<T>)
+  /// Use collection types (`List<T>`).
   list('list');
 
   /// The array type option value
@@ -352,7 +352,7 @@ enum IncludeStyle {
   /// Use quotes for includes ("header.h")
   localInclude('local-include'),
 
-  /// Use angle brackets for includes (<header.h>)
+  /// Use angle brackets for includes (`<header.h>`).
   globalInclude('global-include');
 
   /// The include style option value

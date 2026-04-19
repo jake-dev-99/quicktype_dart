@@ -33,13 +33,13 @@ class QuicktypeCLI {
       final options = parser.parse(args);
 
       // Handle help request
-      if (options['help']) {
+      if (options.flag('help')) {
         _printUsage();
         return 0;
       }
 
       // Handle version request
-      if (options['version']) {
+      if (options.flag('version')) {
         _printVersion();
         return 0;
       }
@@ -50,7 +50,7 @@ class QuicktypeCLI {
       }
 
       // Run with specified config
-      final configPath = options['config'];
+      final configPath = options.option('config') ?? Config.defaultConfigFile;
       return await _generateFromConfig(configPath);
     } catch (e, stackTrace) {
       Log.off('Error: $e');
@@ -62,7 +62,7 @@ class QuicktypeCLI {
   /// Loads [configPath] into a [Quicktype] singleton, expands into commands,
   /// and executes them. Returns exit code 0 on full success, 1 if any
   /// command failed.
-  static Future<int> _generateFromConfig(configPath) async {
+  static Future<int> _generateFromConfig(String configPath) async {
     Log.off('Running quicktype with config: $configPath');
 
     final quicktype = Quicktype.initialize();

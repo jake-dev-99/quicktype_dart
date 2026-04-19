@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:path/path.dart' as Path;
+import 'package:path/path.dart' as p;
 
 import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
@@ -21,51 +21,52 @@ class FileResolver {
     final matches = <String>{};
     final validExtensions = extensions;
     try {
-      pattern = Path.canonicalize(pattern);
-      final String patternExtension = Path.extension(pattern);
+      pattern = p.canonicalize(pattern);
+      final String patternExtension = p.extension(pattern);
       String searchExtensions = validExtensions.length > 1
           ? validExtensions.toSet().toString()
           : validExtensions.first;
 
       // Sanity check the extensions list, and finalize which extensions to search
       if (patternExtension.isEmpty) {
-        pattern = pattern.endsWith('*') ? '$pattern' : '$pattern/*';
+        pattern = pattern.endsWith('*') ? pattern : '$pattern/*';
       } else {
-        if (validExtensions.contains(patternExtension))
+        if (validExtensions.contains(patternExtension)) {
           searchExtensions = patternExtension;
-        else
+        } else {
           throw ConfigException(
-            'Invalid extension: ${patternExtension}',
+            'Invalid extension: $patternExtension',
           );
+        }
       }
 
       // Build the list of matched files
       Log.off('');
       Log.off('Searching for $searchExtensions');
-      Log.off('$pattern');
+      Log.off(pattern);
       try {
         final glob = Glob('$pattern$searchExtensions');
         final files = glob.listSync().toList();
         for (final file in files) {
           if (file is File) {
-            String fileExtension = Path.extension(file.path, 2);
+            final String fileExtension = p.extension(file.path, 2);
             if (searchExtensions.contains(fileExtension)) {
               matches.add(file.absolute.path);
             }
           }
         }
       } catch (e) {
-        Log.severe("Error: $e");
+        Log.severe('Error: $e');
       }
 
       if (matches.isNotEmpty) {
         int counter = 0;
         for (final file in matches) {
           counter++;
-          Log.info("     ($counter/${matches.length}): $file");
+          Log.info('     ($counter/${matches.length}): $file');
         }
       } else {
-        Log.info("     (0/0): No files found");
+        Log.info('     (0/0): No files found');
       }
       return matches;
     } catch (e) {
@@ -84,10 +85,10 @@ class FileResolver {
     TargetType targetType,
     TypeConfig targetConfig,
   ) {
-    final sourceName = Path.basenameWithoutExtension(sourcePath);
+    final sourceName = p.basenameWithoutExtension(sourcePath);
 
     final targetPath = targetConfig.path;
-    final targetPathExt = Path.extension(targetPath);
+    final targetPathExt = p.extension(targetPath);
 
     final targetExt =
         targetType.extensions.first; // Default to the first extension value
@@ -96,8 +97,8 @@ class FileResolver {
     // Make sure you're referencing a folder
     String parentFolder = targetPath;
     if (targetPathExt.isNotEmpty) {
-      parentFolder = Path.dirname(targetPath);
+      parentFolder = p.dirname(targetPath);
     }
-    return Path.join(parentFolder, targetName);
+    return p.join(parentFolder, targetName);
   }
 }

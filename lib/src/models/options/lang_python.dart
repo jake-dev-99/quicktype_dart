@@ -22,10 +22,12 @@ class PythonRendererOptions extends RendererOptions {
     final m = <String, String>{};
     if (pythonVersion != null) m['python-version'] = pythonVersion!.toString();
     if (justTypes != null) m['just-types'] = justTypes.toString();
-    if (nicePropertyNames != null)
+    if (nicePropertyNames != null) {
       m['nice-property-names'] = nicePropertyNames.toString();
-    if (pydanticBaseModel != null)
+    }
+    if (pydanticBaseModel != null) {
       m['pydantic-base-model'] = pydanticBaseModel.toString();
+    }
     return m;
   }
 }

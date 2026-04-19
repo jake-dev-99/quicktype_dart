@@ -1,5 +1,60 @@
 # Changelog
 
+## 0.4.5
+
+**Lint + packaging hygiene — Batch B of the road to 1.0.0-rc.1.** No
+runtime behavior change; the surface of the package stays identical.
+This release turns on the full `package:lints/recommended.yaml` set
+plus strict-casts / strict-inference / strict-raw-types and fixes every
+resulting warning, wires CI, automates version stamping, and cleans up
+the pub tarball contents.
+
+### Added
+
+- **Strict analyzer + lint suite** — `analysis_options.yaml` now
+  inherits `package:lints/recommended.yaml` and adds 18 hardening
+  rules. `strict-casts`, `strict-inference`, and `strict-raw-types`
+  are all on. CI runs with `--fatal-infos --fatal-warnings`.
+- **`tool/sync_version.dart`** — one command keeps `pubspec.yaml`,
+  `lib/src/version.dart`, `android/build.gradle`, and the iOS/macOS
+  podspecs in lockstep. Runs in check-mode in CI (fails the job on
+  drift) and accepts `--write` locally to apply. Closes the regression
+  path that left 0.4.1–0.4.3 tags with a stale `pubspec`.
+- **`.github/workflows/ci.yml`** — per-PR matrix (Ubuntu / macOS /
+  Windows) runs `dart format`, `dart analyze`, `dart test`,
+  `tool/sync_version.dart`, and `dart pub publish --dry-run`.
+  Required status checks come in Batch G.5.
+
+### Changed
+
+- **`entrypoint_cli.dart`** — `options['help']` / `options['version']`
+  replaced with `ArgResults.flag(...)` and `options['config']` with
+  `ArgResults.option(...)`, eliminating the `dynamic` returns the new
+  strict-casts mode surfaced.
+- **`_generateFromConfig`** parameter is now typed `String configPath`.
+- **`Config._parseTypeConfigs`** validates per-entry list items as
+  `Map<String, dynamic>` before handing them to `TypeConfig.fromJson`,
+  replacing the implicit `dynamic` cast in the old `.map(...).toSet()`
+  pipeline with an explicit loop that raises a clear `ConfigException`
+  on the first malformed entry.
+- **`backend_io.dart`** temp-dir + output-file checks switched to
+  sync `existsSync`/`deleteSync` variants (flagged by
+  `avoid_slow_async_io`).
+- **`lib/src/utils/file_resolver.dart`** `as Path` prefix renamed to
+  the conventional lowercase `as p` (fixes `library_prefixes`).
+- **Doc comments in `lib/src/models/enums.dart`** wrap `List<T>` and
+  `<header.h>` in backticks so dartdoc stops interpreting them as
+  HTML.
+- **`.pubignore`** — collapsed the per-file smoke-test exclusion list
+  to a `bin/*_smoke.dart` glob, catching the two existing smoke files
+  (`ffi_noembed_smoke.dart`, `ffi_remote_smoke.dart`) that weren't
+  listed and removing two references to files that never existed.
+
+### Dev dependencies
+
+- `lints: ^5.0.0` added to `dev_dependencies:`. Not a runtime
+  dependency — package consumers don't pay for it.
+
 ## 0.4.4
 
 **Correctness hotfix release — Batch A of the road to 1.0.0-rc.1.** All

@@ -59,7 +59,7 @@ class SchemaValidator {
 
   Future<JsonSchema> _loadSchema(File schemaFile) async {
     final schemaContent = await schemaFile.readAsString();
-    final schema = JsonSchema.create(jsonDecode(schemaContent));
+    final schema = JsonSchema.create(jsonDecode(schemaContent) as Object);
     _schemaCache[schemaFile.path] = schema;
     return schema;
   }

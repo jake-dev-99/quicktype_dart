@@ -128,7 +128,7 @@ Future<String> _runViaProcess({
       );
     }
 
-    if (!await targetFile.exists()) {
+    if (!targetFile.existsSync()) {
       throw QuicktypeException(
         'quicktype reported success but no output file was produced',
         command: '$exe ${argv.join(' ')}',
@@ -139,8 +139,8 @@ Future<String> _runViaProcess({
     return targetFile.readAsString();
   } finally {
     try {
-      if (await tempDir.exists()) {
-        await tempDir.delete(recursive: true);
+      if (tempDir.existsSync()) {
+        tempDir.deleteSync(recursive: true);
       }
     } catch (e) {
       Log.warning('Failed to clean up temp dir ${tempDir.path}: $e');

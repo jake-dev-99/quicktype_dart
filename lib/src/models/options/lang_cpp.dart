@@ -47,12 +47,14 @@ class CppRendererOptions extends RendererOptions {
     if (includeStyle != null) m['include-style'] = includeStyle!.toString();
     if (sourceStyle != null) m['source-style'] = sourceStyle!.toString();
     if (boost != null) m['boost'] = boost.toString();
-    if (hideNullOptional != null)
+    if (hideNullOptional != null) {
       m['hide-null-optional'] = hideNullOptional.toString();
+    }
     if (typeStyle != null) m['type-style'] = typeStyle!.toString();
     if (memberStyle != null) m['member-style'] = memberStyle!.toString();
-    if (enumeratorStyle != null)
+    if (enumeratorStyle != null) {
       m['enumerator-style'] = enumeratorStyle!.toString();
+    }
     return m;
   }
 }

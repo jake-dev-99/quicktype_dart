@@ -17,8 +17,8 @@ import 'package:quicktype_dart/src/ffi/qt_shim_bindings.dart';
 
 Future<void> main() async {
   final pkgRoot = Directory.current.path;
-  final dylib = File(p.join(pkgRoot, 'build', 'native-noembed',
-      'libquicktype_dart.dylib'));
+  final dylib = File(
+      p.join(pkgRoot, 'build', 'native-noembed', 'libquicktype_dart.dylib'));
   if (!dylib.existsSync()) {
     stderr.writeln('FAIL: build/native-noembed/libquicktype_dart.dylib '
         'not found — build with -DQT_EMBED_BUNDLE=OFF first');
@@ -43,8 +43,8 @@ Future<void> main() async {
   // Swap the shared library path: QtFfiRuntime would normally find
   // build/native/libquicktype_dart.dylib first, which has the embedded
   // bundle — copy the no-embed build over it for this smoke.
-  final devPath = File(p.join(pkgRoot, 'build', 'native',
-      'libquicktype_dart.dylib'));
+  final devPath =
+      File(p.join(pkgRoot, 'build', 'native', 'libquicktype_dart.dylib'));
   final backup = File('${devPath.path}.embed-backup');
   if (devPath.existsSync() && !backup.existsSync()) {
     devPath.copySync(backup.path);

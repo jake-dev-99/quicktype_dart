@@ -68,7 +68,7 @@ class Config {
       final result = await Process.run(quicktypeExe, ['--version']);
       return result.stdout.toString().split('\n').first.trim();
     } catch (e) {
-      Log.warning("Unable to retrieve quicktype version: $e");
+      Log.warning('Unable to retrieve quicktype version: $e');
       return 'unknown';
     }
   }
@@ -121,14 +121,14 @@ class Config {
       Log.info('Created default models directory at: ${modelDir.path}');
     }
 
-    this.sources = _defaultSources(modelDir.path);
-    this.targets = _defaultTargets();
+    sources = _defaultSources(modelDir.path);
+    targets = _defaultTargets();
   }
 
   /// Generates default source configurations
   static Map<SourceType, Set<TypeConfig>> _defaultSources(String modelPath) {
     return {
-      for (var source in SourceType.values)
+      for (final source in SourceType.values)
         source: {
           TypeConfig(
             path: modelPath,
@@ -142,7 +142,7 @@ class Config {
   static Map<TargetType, Set<TypeConfig>> _defaultTargets() {
     final targets = <TargetType, Set<TypeConfig>>{};
 
-    for (var target in TargetType.values) {
+    for (final target in TargetType.values) {
       final configs = <TypeConfig>{};
       if (target.defaultPath != null) {
         try {
@@ -174,8 +174,8 @@ class Config {
           'in "${configFile.path}".',
         );
       }
-      this.sources = _parseSources(decoded['sources']);
-      this.targets = _parseTargets(decoded['targets']);
+      sources = _parseSources(decoded['sources']);
+      targets = _parseTargets(decoded['targets']);
     } on ConfigException {
       rethrow;
     } catch (e) {
@@ -231,7 +231,7 @@ class Config {
       final key = entry.key.toLowerCase();
 
       T? matchingType;
-      for (T validType in validTypes) {
+      for (final T validType in validTypes) {
         if (validType.toString().toLowerCase() == key ||
             validType.argName.toLowerCase() == key) {
           matchingType = validType;
@@ -251,9 +251,16 @@ class Config {
           '"$section.${entry.key}" must be a list, got ${rawList.runtimeType}.',
         );
       }
-      final configs = rawList.map((config) {
-        return TypeConfig.fromJson(matchingType!, config);
-      }).toSet();
+      final configs = <TypeConfig>{};
+      for (final config in rawList) {
+        if (config is! Map<String, dynamic>) {
+          throw ConfigException(
+            '"$section.${entry.key}[]" entries must be objects, got '
+            '${config.runtimeType}.',
+          );
+        }
+        configs.add(TypeConfig.fromJson(matchingType, config));
+      }
 
       result[matchingType] = configs;
     }
