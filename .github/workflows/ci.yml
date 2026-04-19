@@ -98,6 +98,15 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install quicktype globally
+        # The example's build_runner invokes QuicktypeDart.generate with
+        # the default `auto` transport. CI doesn't ship the FFI plugin
+        # binary, so auto falls through to the Process transport, which
+        # needs `quicktype` on PATH.
+        run: npm install -g quicktype
       - name: Install deps
         working-directory: example
         run: dart pub get
