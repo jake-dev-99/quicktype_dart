@@ -132,9 +132,6 @@ class Quicktype {
     List<QuicktypeCommand> commands,
   ) async {
     final results = <QuicktypeResult>[];
-    Log.off('');
-    Log.off('========================================');
-
     for (final command in commands) {
       final result = await execute(command);
       results.add(result);
@@ -148,8 +145,7 @@ class Quicktype {
   Future<QuicktypeResult> execute(QuicktypeCommand command) async {
     final sourcePath = path.absolute(command.sourcePath);
     final targetPath = path.absolute(command.targetPath);
-    Log.off('');
-    Log.off('Generating $targetPath');
+    Log.info('Generating $targetPath');
 
     try {
       final parentDir = Directory(path.dirname(targetPath));
