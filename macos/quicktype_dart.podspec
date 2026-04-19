@@ -10,7 +10,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'quicktype_dart'
-  s.version          = '0.2.0-dev.2'
+  s.version          = '0.2.0-dev.7'
   s.summary          = 'Cross-platform type generation from JSON.'
   s.description      = <<-DESC
     Embeds quicktype-core inside a QuickJS-NG runtime via FFI so Flutter

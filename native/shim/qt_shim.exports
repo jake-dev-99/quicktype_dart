@@ -1,4 +1,7 @@
+_qt_runtime_create
+_qt_runtime_destroy
+_qt_runtime_convert
+_qt_free
 _qt_init
 _qt_convert
-_qt_free
 _qt_shutdown

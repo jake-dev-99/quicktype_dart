@@ -10,58 +10,69 @@ import 'package:path/path.dart' as p;
 import '../models/args.dart';
 import '../models/type.dart';
 import '../quicktype.dart';
-import '../utils/logging.dart';
 import 'qt_shim_bindings.dart';
 
 /// Embedded QuickJS + quicktype-core runtime, called via FFI.
 ///
-/// The FFI path is **opt-in for v0.2.0-dev.1** — it only runs on macOS
-/// today, and [QuicktypeDart.generate] tries it first then falls back to
-/// `Process.run`. To force the FFI path (e.g. in tests), call
-/// [QtFfiRuntime.instance] directly.
+/// Each [QtFfiRuntime] owns its own native runtime handle. QuickJS is
+/// single-threaded, so multiple isolates can each create their own
+/// [QtFfiRuntime] and run generations in parallel without contention.
 ///
-/// The runtime lazy-initializes on first call. It's a **process-global
-/// singleton** — QuickJS runtimes are single-threaded and this first cut
-/// doesn't support multi-isolate access. Revisit in a later phase.
+/// The first [QtFfiRuntime] created in an isolate also caches the loaded
+/// [DynamicLibrary] so subsequent runtimes skip library lookup. Handles
+/// are freed via [Finalizer] when the Dart wrapper goes out of scope; call
+/// [dispose] for deterministic cleanup.
 class QtFfiRuntime {
-  QtFfiRuntime._(this._bindings);
-
-  static QtFfiRuntime? _instance;
-  static Object? _resolveError;
-
-  final QtShimBindings _bindings;
-  bool _initialized = false;
-
-  /// Returns the live runtime, or throws [QuicktypeException] if the native
-  /// library can't be loaded on this platform.
-  static Future<QtFfiRuntime> instance() async {
-    if (_instance != null) return _instance!;
-    if (_resolveError != null) {
-      throw QuicktypeException('FFI unavailable: $_resolveError');
-    }
-    try {
-      final lib = await _openLibrary();
-      _instance = QtFfiRuntime._(QtShimBindings(lib));
-      return _instance!;
-    } catch (e) {
-      _resolveError = e;
-      throw QuicktypeException('FFI unavailable: $e');
-    }
+  QtFfiRuntime._(this._bindings, this._handle) {
+    _finalizer.attach(this, _FinalizationToken(_bindings, _handle),
+        detach: this);
   }
 
-  /// Returns `true` if [instance] is known to be callable. Doesn't attempt
-  /// to resolve the library — use in guards to avoid surfacing an error
-  /// when the caller can trivially fall back.
-  static bool get isAvailable => _instance != null;
+  static QtShimBindings? _cachedBindings;
+  static Object? _resolveError;
+  static QtFfiRuntime? _sharedInstance;
 
-  /// Attempts to resolve the native library without throwing; returns
-  /// `true` if it's now available. Intended for one-time capability
-  /// probing before dispatching the FFI path.
+  static final Finalizer<_FinalizationToken> _finalizer =
+      Finalizer<_FinalizationToken>((token) {
+    token.bindings.qtRuntimeDestroy(token.handle);
+  });
+
+  final QtShimBindings _bindings;
+  Pointer<Void> _handle;
+  bool _disposed = false;
+
+  /// Returns the shared process-wide runtime, creating it on first call.
+  ///
+  /// For most consumers this is the right entry point — one runtime per
+  /// process, lazy-initialized on first use. Callers needing isolate-level
+  /// isolation should construct a fresh [QtFfiRuntime.create] instead.
+  static Future<QtFfiRuntime> instance() async {
+    if (_sharedInstance != null && !_sharedInstance!._disposed) {
+      return _sharedInstance!;
+    }
+    _sharedInstance = await create();
+    return _sharedInstance!;
+  }
+
+  /// Creates a fresh runtime backed by a new QuickJS instance. The caller
+  /// owns the returned runtime and should [dispose] it when done, or rely
+  /// on Dart GC finalization.
+  static Future<QtFfiRuntime> create() async {
+    final bindings = await _resolveBindings();
+    final handle = bindings.qtRuntimeCreate();
+    if (handle == nullptr) {
+      throw QuicktypeException(
+          'qt_runtime_create returned null — the embedded QuickJS runtime '
+          'failed to initialize.');
+    }
+    return QtFfiRuntime._(bindings, handle);
+  }
+
+  /// Returns `true` if the FFI library can be resolved in this isolate.
+  /// Doesn't create a runtime — use this to gate optional FFI usage.
   static Future<bool> probe() async {
-    if (_instance != null) return true;
-    if (_resolveError != null) return false;
     try {
-      await instance();
+      await _resolveBindings();
       return true;
     } catch (_) {
       return false;
@@ -77,35 +88,27 @@ class QtFfiRuntime {
     required TargetType target,
     Iterable<Arg> args = const [],
   }) async {
-    if (!_initialized) {
-      final rc = _bindings.qtInit();
-      if (rc != 0) {
-        throw QuicktypeException('qt_init failed with code $rc');
-      }
-      _initialized = true;
+    if (_disposed) {
+      throw StateError('QtFfiRuntime has been disposed');
     }
 
-    // Caller of qt_convert passes three pre-encoded JSON string literals.
-    // Anything language/arg-specific beyond the plain convertJSON path is
-    // not yet forwarded into the QuickJS side — v0.2.0-dev.1 is the basic
-    // lang/name/json conversion. Arg plumbing for FFI lands in a later dev.
-    if (args.isNotEmpty) {
-      Log.warning(
-        'args are not yet plumbed through the FFI path — they will be '
-        'ignored. Use Process.run for arg support in v0.2.0-dev.1.',
-        'QtFfiRuntime',
-      );
+    final rendererOptions = <String, String>{};
+    for (final arg in args) {
+      final entry = arg.toRendererOption();
+      if (entry != null) rendererOptions[entry.key] = entry.value;
     }
 
     final langP = jsonEncode(target.argName).toNativeUtf8();
     final nameP = jsonEncode(label).toNativeUtf8();
     final jsonP = jsonEncode(json).toNativeUtf8();
+    final optsP = jsonEncode(rendererOptions).toNativeUtf8();
     try {
-      final resultP = _bindings.qtConvert(langP, nameP, jsonP);
+      final resultP =
+          _bindings.qtRuntimeConvert(_handle, langP, nameP, jsonP, optsP);
       if (resultP == nullptr) {
         throw QuicktypeException(
-          'qt_convert returned null — the embedded runtime encountered a '
-          'catastrophic error. Consider filing an issue with the input.',
+          'qt_runtime_convert returned null — the embedded runtime '
+          'encountered a catastrophic error.',
         );
       }
       final result = resultP.toDartString();
@@ -115,29 +118,50 @@ class QtFfiRuntime {
       calloc.free(langP);
       calloc.free(nameP);
       calloc.free(jsonP);
+      calloc.free(optsP);
     }
   }
 
-  /// Resolves the shared library across the platforms v0.2.0-dev.1 supports.
-  /// Each layer below raises a [QuicktypeException] on failure.
+  /// Explicitly tears down this runtime's native handle.
+  void dispose() {
+    if (_disposed) return;
+    _disposed = true;
+    _finalizer.detach(this);
+    if (_handle != nullptr) {
+      _bindings.qtRuntimeDestroy(_handle);
+      _handle = nullptr;
+    }
+    if (identical(_sharedInstance, this)) _sharedInstance = null;
+  }
+
+  /// Loads the native library once per isolate and caches the bindings.
+  static Future<QtShimBindings> _resolveBindings() async {
+    if (_cachedBindings != null) return _cachedBindings!;
+    if (_resolveError != null) {
+      throw QuicktypeException('FFI unavailable: $_resolveError');
+    }
+    try {
+      final lib = await _openLibrary();
+      _cachedBindings = QtShimBindings(lib);
+      return _cachedBindings!;
+    } catch (e) {
+      _resolveError = e;
+      throw QuicktypeException('FFI unavailable: $e');
+    }
+  }
+
   static Future<DynamicLibrary> _openLibrary() async {
-    // 1) Standalone dev build (`cmake --build build/native`) — tried first
-    //    because it's the only path that works today when running tests
-    //    against the repo without a Flutter app bundle.
     final devPath = await _devBuildPath();
     if (devPath != null && File(devPath).existsSync()) {
       return DynamicLibrary.open(devPath);
     }
-
-    // 2) Flutter plugin install — loads via `@rpath` resolution.
-    //    (This branch is what ships; dev branch above is the contributor path.)
     final pluginName = _flutterLibName();
     try {
       return DynamicLibrary.open(pluginName);
     } catch (e) {
       throw QuicktypeException(
-        'Unable to resolve qt_shim native library. Tried dev build at '
-        '"$devPath" and plugin-style "$pluginName". Error: $e',
+        'Unable to resolve quicktype_dart native library. Tried dev build '
+        'at "$devPath" and plugin-style "$pluginName". Error: $e',
       );
     }
   }
@@ -154,7 +178,6 @@ class QtFfiRuntime {
         Uri.parse('package:quicktype_dart/quicktype_dart.dart'),
       );
       if (packageUri == null) return null;
-      // packageUri → .../quicktype_dart/lib/quicktype_dart.dart
       final packageRoot = p.dirname(p.dirname(packageUri.toFilePath()));
       final ext = _dylibExtension();
       final prefix = Platform.isWindows ? '' : 'lib';
@@ -166,10 +189,6 @@ class QtFfiRuntime {
   }
 
   static String _flutterLibName() {
-    // Flutter compiles the plugin's native code into a framework/library
-    // named after the plugin's pod/pubspec `name`, not our internal
-    // `qt_shim` CMake target. On macOS/iOS that's a framework; on the
-    // Unixes it's `libquicktype_dart.so`; on Windows `quicktype_dart.dll`.
     if (Platform.isMacOS || Platform.isIOS) {
       return 'quicktype_dart.framework/quicktype_dart';
     }
@@ -183,4 +202,13 @@ class QtFfiRuntime {
     if (Platform.isWindows) return '.dll';
     return '.so';
   }
+}
+
+/// Finalization token — [Finalizer] requires the attached value to NOT
+/// reference the wrapper directly (otherwise the wrapper never becomes
+/// unreachable). A tiny immutable carrier avoids that cycle.
+class _FinalizationToken {
+  _FinalizationToken(this.bindings, this.handle);
+  final QtShimBindings bindings;
+  final Pointer<Void> handle;
 }
