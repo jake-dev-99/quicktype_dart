@@ -1,5 +1,77 @@
 # Changelog
 
+## 0.7.0
+
+**Quality gates release.** Locks in the bar for everything that
+follows: coverage thresholds, public-API snapshot, release-flow
+automation, golden tests, concurrency + fuzz coverage, CODEOWNERS,
+and a PR template. From this version onward no change reaches pub.dev
+without clearing every gate below.
+
+### Permanent quality bar
+
+- **≥ 80% overall line coverage, ≥ 90% on critical-path modules**
+  (`backend_io.dart`, `backend_web.dart`, `config.dart`,
+  `native_bundle_cache.dart`, `ffi_runtime.dart`). Enforced in CI
+  via `tool/check_coverage.dart`; lcov artifact attached to every
+  run.
+- **Public-API snapshot** (`tool/api_snapshot.txt`). CI diffs it on
+  every PR via `tool/api_snapshot.dart`; drift fails the build
+  unless the snapshot is refreshed in the same commit with a
+  CHANGELOG entry.
+- **Release workflow** (`.github/workflows/release.yml`). Fires on
+  `v*` tag push, re-runs the full static + unit + publish-dry-run
+  gate, then `flutter pub publish` under OIDC auth — no long-lived
+  pub.dev token in secrets.
+- **Concurrency stress tests** (`test/unit/concurrency_test.dart`,
+  `slow` tag). 64 parallel cache fetches of the same URL plus
+  parallel fetches of distinct URLs; proves the atomic-write +
+  Completer-init fixes from 0.4.4 hold under load.
+- **Config fuzz tests** (`test/unit/config_fuzz_test.dart`). ~25
+  hand-rolled malformed shapes (arrays-for-objects, wrong-typed
+  values, unknown targets, etc.) all surface as `ConfigException`
+  — never a raw `FormatException` or cast error leaking out of
+  `dart:convert`.
+- **Golden tests** (`test/integration/golden_test.dart`). Starter
+  golden for `TargetType.dart` + `justTypes: true`; regenerate via
+  `GOLDEN=update dart test test/integration/golden_test.dart`.
+- **Dependency audit** job scheduled weekly — `flutter pub outdated
+  --mode=null-safety --no-dev-dependencies`.
+
+### Added
+
+- `tool/check_coverage.dart` — parses `coverage/lcov.info`, enforces
+  thresholds, exits 1 with a diff on failure.
+- `tool/api_snapshot.dart` + `tool/api_snapshot.txt` — API-surface
+  snapshot + diff tool, built on `package:analyzer`.
+- `.github/workflows/release.yml` — tag-triggered pub.dev publish.
+- `.github/CODEOWNERS` — ownership rules for `/native/`,
+  `/lib/src/ffi/`, backends, `/tool/`, workflows, and the API
+  snapshot.
+- `.github/pull_request_template.md` — required checklist for every
+  PR (format, analyze, tests, sync_version, api_snapshot, changelog,
+  breaking-yes/no).
+
+### Changed
+
+- CI workflow expanded with `coverage` and `deps` jobs; `static` job
+  now also runs `api_snapshot` in check mode.
+
+### Dev dependency
+
+- `analyzer: ^7.7.0` — required by `tool/api_snapshot.dart`. Dev-only;
+  consumers of the package don't pay for it.
+
+### Deferred
+
+- **Mutation testing** (`package:mutation_test`) — tracked for a
+  future batch; wants a dedicated weekly schedule + dashboard before
+  it becomes a gate.
+- **Downstream Flutter-scaffold matrix** — expensive CI; revisit
+  before 1.0 once budget allows.
+- **Perf regression guard** (`test/perf/`) — needs a stable baseline
+  first; come back after the RC.
+
 ## 0.6.2
 
 **Native build reproducibility + developer onboarding.** No public API
