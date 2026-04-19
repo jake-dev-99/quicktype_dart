@@ -5,11 +5,10 @@
 # `npm install -g quicktype` or rely on `dart run build_runner`.
 tool/
 
-# Flutter plugin scaffolding — re-added in v0.2.0 when the QuickJS FFI path
-# lands. These dirs are currently empty template code.
+# Platforms not yet wired up for the FFI plugin — each lands in a
+# subsequent v0.2.0-dev.N release.
 android/
 ios/
-macos/
 linux/
 windows/
 web/
