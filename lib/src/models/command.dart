@@ -33,6 +33,7 @@ class QuicktypeCommand {
   /// collapse to `--key` / `--no-key` to match quicktype's CLI conventions.
   final Map<String, String> rendererOptions;
 
+  /// Creates a command describing a single quicktype invocation.
   const QuicktypeCommand({
     required this.sourcePath,
     required this.sourceArg,

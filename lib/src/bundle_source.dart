@@ -50,11 +50,16 @@ sealed class BundleSource {
 
 /// See [BundleSource.embedded].
 final class EmbeddedBundleSource extends BundleSource {
+  /// Creates a [BundleSource] that loads the compiled-in bundle. Use
+  /// the [BundleSource.embedded] factory for clarity.
   const EmbeddedBundleSource();
 }
 
 /// See [BundleSource.remote].
 final class RemoteBundleSource extends BundleSource {
+  /// Creates a [BundleSource] that fetches from [url], optionally
+  /// verified against a Subresource-Integrity [integrity] token. Use
+  /// the [BundleSource.remote] factory for clarity.
   const RemoteBundleSource(this.url, {this.integrity});
 
   /// Absolute URL the browser will `<script src="…">` load from.

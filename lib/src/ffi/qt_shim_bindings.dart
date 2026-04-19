@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 // Hand-written FFI bindings to the qt_shim C library.
 
 import 'dart:ffi';

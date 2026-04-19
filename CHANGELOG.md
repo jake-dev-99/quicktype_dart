@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.9.0
+
+**Final docs + polish before 1.0.0-rc.1.** No runtime API change; the
+surface of 0.7.0 stays identical. This release closes the doc-coverage
+gap, refreshes the README for the current API, and enables the
+`public_member_api_docs` lint so gaps can't re-open.
+
+### Added
+
+- **`public_member_api_docs` lint enabled.** Every public exported
+  symbol now carries at least a one-line dartdoc. Internal FFI
+  bindings and self-documenting option/enum fields suppress the rule
+  with targeted `// ignore_for_file` pragmas and a comment
+  explaining why.
+- **`dart doc --dry-run` passes clean** — zero unresolved references.
+
+### Changed
+
+- **README rewritten for the 0.9.0 API.** Install snippet now pins
+  `^0.9.0`; dead references to the `*Args` API (removed in 0.4.0)
+  are gone; `Config` loader / `Quicktype` constructor examples match
+  the 0.5.0 shape; transports section leads with "Prefer `auto`";
+  bundle-source section documents the 0.4.4 body-read timeout,
+  atomic writes, and SRI base64 rejection.
+- **`GenerateTransport` enum values now carry per-case docstrings**
+  explaining when each transport is available and when to reach for
+  it instead of `auto`.
+- Various one-line docstrings added to `Config`, `ConfigException`,
+  `QuicktypeCommand`, `QuicktypeException`, `RendererOptions`,
+  `DefaultPaths.*` constants.
+
+### Skipped from plan
+
+- **Cancellation support** (`CancellationToken`) — deferred. Adding
+  a new concept to the `generate` surface right before the RC cut
+  wants consumer feedback first. Track via a post-1.0 RFC.
+
 ## 0.7.0
 
 **Quality gates release.** Locks in the bar for everything that
