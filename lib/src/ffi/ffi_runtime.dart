@@ -144,6 +144,10 @@ class QtFfiRuntime {
 
   /// Returns the on-disk dev-build path if we can locate it via the
   /// quicktype_dart package root, otherwise null.
+  ///
+  /// Matches the filename produced by `cmake --build build/native` — which
+  /// in turn matches the pubspec `name` (`quicktype_dart`) so all platforms
+  /// use a single convention.
   static Future<String?> _devBuildPath() async {
     try {
       final packageUri = await Isolate.resolvePackageUri(
@@ -153,7 +157,9 @@ class QtFfiRuntime {
       // packageUri → .../quicktype_dart/lib/quicktype_dart.dart
       final packageRoot = p.dirname(p.dirname(packageUri.toFilePath()));
       final ext = _dylibExtension();
-      return p.join(packageRoot, 'build', 'native', 'libqt_shim$ext');
+      final prefix = Platform.isWindows ? '' : 'lib';
+      return p.join(packageRoot, 'build', 'native',
+          '${prefix}quicktype_dart$ext');
     } catch (_) {
       return null;
     }

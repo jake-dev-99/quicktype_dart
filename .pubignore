@@ -9,7 +9,6 @@ tool/
 # subsequent v0.2.0-dev.N release.
 android/
 ios/
-linux/
 windows/
 web/
 

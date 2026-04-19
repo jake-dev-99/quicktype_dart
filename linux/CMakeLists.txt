@@ -1,22 +1,26 @@
-# The Flutter tooling requires that developers have CMake 3.10 or later
-# installed. You should not increase this version, as doing so will cause
-# the plugin to fail to compile for some customers of the plugin.
+# Flutter Linux desktop FFI plugin entry point.
+#
+# Flutter invokes this CMake during `flutter build linux`. We delegate the
+# actual compile to the shared `native/` tree so macOS, Linux, Windows, and
+# Android all build from the same sources.
+#
+# The Flutter tooling requires CMake ≥ 3.10.
+
 cmake_minimum_required(VERSION 3.10)
 
-# Project-level configuration.
 set(PROJECT_NAME "quicktype_dart")
-project(${PROJECT_NAME} LANGUAGES CXX)
+project(${PROJECT_NAME} LANGUAGES C)
 
-# Invoke the build for native code shared with the other target platforms.
-# This can be changed to accommodate different builds.
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../src" "${CMAKE_CURRENT_BINARY_DIR}/shared")
+# Build the shared `native/` tree. Produces the `quicktype_dart` shared
+# library target (libquicktype_dart.so on Linux).
+add_subdirectory(
+  "${CMAKE_CURRENT_SOURCE_DIR}/../native"
+  "${CMAKE_CURRENT_BINARY_DIR}/shared"
+)
 
-# List of absolute paths to libraries that should be bundled with the plugin.
-# This list could contain prebuilt libraries, or libraries created by an
-# external build triggered from this build file.
+# Expose the built library so Flutter bundles it into the app's output.
+# The Flutter tool looks for this specific variable in scope.
 set(quicktype_dart_bundled_libraries
-  # Defined in ../src/CMakeLists.txt.
-  # This can be changed to accommodate different builds.
   $<TARGET_FILE:quicktype_dart>
   PARENT_SCOPE
 )
