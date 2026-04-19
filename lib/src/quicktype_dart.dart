@@ -5,10 +5,23 @@ import 'dart:isolate';
 
 import 'package:path/path.dart' as p;
 
+import 'ffi/ffi_runtime.dart';
 import 'models/args.dart';
 import 'models/type.dart';
 import 'quicktype.dart';
 import 'utils/logging.dart';
+
+/// Selects which code-generation transport [QuicktypeDart] uses.
+///
+/// * [auto] — prefer the in-process FFI runtime when it's available and
+///   the caller isn't using [Arg]s (which aren't plumbed through FFI yet);
+///   fall back to [process] otherwise. This is the default.
+/// * [ffi] — require the FFI runtime. Throws [QuicktypeException] if the
+///   native library isn't resolvable on this platform or args are set.
+/// * [process] — always shell out to the `quicktype` Node CLI. Identical
+///   to v0.1.x behaviour. Required for `args` passthrough until the
+///   FFI path learns to forward them (tracked for v0.2.0-dev.2+).
+enum GenerateTransport { auto, ffi, process }
 
 /// Entry point for ad-hoc, runtime JSON → typed-code conversion.
 ///
@@ -24,24 +37,20 @@ import 'utils/logging.dart';
 ///   label: 'User',
 ///   data: [{'id': 1, 'name': 'Jake'}],
 ///   target: TargetType.dart,
-///   args: [DartArgs.useFreezed..value = true],
 /// );
 /// ```
 ///
-/// ### Executable resolution
+/// ### Transports
 ///
-/// Shells out to the `quicktype` Node CLI. Resolution order:
+/// Two runtimes ship, selected via [GenerateTransport]:
 ///
-///   1. A bundled binary at `<package-root>/tool/node_modules/.bin/quicktype`
-///      — used when running from a dev checkout of this package.
-///   2. The `quicktype` executable on the user's `PATH` — the typical
-///      production path, requires `npm install -g quicktype`.
-///
-/// Throws [QuicktypeException] with install instructions if neither is
-/// available.
-///
-/// v0.2.0 will add an FFI path (QuickJS-embedded quicktype-core) that
-/// removes the Node dependency entirely.
+/// * **FFI** (default when available) — embedded QuickJS running
+///   quicktype-core's bundled JS directly in-process. No Node required.
+///   ~ms per call after one-time warm-up.
+/// * **Process** — shells out to the `quicktype` Node CLI. Required when
+///   passing [Arg]s until the FFI path supports them in v0.2.0-dev.2+.
+///   Executable resolution: bundled `tool/node_modules/.bin/quicktype`
+///   first (dev checkouts), then `quicktype` on PATH.
 class QuicktypeDart {
   QuicktypeDart._();
 
@@ -57,34 +66,92 @@ class QuicktypeDart {
   ///
   /// [args] carries language-specific flags — e.g. for Dart:
   /// `[DartArgs.useFreezed..value = true, DartArgs.nullSafety..value = true]`.
-  /// See the `*Args` classes for each target language.
+  /// See the `*Args` classes for each target language. Requires
+  /// [transport] of [GenerateTransport.process] in v0.2.0-dev.1.
+  ///
+  /// [transport] picks the runtime — see [GenerateTransport]. Defaults to
+  /// [GenerateTransport.auto].
   ///
   /// Returns the generated source as a string. Throws [QuicktypeException]
-  /// on subprocess failure.
+  /// on failure.
   static Future<String> generate({
     required String label,
     required Object data,
     required TargetType target,
     Iterable<Arg> args = const [],
+    GenerateTransport transport = GenerateTransport.auto,
   }) =>
       generateFromString(
         label: label,
         json: jsonEncode(data),
         target: target,
         args: args,
+        transport: transport,
       );
 
   /// Generates typed source code from a raw JSON document string.
   ///
   /// Skip `jsonEncode`-ing when you already have the document as a string
-  /// (reading a file, a network response, etc).
-  ///
-  /// See [generate] for parameter semantics.
+  /// (reading a file, a network response, etc). See [generate] for
+  /// parameter semantics.
   static Future<String> generateFromString({
     required String label,
     required String json,
     required TargetType target,
     Iterable<Arg> args = const [],
+    GenerateTransport transport = GenerateTransport.auto,
+  }) async {
+    final resolved = await _resolveTransport(transport, args);
+    switch (resolved) {
+      case GenerateTransport.ffi:
+        final rt = await QtFfiRuntime.instance();
+        return rt.generate(
+          label: label,
+          json: json,
+          target: target,
+          args: args,
+        );
+      case GenerateTransport.process:
+        return _runViaProcess(
+          label: label,
+          json: json,
+          target: target,
+          args: args,
+        );
+      case GenerateTransport.auto:
+        // _resolveTransport never returns auto.
+        throw StateError('unreachable');
+    }
+  }
+
+  static Future<GenerateTransport> _resolveTransport(
+    GenerateTransport requested,
+    Iterable<Arg> args,
+  ) async {
+    switch (requested) {
+      case GenerateTransport.ffi:
+        if (args.isNotEmpty) {
+          throw QuicktypeException(
+            'GenerateTransport.ffi does not yet support passing Arg '
+            'instances. Use GenerateTransport.process or drop the args.',
+          );
+        }
+        return GenerateTransport.ffi;
+      case GenerateTransport.process:
+        return GenerateTransport.process;
+      case GenerateTransport.auto:
+        if (args.isEmpty && await QtFfiRuntime.probe()) {
+          return GenerateTransport.ffi;
+        }
+        return GenerateTransport.process;
+    }
+  }
+
+  static Future<String> _runViaProcess({
+    required String label,
+    required String json,
+    required TargetType target,
+    required Iterable<Arg> args,
   }) async {
     final exe = await _resolveQuicktypeExecutable();
     final tempDir = await Directory.systemTemp.createTemp('quicktype_dart_');
@@ -142,18 +209,18 @@ class QuicktypeDart {
   /// to a `quicktype` found on `PATH`. Throws [QuicktypeException] if neither
   /// is available.
   static Future<String> _resolveQuicktypeExecutable() async {
-    // 1) Prefer the bundled binary when running inside a dev checkout.
     final bundled = await _resolveBundledExecutable();
     if (bundled != null) return bundled;
 
-    // 2) Fall back to `quicktype` on PATH.
     final onPath = _findOnPath('quicktype');
     if (onPath != null) return onPath;
 
     throw QuicktypeException(
       'quicktype not found. Install it with `npm install -g quicktype`, or '
       'make sure the bundled binary exists at '
-      '<package-root>/tool/node_modules/.bin/quicktype.',
+      '<package-root>/tool/node_modules/.bin/quicktype. Alternatively, use '
+      '`transport: GenerateTransport.ffi` to run via the embedded '
+      'QuickJS runtime (v0.2.0-dev.1+, no args support yet).',
     );
   }
 
@@ -163,8 +230,6 @@ class QuicktypeDart {
         Uri.parse('package:quicktype_dart/quicktype_dart.dart'),
       );
       if (packageUri == null) return null;
-      // packageUri → .../quicktype_dart/lib/quicktype_dart.dart
-      // package root → .../quicktype_dart/
       final packageRoot = p.dirname(p.dirname(packageUri.toFilePath()));
       final exe =
           p.join(packageRoot, 'tool', 'node_modules', '.bin', 'quicktype');
