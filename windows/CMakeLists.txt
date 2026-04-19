@@ -1,23 +1,28 @@
-# The Flutter tooling requires that developers have a version of Visual Studio
-# installed that includes CMake 3.14 or later. You should not increase this
-# version, as doing so will cause the plugin to fail to compile for some
-# customers of the plugin.
+# Flutter Windows desktop FFI plugin entry point.
+#
+# Invoked during `flutter build windows`. Delegates to the shared native/
+# tree so all platforms build from the same sources.
+#
+# Visual Studio's CMake requires ≥ 3.14.
+
 cmake_minimum_required(VERSION 3.14)
 
-# Project-level configuration.
 set(PROJECT_NAME "quicktype_dart")
-project(${PROJECT_NAME} LANGUAGES CXX)
+project(${PROJECT_NAME} LANGUAGES C)
 
-# Invoke the build for native code shared with the other target platforms.
-# This can be changed to accommodate different builds.
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../src" "${CMAKE_CURRENT_BINARY_DIR}/shared")
+# Silence MSVC's noisiest C warnings from quickjs-ng — these are expected
+# in that codebase and not actionable in our consumption of it.
+if(MSVC)
+  add_compile_options(/wd4101 /wd4146 /wd4244 /wd4267 /wd4305 /wd4334)
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_WARNINGS)
+endif()
 
-# List of absolute paths to libraries that should be bundled with the plugin.
-# This list could contain prebuilt libraries, or libraries created by an
-# external build triggered from this build file.
+add_subdirectory(
+  "${CMAKE_CURRENT_SOURCE_DIR}/../native"
+  "${CMAKE_CURRENT_BINARY_DIR}/shared"
+)
+
 set(quicktype_dart_bundled_libraries
-  # Defined in ../src/CMakeLists.txt.
-  # This can be changed to accommodate different builds.
   $<TARGET_FILE:quicktype_dart>
   PARENT_SCOPE
 )

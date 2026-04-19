@@ -27,9 +27,35 @@
 
 #include "qt_shim.h"
 #include "quickjs.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// --- Portability shims ---------------------------------------------------
+// MSVC doesn't provide asprintf (GNU extension) or strdup (POSIX, though
+// available as _strdup). Provide minimal replacements under _WIN32.
+
+#if defined(_WIN32)
+#  define strdup _strdup
+
+static int asprintf(char** strp, const char* fmt, ...) {
+  if (!strp) return -1;
+  va_list args;
+  va_start(args, fmt);
+  int len = _vscprintf(fmt, args);
+  va_end(args);
+  if (len < 0) return -1;
+  char* buf = (char*)malloc((size_t)len + 1);
+  if (!buf) return -1;
+  va_start(args, fmt);
+  int written = vsnprintf(buf, (size_t)len + 1, fmt, args);
+  va_end(args);
+  if (written < 0) { free(buf); return -1; }
+  *strp = buf;
+  return written;
+}
+#endif
 
 // Generated at build time by embed_bundle.py.
 extern const char qt_prelude_js[];
