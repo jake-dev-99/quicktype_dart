@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.4.6
+
+**Resource safety + error propagation polish — Batch C of the road to
+1.0.0-rc.1.** No public API additions or removals. Seven quality-of-
+implementation improvements to make subprocess, web-bundle, and cache
+error paths both safer and clearer.
+
+### Fixed
+
+- **Process transport logs subprocess stdout/stderr on success**
+  (`lib/src/backend_io.dart`). Deprecation notices and compatibility
+  warnings emitted by `quicktype` no longer vanish into the void —
+  stdout lands on `Log.info`, stderr on `Log.warning`.
+- **Subprocess `command` field in thrown exceptions is now
+  shell-quoted** via a new `lib/src/utils/shell.dart`. Args with
+  whitespace, quotes, or shell metacharacters get single-quoted so
+  the failing command is copy-pastable. (Pure formatting — we still
+  pass argv directly to `Process.run`, never through a shell.)
+- **Temp-dir cleanup survives a Windows file lock**
+  (`lib/src/backend_io.dart`). On a first-pass delete failure the path
+  is queued for a second-chance sweep at the start of the next
+  `_runViaProcess` call, instead of leaking into the user's temp dir.
+- **Web bundle loader replaces the 25 ms busy-wait with an
+  event-driven + exponential-backoff hybrid**
+  (`lib/src/backend_web.dart`). When a `<script data-quicktype-dart>`
+  tag was injected by someone else, we now listen for its load/error
+  events and only poll (2 → 4 → 8 → … ms, capped at 100 ms) as a
+  fallback for the already-fired case. Overall budget raised from 5 s
+  to 15 s to cover cold-cache fetches.
+- **Web bundle timeout vs. corrupt-bundle errors are now distinct
+  messages**. A timeout reports "timed out … waiting for
+  globalThis.qtConvert"; a completed-but-empty symbol reports "the
+  bundle … is either corrupt or not a quicktype_dart bundle". Callers
+  can tell the two failure modes apart at a glance.
+- **SRI parse rejects malformed base64 and empty hashes at parse time**
+  (`lib/src/ffi/native_bundle_cache.dart`). Previously a token like
+  `'sha256-!!!not-base64!!!'` sailed through `_parseSri` only to blow
+  up with a bare `FormatException` deep in the hash routine; now it
+  cleanly fails the integrity check like any other bad token.
+- **FFI `size_t` ↔ `int` bound documented**
+  (`lib/src/ffi/qt_shim_bindings.dart`). Clarifies that the bundle
+  length cap is well beyond any realistic quicktype-core bundle on
+  every platform Dart supports.
+
+### Added
+
+- `lib/src/utils/shell.dart` — `shellQuote` and `formatCommand`
+  helpers. Internal, unit-tested, reusable by future tooling.
+
 ## 0.4.5
 
 **Lint + packaging hygiene — Batch B of the road to 1.0.0-rc.1.** No

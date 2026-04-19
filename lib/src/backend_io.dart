@@ -16,6 +16,7 @@ import 'models/type.dart';
 import 'quicktype.dart';
 import 'quicktype_dart.dart' show GenerateTransport, QuicktypeDart;
 import 'utils/logging.dart';
+import 'utils/shell.dart';
 
 /// Backend entry point. Platform-independent argument handling already
 /// happened in [QuicktypeDart.generateFromString]; this function just
@@ -101,6 +102,7 @@ Future<String> _runViaProcess({
     }
 
     final timeout = QuicktypeDart.processTimeout;
+    final commandStr = formatCommand(exe, argv);
     final ProcessResult result;
     try {
       result = await Process.run(exe, argv).timeout(timeout);
@@ -109,12 +111,12 @@ Future<String> _runViaProcess({
         'quicktype subprocess timed out after ${timeout.inSeconds}s. '
         'Raise the limit via QuicktypeDart.processTimeout if generations '
         'legitimately take longer.',
-        command: '$exe ${argv.join(' ')}',
+        command: commandStr,
       );
     } catch (e, st) {
       throw QuicktypeException(
         'Failed to run quicktype: $e',
-        command: '$exe ${argv.join(' ')}',
+        command: commandStr,
         cause: e,
         stackTrace: st,
       );
@@ -123,29 +125,74 @@ Future<String> _runViaProcess({
     if (result.exitCode != 0) {
       throw QuicktypeException(
         'quicktype exited with code ${result.exitCode}: ${result.stderr}',
-        command: '$exe ${argv.join(' ')}',
+        command: commandStr,
         exitCode: result.exitCode,
       );
+    }
+
+    // Surface any advisory output the child emitted on success. Previously
+    // deprecation notices and compatibility warnings were discarded; they
+    // now land on Log.info / Log.warning so callers can see them.
+    final stdoutStr = result.stdout.toString();
+    if (stdoutStr.trim().isNotEmpty) {
+      Log.info(stdoutStr.trimRight());
+    }
+    final stderrStr = result.stderr.toString();
+    if (stderrStr.trim().isNotEmpty) {
+      Log.warning(stderrStr.trimRight());
     }
 
     if (!targetFile.existsSync()) {
       throw QuicktypeException(
         'quicktype reported success but no output file was produced',
-        command: '$exe ${argv.join(' ')}',
+        command: commandStr,
         exitCode: result.exitCode,
       );
     }
 
     return targetFile.readAsString();
   } finally {
+    _cleanupTempDir(tempDir);
+  }
+}
+
+/// Deletes [tempDir] best-effort, with one retry + queue for a later
+/// sweep if the first attempt hits a Windows file-lock. The second-chance
+/// sweep runs on the next `_runViaProcess` invocation via [_sweepOrphans].
+void _cleanupTempDir(Directory tempDir) {
+  _sweepOrphans();
+  try {
+    if (tempDir.existsSync()) {
+      tempDir.deleteSync(recursive: true);
+    }
+  } catch (e) {
+    _deferredOrphans.add(tempDir.path);
+    Log.warning(
+      'Failed to clean up temp dir ${tempDir.path}: $e. Will retry on '
+      'next invocation.',
+    );
+  }
+}
+
+/// Paths queued for a second-chance cleanup pass. Windows can keep files
+/// locked briefly after the subprocess exits; this lets the next run
+/// reclaim them instead of leaking into the user's temp dir.
+final Set<String> _deferredOrphans = <String>{};
+
+void _sweepOrphans() {
+  if (_deferredOrphans.isEmpty) return;
+  final still = <String>{};
+  for (final path in _deferredOrphans) {
     try {
-      if (tempDir.existsSync()) {
-        tempDir.deleteSync(recursive: true);
-      }
-    } catch (e) {
-      Log.warning('Failed to clean up temp dir ${tempDir.path}: $e');
+      final dir = Directory(path);
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
+    } catch (_) {
+      still.add(path);
     }
   }
+  _deferredOrphans
+    ..clear()
+    ..addAll(still);
 }
 
 /// Resolves a usable `quicktype` executable, independent of caller CWD.
