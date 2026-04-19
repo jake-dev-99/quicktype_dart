@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'backend_io.dart'
-    if (dart.library.js_interop) 'backend_web.dart' as backend;
+import 'backend_io.dart' if (dart.library.js_interop) 'backend_web.dart'
+    as backend;
 import 'bundle_source.dart';
 import 'models/renderer_options.dart';
 import 'models/type.dart';
@@ -80,6 +80,13 @@ class QuicktypeDart {
   static void setBundleSource(BundleSource source) {
     _bundleSource = source;
   }
+
+  /// Maximum wall-clock duration for a single `quicktype` subprocess run
+  /// via [GenerateTransport.process]. A hung child no longer blocks the
+  /// caller (or build_runner) forever — the process is terminated and a
+  /// [QuicktypeException] is thrown when this elapses. Defaults to 5
+  /// minutes; override for generations that legitimately take longer.
+  static Duration processTimeout = const Duration(minutes: 5);
 
   /// Generates typed source code from any JSON-encodable Dart value.
   ///

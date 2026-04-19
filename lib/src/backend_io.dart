@@ -5,6 +5,7 @@
 // Dispatches between the embedded QuickJS FFI runtime and the `quicktype`
 // Node CLI (`Process.run`) per the caller's [GenerateTransport] choice.
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -13,7 +14,7 @@ import 'package:path/path.dart' as p;
 import 'ffi/ffi_runtime.dart';
 import 'models/type.dart';
 import 'quicktype.dart';
-import 'quicktype_dart.dart' show GenerateTransport;
+import 'quicktype_dart.dart' show GenerateTransport, QuicktypeDart;
 import 'utils/logging.dart';
 
 /// Backend entry point. Platform-independent argument handling already
@@ -77,10 +78,14 @@ Future<String> _runViaProcess({
     await sourceFile.writeAsString(json);
 
     final argv = <String>[
-      '--src', sourceFile.path,
-      '--src-lang', 'json',
-      '--lang', target.argName,
-      '--out', targetFile.path,
+      '--src',
+      sourceFile.path,
+      '--src-lang',
+      'json',
+      '--lang',
+      target.argName,
+      '--out',
+      targetFile.path,
     ];
     // Serialize renderer options as CLI flags. Boolean-style "false" values
     // become --no-<name>; "true" collapses to --<name>; everything else
@@ -95,7 +100,25 @@ Future<String> _runViaProcess({
       }
     }
 
-    final result = await Process.run(exe, argv);
+    final timeout = QuicktypeDart.processTimeout;
+    final ProcessResult result;
+    try {
+      result = await Process.run(exe, argv).timeout(timeout);
+    } on TimeoutException {
+      throw QuicktypeException(
+        'quicktype subprocess timed out after ${timeout.inSeconds}s. '
+        'Raise the limit via QuicktypeDart.processTimeout if generations '
+        'legitimately take longer.',
+        command: '$exe ${argv.join(' ')}',
+      );
+    } catch (e, st) {
+      throw QuicktypeException(
+        'Failed to run quicktype: $e',
+        command: '$exe ${argv.join(' ')}',
+        cause: e,
+        stackTrace: st,
+      );
+    }
 
     if (result.exitCode != 0) {
       throw QuicktypeException(
@@ -163,9 +186,8 @@ String? _findOnPath(String name) {
   final pathEnv = Platform.environment['PATH'];
   if (pathEnv == null || pathEnv.isEmpty) return null;
   final separator = Platform.isWindows ? ';' : ':';
-  final candidates = Platform.isWindows
-      ? ['$name.cmd', '$name.exe', name]
-      : [name];
+  final candidates =
+      Platform.isWindows ? ['$name.cmd', '$name.exe', name] : [name];
   for (final dir in pathEnv.split(separator)) {
     if (dir.isEmpty) continue;
     for (final cand in candidates) {

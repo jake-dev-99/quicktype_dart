@@ -27,7 +27,11 @@ void main() {
     test('parses path and coerces the args map to rendererOptions', () {
       final cfg = TypeConfig.fromJson(TargetType.dart, {
         'path': 'lib/models/',
-        'args': {'use-freezed': true, 'null-safety': false, 'part-name': 'user.g.dart'},
+        'args': {
+          'use-freezed': true,
+          'null-safety': false,
+          'part-name': 'user.g.dart'
+        },
       });
       expect(cfg.path, 'lib/models/');
       expect(cfg.rendererOptions, {

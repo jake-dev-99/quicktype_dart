@@ -67,7 +67,8 @@ void main() {
   });
 
   group('cross-language sanity', () {
-    test('empty instance of every RendererOptions subclass serializes empty', () {
+    test('empty instance of every RendererOptions subclass serializes empty',
+        () {
       final cases = <RendererOptions>[
         const CRendererOptions(),
         const CppRendererOptions(),
@@ -94,7 +95,8 @@ void main() {
       ];
       for (final c in cases) {
         expect(c.toRendererOptions(), isEmpty,
-            reason: '${c.runtimeType} should serialize empty when no fields set');
+            reason:
+                '${c.runtimeType} should serialize empty when no fields set');
       }
     });
   });

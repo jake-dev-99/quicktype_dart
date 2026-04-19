@@ -1,5 +1,64 @@
 # Changelog
 
+## 0.4.4
+
+**Correctness hotfix release — Batch A of the road to 1.0.0-rc.1.** All
+fixes are latent-bug repairs; no public API is removed or renamed. The
+`QuicktypeException` class gains optional `cause` and `stackTrace` fields
+(additive), and `QuicktypeDart.processTimeout` is a new tunable static.
+
+Note: this is the first release where `pubspec.yaml`, the iOS/macOS
+podspecs, and `android/build.gradle` all carry a matching version — the
+0.4.1/0.4.2/0.4.3 tags that existed upstream never landed pubspec bumps
+on `main`, so this release collapses back to `pubspec` as source of
+truth. A `tool/sync_version.dart` script in Batch B will prevent future
+drift.
+
+### Fixed
+
+- **Process subprocess now has a 5-minute default timeout**
+  (`lib/src/backend_io.dart`). A hung `quicktype` child can no longer
+  block build_runner indefinitely. Configurable via
+  `QuicktypeDart.processTimeout`.
+- **Remote bundle fetch has a 60-second total-body timeout**
+  (`lib/src/ffi/native_bundle_cache.dart`). Previously only the TCP
+  connect was bounded, so a slow-trickling CDN could hang the isolate
+  forever.
+- **Atomic cache writes** (`lib/src/ffi/native_bundle_cache.dart`).
+  Concurrent isolates racing a bundle fetch can no longer observe a
+  half-written file — writes go through `tmp + rename`.
+- **Corrupted cache files are now deleted** on integrity-check failure
+  so a bad write doesn't poison subsequent reads
+  (`lib/src/ffi/native_bundle_cache.dart`).
+- **`QtFfiRuntime.instance()` is now serialized through a `Completer`**
+  (`lib/src/ffi/ffi_runtime.dart`), so two concurrent callers share one
+  allocation instead of each initializing a native runtime and leaking
+  the loser.
+- **FFI generate-path allocations migrated to `package:ffi` `Arena`**
+  (`lib/src/ffi/ffi_runtime.dart`). If `jsonEncode` throws mid-
+  allocation, every already-allocated pointer is freed.
+- **`Config` loader validates shapes before casting**
+  (`lib/src/config.dart`). Previously `as Map<String,dynamic>`,
+  `as List`, and a force-unwrapped `matchingType!` crashed on any
+  malformed `quicktype.json`; now each failure raises a
+  `ConfigException` with a field path and the expected shape.
+- **Subprocess failures no longer swallow the underlying error**
+  (`lib/src/quicktype.dart`, `lib/src/backend_io.dart`).
+  `QuicktypeException` now carries the original `cause` and
+  `stackTrace`, and its `toString()` surfaces the wrapped cause.
+- **CLI version string reads from `pubspec.yaml`** via a new generated
+  constant at `lib/src/version.dart`. `dart run quicktype_dart
+  --version` no longer prints a stale `v1.0.0`.
+
+### Added
+
+- `QuicktypeException.cause` and `QuicktypeException.stackTrace`
+  (optional, additive).
+- `QuicktypeDart.processTimeout` — tunable wall-clock cap for the
+  subprocess transport.
+- `lib/src/version.dart` exposing `packageVersion` so downstream tooling
+  can read the current version without parsing `pubspec.yaml`.
+
 ## 0.4.0
 
 **Breaking-change release.** Removes the `*Args` surface deprecated in v0.3.0

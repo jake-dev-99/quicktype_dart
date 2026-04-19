@@ -196,8 +196,7 @@ class TypeConfig {
     }
   }
 
-  static Map<String, String> _coerceRendererOptions(
-      Map<String, dynamic> raw) {
+  static Map<String, String> _coerceRendererOptions(Map<String, dynamic> raw) {
     final out = <String, String>{};
     for (final entry in raw.entries) {
       final v = entry.value;
@@ -210,7 +209,7 @@ class TypeConfig {
       } else {
         Log.warning(
           'Renderer option "${entry.key}" has unsupported value type '
-          '${v.runtimeType}; coercing via toString().',
+              '${v.runtimeType}; coercing via toString().',
           'TypeConfig',
         );
         out[entry.key] = v.toString();

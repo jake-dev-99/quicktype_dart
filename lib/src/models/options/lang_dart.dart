@@ -1,4 +1,3 @@
-
 import '../renderer_options.dart';
 
 /// Named-parameter options for the Dart target.
@@ -43,7 +42,8 @@ class DartRendererOptions extends RendererOptions {
     if (copyWith != null) m['copy-with'] = copyWith.toString();
     if (useFreezed != null) m['use-freezed'] = useFreezed.toString();
     if (useHive != null) m['use-hive'] = useHive.toString();
-    if (useJsonAnnotation != null) m['use-json-annotation'] = useJsonAnnotation.toString();
+    if (useJsonAnnotation != null)
+      m['use-json-annotation'] = useJsonAnnotation.toString();
     if (partName != null) m['part-name'] = partName!;
     return m;
   }

@@ -74,10 +74,14 @@ class QuicktypeCommand {
 
   List<String> _toArgv() {
     final out = <String>[
-      '--src', path.canonicalize(sourcePath),
-      '--src-lang', sourceArg,
-      '--lang', targetArg,
-      '--out', path.canonicalize(targetPath),
+      '--src',
+      path.canonicalize(sourcePath),
+      '--src-lang',
+      sourceArg,
+      '--lang',
+      targetArg,
+      '--out',
+      path.canonicalize(targetPath),
     ];
     for (final entry in rendererOptions.entries) {
       if (entry.value == 'true') {

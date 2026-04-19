@@ -77,8 +77,8 @@ Future<void> _loadBundle() async {
     RemoteBundleSource(:final integrity) => integrity,
   };
 
-  final existing = web.document
-      .querySelector('script[data-quicktype-dart="bundle"]');
+  final existing =
+      web.document.querySelector('script[data-quicktype-dart="bundle"]');
   if (existing == null) {
     final script = web.document.createElement('script') as web.HTMLScriptElement
       ..src = url
@@ -91,8 +91,8 @@ Future<void> _loadBundle() async {
 
     final completer = Completer<void>();
     script.onLoad.listen((_) => completer.complete());
-    script.onError.listen((e) => completer.completeError(
-        QuicktypeException('Failed to load $url: $e')));
+    script.onError.listen((e) =>
+        completer.completeError(QuicktypeException('Failed to load $url: $e')));
     web.document.head!.appendChild(script);
     await completer.future;
   } else {

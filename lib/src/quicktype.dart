@@ -18,7 +18,9 @@ import 'utils/logging.dart';
 const String _quicktypeExe = './tool/node_modules/.bin/quicktype';
 
 /// Thrown when a quicktype subprocess call fails or its output can't be
-/// consumed. Carries the failing command and exit code when available.
+/// consumed. Carries the failing command and exit code when available,
+/// plus the underlying [cause] and its [stackTrace] when wrapping another
+/// error so callers can diagnose without losing context.
 class QuicktypeException implements Exception {
   /// Human-readable description of the failure.
   final String message;
@@ -29,7 +31,19 @@ class QuicktypeException implements Exception {
   /// Subprocess exit code, if the command actually ran.
   final int? exitCode;
 
-  QuicktypeException(this.message, {this.command, this.exitCode});
+  /// The underlying error this exception wraps, if any.
+  final Object? cause;
+
+  /// The stack trace of [cause], if captured.
+  final StackTrace? stackTrace;
+
+  QuicktypeException(
+    this.message, {
+    this.command,
+    this.exitCode,
+    this.cause,
+    this.stackTrace,
+  });
 
   @override
   String toString() {
@@ -39,6 +53,9 @@ class QuicktypeException implements Exception {
     }
     if (exitCode != null) {
       buffer.write('\nExit code: $exitCode');
+    }
+    if (cause != null) {
+      buffer.write('\nCaused by: $cause');
     }
     return buffer.toString();
   }
@@ -158,11 +175,17 @@ class Quicktype {
         parentDir.createSync(recursive: true);
       }
 
-      final result =
-          await Process.run(_quicktypeExe, command.argv).catchError((e) {
-        throw QuicktypeException('Failed to run quicktype',
-            command: 'quicktype');
-      });
+      final ProcessResult result;
+      try {
+        result = await Process.run(_quicktypeExe, command.argv);
+      } catch (e, st) {
+        throw QuicktypeException(
+          'Failed to run quicktype: $e',
+          command: '$_quicktypeExe ${command.argv.join(' ')}',
+          cause: e,
+          stackTrace: st,
+        );
+      }
       if (result.exitCode == 0) {
         if (result.stdout.toString().isNotEmpty) {
           Log.off('${result.stdout}');

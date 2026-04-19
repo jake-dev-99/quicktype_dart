@@ -33,7 +33,13 @@ Future<String> fetchAndCacheBundle(Uri url, String? integrity) async {
     if (integrity == null || _matchesIntegrity(bytes, integrity)) {
       return utf8.decode(bytes);
     }
-    // Integrity mismatch on cached copy → re-fetch.
+    // Integrity mismatch on cached copy → drop the stale file so we
+    // don't keep re-reading it if the atomic write below fails later.
+    try {
+      cacheFile.deleteSync();
+    } catch (_) {
+      // Best-effort; the atomic rename below overwrites regardless.
+    }
   }
 
   final bytes = await _fetch(url);
@@ -44,7 +50,26 @@ Future<String> fetchAndCacheBundle(Uri url, String? integrity) async {
     );
   }
   cacheFile.parent.createSync(recursive: true);
-  cacheFile.writeAsBytesSync(bytes, flush: true);
+  // Atomic write: write to a uniquely-named temp file in the same
+  // directory, then rename into place. Concurrent isolates/processes
+  // either see the complete previous file or the complete new file —
+  // never a half-written blob.
+  final tmp = File(
+    '${cacheFile.path}.tmp-$pid-${DateTime.now().microsecondsSinceEpoch}',
+  );
+  try {
+    tmp.writeAsBytesSync(bytes, flush: true);
+    tmp.renameSync(cacheFile.path);
+  } catch (_) {
+    if (tmp.existsSync()) {
+      try {
+        tmp.deleteSync();
+      } catch (_) {
+        // Leave stray temp for the OS to sweep; not load-bearing.
+      }
+    }
+    rethrow;
+  }
   return utf8.decode(bytes);
 }
 
@@ -55,9 +80,15 @@ Future<File> _cacheFileFor(Uri url) async {
       .toString()
       .substring(0, 16);
   return File(
-    p.join(Directory.systemTemp.path, 'quicktype_dart_bundles', key, 'bundle.js'),
+    p.join(
+        Directory.systemTemp.path, 'quicktype_dart_bundles', key, 'bundle.js'),
   );
 }
+
+/// Total wall-clock budget for a single bundle fetch, covering connect +
+/// request + full body read. A slow or malicious CDN that trickles bytes
+/// can no longer hang the caller indefinitely.
+const Duration _fetchTimeout = Duration(seconds: 60);
 
 /// Fetches [url] with a short total timeout. HTTP/HTTPS only; `file:` URLs
 /// are also supported for tests + tooling.
@@ -65,23 +96,35 @@ Future<Uint8List> _fetch(Uri url) async {
   if (url.scheme == 'file') {
     return File(url.toFilePath()).readAsBytes();
   }
-  final client = HttpClient()
-    ..connectionTimeout = const Duration(seconds: 15);
+  final client = HttpClient()..connectionTimeout = const Duration(seconds: 15);
   try {
-    final req = await client.getUrl(url);
-    final resp = await req.close();
-    if (resp.statusCode != 200) {
-      throw QuicktypeException(
-          'GET $url returned HTTP ${resp.statusCode}');
-    }
-    final builder = BytesBuilder(copy: false);
-    await for (final chunk in resp) {
-      builder.add(chunk);
-    }
-    return builder.toBytes();
+    return await _fetchOverHttp(client, url).timeout(
+      _fetchTimeout,
+      onTimeout: () => throw QuicktypeException(
+        'GET $url timed out after ${_fetchTimeout.inSeconds}s.',
+      ),
+    );
   } finally {
-    client.close(force: true);
+    try {
+      client.close(force: true);
+    } catch (_) {
+      // Swallow close-time failures; the primary error (if any) already
+      // propagated.
+    }
   }
+}
+
+Future<Uint8List> _fetchOverHttp(HttpClient client, Uri url) async {
+  final req = await client.getUrl(url);
+  final resp = await req.close();
+  if (resp.statusCode != 200) {
+    throw QuicktypeException('GET $url returned HTTP ${resp.statusCode}');
+  }
+  final builder = BytesBuilder(copy: false);
+  await for (final chunk in resp) {
+    builder.add(chunk);
+  }
+  return builder.toBytes();
 }
 
 /// Returns true if [bytes] hash to the SRI token [integrity].

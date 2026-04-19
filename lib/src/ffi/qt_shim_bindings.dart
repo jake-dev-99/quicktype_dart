@@ -20,8 +20,7 @@ typedef QtRuntimeLoadEmbedded = int Function(Pointer<Void>);
 /// loads caller-supplied JS into the runtime. Returns 0 on success.
 typedef QtRuntimeLoadBundleNative = Int32 Function(
     Pointer<Void>, Pointer<Utf8>, Size);
-typedef QtRuntimeLoadBundle = int Function(
-    Pointer<Void>, Pointer<Utf8>, int);
+typedef QtRuntimeLoadBundle = int Function(Pointer<Void>, Pointer<Utf8>, int);
 
 /// `void qt_runtime_destroy(QtRuntime*)` — tears down a runtime. Safe with
 /// `nullptr`.
@@ -43,17 +42,20 @@ typedef QtFree = void Function(Pointer<Utf8>);
 /// Lazily-resolved function pointers into the `qt_shim` native library.
 class QtShimBindings {
   QtShimBindings(this._lib)
-      : qtRuntimeCreate = _lib.lookupFunction<QtRuntimeCreateNative,
-            QtRuntimeCreate>('qt_runtime_create'),
-        qtRuntimeLoadEmbedded = _lib.lookupFunction<
-            QtRuntimeLoadEmbeddedNative,
+      : qtRuntimeCreate =
+            _lib.lookupFunction<QtRuntimeCreateNative, QtRuntimeCreate>(
+                'qt_runtime_create'),
+        qtRuntimeLoadEmbedded = _lib.lookupFunction<QtRuntimeLoadEmbeddedNative,
             QtRuntimeLoadEmbedded>('qt_runtime_load_embedded'),
-        qtRuntimeLoadBundle = _lib.lookupFunction<QtRuntimeLoadBundleNative,
-            QtRuntimeLoadBundle>('qt_runtime_load_bundle'),
-        qtRuntimeDestroy = _lib.lookupFunction<QtRuntimeDestroyNative,
-            QtRuntimeDestroy>('qt_runtime_destroy'),
-        qtRuntimeConvert = _lib.lookupFunction<QtRuntimeConvertNative,
-            QtRuntimeConvert>('qt_runtime_convert'),
+        qtRuntimeLoadBundle =
+            _lib.lookupFunction<QtRuntimeLoadBundleNative, QtRuntimeLoadBundle>(
+                'qt_runtime_load_bundle'),
+        qtRuntimeDestroy =
+            _lib.lookupFunction<QtRuntimeDestroyNative, QtRuntimeDestroy>(
+                'qt_runtime_destroy'),
+        qtRuntimeConvert =
+            _lib.lookupFunction<QtRuntimeConvertNative, QtRuntimeConvert>(
+                'qt_runtime_convert'),
         qtFree = _lib.lookupFunction<QtFreeNative, QtFree>('qt_free');
 
   // ignore: unused_field

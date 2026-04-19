@@ -48,7 +48,8 @@ class SchemaValidator {
         return false;
       }
 
-      Log.info('JSON validation passed for ${jsonFile.path}', 'SchemaValidator');
+      Log.info(
+          'JSON validation passed for ${jsonFile.path}', 'SchemaValidator');
       return true;
     } catch (e) {
       Log.severe('Error during validation: $e', 'SchemaValidator');

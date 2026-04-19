@@ -9,7 +9,8 @@ void main() {
       const a = BundleSource.embedded();
       const b = BundleSource.embedded();
       expect(identical(a, b), isTrue,
-          reason: 'const factory of BundleSource.embedded() should canonicalize');
+          reason:
+              'const factory of BundleSource.embedded() should canonicalize');
       expect(a, isA<EmbeddedBundleSource>());
     });
 
