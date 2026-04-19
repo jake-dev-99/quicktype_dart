@@ -4,6 +4,7 @@ import '../args.dart';
 ///
 /// Provides methods to generate properly formatted command-line arguments
 /// for C-specific features of quicktype.
+@Deprecated('Use CRendererOptions instead — removal planned for v0.4.0')
 class CArgs {
   /// Private constructor to prevent instantiation
   CArgs._();

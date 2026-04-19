@@ -11,7 +11,6 @@ import 'dart:isolate';
 import 'package:path/path.dart' as p;
 
 import 'ffi/ffi_runtime.dart';
-import 'models/args.dart';
 import 'models/type.dart';
 import 'quicktype.dart';
 import 'quicktype_dart.dart' show GenerateTransport;
@@ -24,7 +23,7 @@ Future<String> generateFromString({
   required String label,
   required String json,
   required TargetType target,
-  required Iterable<Arg> args,
+  required Map<String, String> rendererOptions,
   required GenerateTransport transport,
 }) async {
   final resolved = await _resolveTransport(transport);
@@ -35,14 +34,14 @@ Future<String> generateFromString({
         label: label,
         json: json,
         target: target,
-        args: args,
+        rendererOptions: rendererOptions,
       );
     case GenerateTransport.process:
       return _runViaProcess(
         label: label,
         json: json,
         target: target,
-        args: args,
+        rendererOptions: rendererOptions,
       );
     case GenerateTransport.auto:
       throw StateError('unreachable');
@@ -65,7 +64,7 @@ Future<String> _runViaProcess({
   required String label,
   required String json,
   required TargetType target,
-  required Iterable<Arg> args,
+  required Map<String, String> rendererOptions,
 }) async {
   final exe = await _resolveQuicktypeExecutable();
   final tempDir = await Directory.systemTemp.createTemp('quicktype_dart_');
@@ -83,8 +82,16 @@ Future<String> _runViaProcess({
       '--lang', target.argName,
       '--out', targetFile.path,
     ];
-    for (final arg in args) {
-      argv.addAll(arg.argv());
+    // Serialize renderer options as CLI flags. BoolArg-style "false" values
+    // become --no-<name>; everything else is --<name> <value>.
+    for (final entry in rendererOptions.entries) {
+      if (entry.value == 'true') {
+        argv.add('--${entry.key}');
+      } else if (entry.value == 'false') {
+        argv.add('--no-${entry.key}');
+      } else {
+        argv.addAll(['--${entry.key}', entry.value]);
+      }
     }
 
     final result = await Process.run(exe, argv);

@@ -21,7 +21,7 @@ Future<void> main() async {
     label: 'Beta',
     json: '{"id":2}',
     target: TargetType.dart,
-    args: [DartArgs.justTypes..value = true],
+    rendererOptions: const {'just-types': 'true'},
   );
 
   _assert(outA.contains('class Alpha'), 'Alpha missing class');

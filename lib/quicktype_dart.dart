@@ -25,7 +25,13 @@ export 'src/models/type.dart'
 export 'src/models/command.dart' show QuicktypeCommand;
 export 'src/models/result.dart' show QuicktypeResult;
 
-// Args surface (Arg base classes + all lang_*.dart + main_args + enums)
+// Typed renderer options (preferred) — `DartRendererOptions`,
+// `KotlinRendererOptions`, `SwiftRendererOptions`, etc.
+export 'src/models/options/options.dart';
+
+// Args surface (Arg base classes + all lang_*.dart + main_args + enums).
+// Deprecated since v0.3.0 — use the typed RendererOptions classes above.
+// Full removal planned for v0.4.0.
 export 'src/models/args.dart';
 
 // Config + orchestration

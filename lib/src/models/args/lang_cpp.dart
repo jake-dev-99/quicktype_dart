@@ -4,6 +4,7 @@ import '../args.dart';
 ///
 /// Provides methods to generate properly formatted command-line arguments
 /// for C++-specific features of quicktype.
+@Deprecated('Use CppRendererOptions instead — removal planned for v0.4.0')
 class CppArgs {
   /// Private constructor to prevent instantiation
   const CppArgs._();

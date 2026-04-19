@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// Smithy language specific options for quicktype code generation.
+@Deprecated('Use SmithyRendererOptions instead — removal planned for v0.4.0')
 class SmithyArgs {
   SmithyArgs._();
 

@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// Go language specific options for quicktype code generation.
+@Deprecated('Use GoRendererOptions instead — removal planned for v0.4.0')
 class GoArgs {
   GoArgs._();
 

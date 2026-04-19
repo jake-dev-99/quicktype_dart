@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// Rust language specific options for quicktype code generation.
+@Deprecated('Use RustRendererOptions instead — removal planned for v0.4.0')
 class RustArgs {
   RustArgs._();
 

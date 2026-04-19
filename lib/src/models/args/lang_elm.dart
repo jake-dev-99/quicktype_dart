@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// Elm language specific options for quicktype code generation.
+@Deprecated('Use ElmRendererOptions instead — removal planned for v0.4.0')
 class ElmArgs {
   ElmArgs._();
 

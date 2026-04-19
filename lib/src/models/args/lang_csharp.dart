@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// C# language specific options for quicktype code generation.
+@Deprecated('Use CSharpRendererOptions instead — removal planned for v0.4.0')
 class CSharpArgs {
   CSharpArgs._();
 

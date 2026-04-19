@@ -20,6 +20,10 @@ bin/smoke.dart
 bin/ffi_smoke.dart
 bin/ffi_args_smoke.dart
 bin/ffi_isolate_smoke.dart
+bin/options_smoke.dart
+
+# Generator tool — dev-only, not needed at runtime or pub consumption.
+tool/gen_options.py
 
 # CI caches / editor state that might slip through.
 .dart_tool/

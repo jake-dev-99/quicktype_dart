@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// Scala 3 language specific options for quicktype code generation.
+@Deprecated('Use Scala3RendererOptions instead — removal planned for v0.4.0')
 class Scala3Args {
   Scala3Args._();
 

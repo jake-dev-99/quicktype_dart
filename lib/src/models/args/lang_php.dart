@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// PHP language specific options for quicktype code generation.
+@Deprecated('Use PHPRendererOptions instead — removal planned for v0.4.0')
 class PHPArgs {
   PHPArgs._();
 

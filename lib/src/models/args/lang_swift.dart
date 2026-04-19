@@ -4,6 +4,7 @@ import '../args.dart';
 ///
 /// Provides methods to generate properly formatted command-line arguments
 /// for Swift-specific features of quicktype.
+@Deprecated('Use SwiftRendererOptions instead — removal planned for v0.4.0')
 class SwiftArgs {
   /// Private constructor to prevent instantiation
   SwiftArgs._();

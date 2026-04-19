@@ -10,7 +10,6 @@ import 'dart:js_interop';
 
 import 'package:web/web.dart' as web;
 
-import 'models/args.dart';
 import 'models/type.dart';
 import 'quicktype.dart';
 import 'quicktype_dart.dart' show GenerateTransport;
@@ -24,7 +23,7 @@ Future<String> generateFromString({
   required String label,
   required String json,
   required TargetType target,
-  required Iterable<Arg> args,
+  required Map<String, String> rendererOptions,
   required GenerateTransport transport,
 }) async {
   if (transport == GenerateTransport.ffi) {
@@ -39,12 +38,6 @@ Future<String> generateFromString({
   }
 
   await _ensureBundleLoaded();
-
-  final rendererOptions = <String, String>{};
-  for (final arg in args) {
-    final entry = arg.toRendererOption();
-    if (entry != null) rendererOptions[entry.key] = entry.value;
-  }
 
   try {
     final resultPromise = _qtConvert(

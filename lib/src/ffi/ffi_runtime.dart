@@ -7,7 +7,6 @@ import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as p;
 
-import '../models/args.dart';
 import '../models/type.dart';
 import '../quicktype.dart';
 import 'qt_shim_bindings.dart';
@@ -86,16 +85,10 @@ class QtFfiRuntime {
     required String label,
     required String json,
     required TargetType target,
-    Iterable<Arg> args = const [],
+    Map<String, String> rendererOptions = const {},
   }) async {
     if (_disposed) {
       throw StateError('QtFfiRuntime has been disposed');
-    }
-
-    final rendererOptions = <String, String>{};
-    for (final arg in args) {
-      final entry = arg.toRendererOption();
-      if (entry != null) rendererOptions[entry.key] = entry.value;
     }
 
     final langP = jsonEncode(target.argName).toNativeUtf8();
