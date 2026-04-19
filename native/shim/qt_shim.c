@@ -1,9 +1,9 @@
 // quicktype_dart native bridge.
 //
-// Public surface documented in qt_shim.h. The per-runtime API
-// (qt_runtime_create/convert/destroy) is the primary entry point; the
-// older process-global API (qt_init/qt_convert) is preserved as a shim on
-// top of a shared global runtime for backward compatibility.
+// Public surface documented in qt_shim.h. Each caller creates its own
+// opaque runtime handle via qt_runtime_create() and destroys it via
+// qt_runtime_destroy(). QuickJS is single-threaded, so one handle per
+// Dart isolate keeps things race-free.
 
 #include "qt_shim.h"
 #include "quickjs.h"
@@ -184,27 +184,4 @@ QT_EXPORT char* qt_runtime_convert(QtRuntime* rt,
 
 QT_EXPORT void qt_free(char* p) {
   if (p) free(p);
-}
-
-// --- Legacy process-global API -------------------------------------------
-
-static QtRuntime* g_legacy = NULL;
-
-QT_EXPORT int qt_init(void) {
-  if (g_legacy) return 0;
-  g_legacy = qt_runtime_create();
-  return g_legacy ? 0 : -1;
-}
-
-QT_EXPORT char* qt_convert(const char* lang_json,
-                           const char* name_json,
-                           const char* sample_json,
-                           const char* options_json) {
-  if (!g_legacy && qt_init() != 0) return NULL;
-  return qt_runtime_convert(g_legacy, lang_json, name_json,
-                            sample_json, options_json);
-}
-
-QT_EXPORT void qt_shutdown(void) {
-  if (g_legacy) { qt_runtime_destroy(g_legacy); g_legacy = NULL; }
 }
