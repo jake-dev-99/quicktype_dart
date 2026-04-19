@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.1
+
+Hygiene-only patch. No code, API, or runtime behaviour changes.
+
+- Rewrites `.gitignore` to cover `node_modules/`, `build/`, `.dart_tool/`,
+  Flutter-generated per-platform registrants, Xcode `ephemeral/` state,
+  Android NDK `.cxx/` caches, and Gradle `.gradle/` dirs.
+- Removes **3929 previously-tracked build artifacts** from version control
+  — mostly `tool/node_modules/` (the Node `quicktype` install was
+  accidentally checked in), plus Flutter-generated files under
+  `ios/Flutter/`, `macos/Flutter/`, and `linux/flutter/`. All regenerated
+  by `flutter pub get` / `npm install` locally.
+- Deletes `models/`, `web/src/models/`, and `pubspec.dart` — dead
+  scaffold output from early quicktype runs, nothing in the package
+  referenced them.
+
+Upgrade notes: dependents pinned to `^0.1.0` pick this up automatically.
+Local dev checkouts may have stale tracked copies of the now-ignored
+files — `git clean -fdx` or a fresh clone resolves it.
+
 ## 0.1.0
 
 First public release.
