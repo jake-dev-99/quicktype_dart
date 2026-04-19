@@ -55,17 +55,6 @@ QT_EXPORT char* qt_runtime_convert(QtRuntime* rt,
 /// Frees a string previously returned from qt_runtime_convert. Safe with NULL.
 QT_EXPORT void qt_free(char* p);
 
-// --- Legacy process-global API (deprecated) ------------------------------
-// Retained for backward compatibility with v0.2.0-dev.1..dev.6. New code
-// should use the per-runtime API above. These will be removed in v0.3.0.
-
-QT_EXPORT int   qt_init(void);
-QT_EXPORT char* qt_convert(const char* lang_json,
-                           const char* name_json,
-                           const char* sample_json,
-                           const char* options_json);
-QT_EXPORT void  qt_shutdown(void);
-
 #ifdef __cplusplus
 }
 #endif

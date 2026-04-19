@@ -4,6 +4,7 @@ import '../args.dart';
 ///
 /// Provides methods to generate properly formatted command-line arguments
 /// for TypeScript-specific features of quicktype.
+@Deprecated('Use TypeScriptRendererOptions instead — removal planned for v0.4.0')
 class TypeScriptArgs {
   /// Private constructor to prevent instantiation
   TypeScriptArgs._();

@@ -4,6 +4,7 @@ import '../args.dart';
 ///
 /// Provides methods to generate properly formatted command-line arguments
 /// for Kotlin-specific features of quicktype.
+@Deprecated('Use KotlinRendererOptions instead — removal planned for v0.4.0')
 class KotlinArgs {
   /// Private constructor to prevent instantiation
   KotlinArgs._();

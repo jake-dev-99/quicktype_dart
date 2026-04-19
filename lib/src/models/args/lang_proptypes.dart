@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// JavaScript PropTypes specific options for quicktype code generation.
+@Deprecated('Use PropTypesRendererOptions instead — removal planned for v0.4.0')
 class PropTypesArgs {
   PropTypesArgs._();
 

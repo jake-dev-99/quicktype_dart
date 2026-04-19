@@ -1,5 +1,87 @@
 # Changelog
 
+## 0.3.0
+
+API-shape release — typed renderer options + web remote-bundle option —
+plus a small C-side cleanup. No Dart behavior changes for callers who
+stay on the existing `args:` path.
+
+### Typed renderer options (preferred going forward)
+
+- New `RendererOptions` base class + 22 concrete subclasses
+  (`DartRendererOptions`, `KotlinRendererOptions`, `SwiftRendererOptions`,
+  etc.), one per target language. Each mirrors the fields of its matching
+  `*Args` class but as named constructor parameters with proper nullable
+  types (`bool? useFreezed`, `CSharpFramework? framework`, …).
+- `QuicktypeDart.generate` / `generateFromString` gain an
+  `options: RendererOptions?` parameter:
+  ```dart
+  await QuicktypeDart.generate(
+    label: 'User',
+    data: {'id': 1, 'name': 'Jake'},
+    target: TargetType.dart,
+    options: const DartRendererOptions(
+      useFreezed: true,
+      nullSafety: true,
+    ),
+  );
+  ```
+- The old `args: Iterable<Arg>` parameter still works. When both are
+  supplied, `args` overrides `options` on key collision (legacy wins to
+  reduce surprise for callers mid-migration).
+- All 22 `*Args` classes now carry `@Deprecated('Use *RendererOptions
+  instead — removal planned for v0.4.0')`. Removal **in v0.4.0**.
+
+### Flutter Web — remote bundle option
+
+- New `sealed class BundleSource` with two variants:
+  - `BundleSource.embedded()` — default, loads the plugin asset
+    (current v0.2.1 behavior).
+  - `BundleSource.remote(Uri url, {String? integrity})` — loads via a
+    `<script src="…">` tag pointing at any URL. Optional Subresource
+    Integrity hash for safety with third-party CDNs.
+- `QuicktypeDart.setBundleSource(…)` to switch. Call before the first
+  generate; Flutter Web caches the loaded bundle for the page lifetime.
+- **Platform scope:** Flutter Web honors both variants. Native targets
+  (macOS / iOS / Linux / Windows / Android) always use the embedded
+  QuickJS bundle — remote bundle on native ships in v0.3.1 once we
+  split `qt_runtime_create` into create + load phases and add a
+  build-time flag to strip the embedded blob.
+
+### Legacy FFI API removal
+
+- The v0.2.0-dev.1…dev.6 process-global C API (`qt_init` / `qt_convert`
+  / `qt_shutdown`) has been removed. The per-runtime API
+  (`qt_runtime_create` / `_convert` / `_destroy`), public since
+  v0.2.0-dev.7, is now the only surface. No Dart API change.
+
+### Tooling
+
+- `tool/gen_options.py` — parses `lib/src/models/args/lang_*.dart` and
+  emits the matching `lib/src/models/options/lang_*.dart` classes. Run
+  after adding a new flag to the Arg registry to keep the typed
+  surface in sync. Excluded from the published tarball.
+
+### Tests
+
+- 41/41 pass — up from 29 (v0.2.1). Additions cover `RendererOptions`
+  serialization, `BundleSource` construction + round-trip, and
+  typed-vs-Arg output equivalence.
+
+### Breaking (pre-1.0, no Dart source changes required)
+
+- `QtShimBindings` dropped `qtInit`, `qtConvertGlobal`, `qtShutdown`
+  fields — consumers that instantiated it directly (shouldn't be any)
+  now have fewer fields. `QtFfiRuntime` is unchanged.
+- C library exports reduced from 7 to 4 symbols. Anyone dlopen'ing the
+  dylib directly is affected; Dart callers are not.
+
+### Deferred to v0.3.1
+
+- Native remote-bundle support.
+- Binary-size reduction on native (strip the embedded 2.9MB JS when
+  remote is configured).
+
 ## 0.2.1
 
 Adds Flutter Web support via `dart:js_interop`, covering the one

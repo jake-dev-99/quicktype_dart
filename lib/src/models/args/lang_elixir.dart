@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// Elixir language specific options for quicktype code generation.
+@Deprecated('Use ElixirRendererOptions instead — removal planned for v0.4.0')
 class ElixirArgs {
   ElixirArgs._();
 

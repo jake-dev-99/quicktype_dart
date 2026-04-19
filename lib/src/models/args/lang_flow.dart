@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// Flow language specific options for quicktype code generation.
+@Deprecated('Use FlowRendererOptions instead — removal planned for v0.4.0')
 class FlowArgs {
   FlowArgs._();
 

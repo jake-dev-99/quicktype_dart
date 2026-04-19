@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// Ruby language specific options for quicktype code generation.
+@Deprecated('Use RubyRendererOptions instead — removal planned for v0.4.0')
 class RubyArgs {
   RubyArgs._();
 

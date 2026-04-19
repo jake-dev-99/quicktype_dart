@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// Python language specific options for quicktype code generation.
+@Deprecated('Use PythonRendererOptions instead — removal planned for v0.4.0')
 class PythonArgs {
   PythonArgs._();
 

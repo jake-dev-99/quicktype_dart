@@ -17,7 +17,7 @@ A thin Dart wrapper around the [quicktype](https://quicktype.io) code generator.
 
 ```yaml
 dependencies:
-  quicktype_dart: ^0.2.1
+  quicktype_dart: ^0.3.0
 ```
 
 No other tooling required for Flutter apps on macOS, iOS, Linux, Windows,
@@ -55,20 +55,28 @@ final dartSource = await QuicktypeDart.generate(
 print(dartSource); // → `class User { ... }` with fromJson/toJson
 ```
 
-Pass language-specific flags via the typed arg registry — e.g. Dart with
-`--use-freezed --null-safety`:
+Pass language-specific flags via the typed `options:` parameter — e.g.
+Dart with `--use-freezed --null-safety`:
 
 ```dart
 await QuicktypeDart.generate(
   label: 'User',
   data: {'id': 1, 'name': 'Jake'},
   target: TargetType.dart,
-  args: [
-    DartArgs.useFreezed..value = true,
-    DartArgs.nullSafety..value = true,
-  ],
+  options: const DartRendererOptions(
+    useFreezed: true,
+    nullSafety: true,
+  ),
 );
 ```
+
+Every target has a matching `*RendererOptions` class:
+`DartRendererOptions`, `KotlinRendererOptions`, `SwiftRendererOptions`,
+`TypeScriptRendererOptions`, `CSharpRendererOptions`, `PythonRendererOptions`,
+etc. IDE autocomplete gives you every flag the underlying renderer accepts.
+
+(The older `args: [DartArgs.useFreezed..value = true]` pattern still works
+but is `@Deprecated` — removal planned for v0.4.0.)
 
 Already have the JSON as a string? Skip the re-encode:
 
@@ -195,14 +203,33 @@ flags as typed getters — `DartArgs.useFreezed`, `SwiftArgs.structOrClass`,
 
 ---
 
+## Bundle source (Flutter Web)
+
+On Flutter Web the 2.9MB quicktype-core JS bundle ships as a plugin
+asset by default. Apps that prefer a CDN can switch:
+
+```dart
+QuicktypeDart.setBundleSource(BundleSource.remote(
+  Uri.parse('https://cdn.example.com/quicktype_bundle.js'),
+  integrity: 'sha384-…', // optional Subresource Integrity hash
+));
+
+// Subsequent calls use the remote bundle.
+```
+
+Native targets always use the embedded QuickJS bundle in v0.3.0 —
+remote bundle on native ships in v0.3.1.
+
+---
+
 ## Roadmap
 
-- **v0.2.1** — current. Full platform coverage: FFI on macOS / iOS /
-  Linux / Windows / Android; `dart:js_interop` on Flutter Web. Same
-  quicktype-core bundle powers every transport.
-- **v0.3.0** — bundle-as-remote-asset option (smaller app binaries),
-  removal of the legacy process-global FFI API, per-renderer defaults
-  tighter-typed than the current `Map<String, String>` rendererOptions.
+- **v0.3.0** — current. Typed `*RendererOptions` classes, Flutter Web
+  remote bundle option, legacy process-global FFI API removed.
+- **v0.3.1** — native remote bundle + binary-size reduction on native
+  when remote is configured (strip the embedded 2.9MB JS).
+- **v0.4.0** — remove the deprecated `*Args` classes in favor of
+  `*RendererOptions`.
 
 ---
 

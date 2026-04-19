@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'backend_io.dart'
     if (dart.library.js_interop) 'backend_web.dart' as backend;
+import 'bundle_source.dart';
 import 'models/args.dart';
+import 'models/renderer_options.dart';
 import 'models/type.dart';
 
 /// Selects which code-generation transport [QuicktypeDart] uses.
@@ -30,6 +32,7 @@ enum GenerateTransport { auto, ffi, process }
 ///   label: 'User',
 ///   data: [{'id': 1, 'name': 'Jake'}],
 ///   target: TargetType.dart,
+///   options: const DartRendererOptions(useFreezed: true),
 /// );
 /// ```
 ///
@@ -44,33 +47,58 @@ enum GenerateTransport { auto, ffi, process }
 ///   `npm install -g quicktype`. Useful for native dev tooling.
 /// * **Web** — uses `dart:js_interop` to run the same bundled JS in the
 ///   browser's native JS engine. Picked automatically on Flutter Web.
+///
+/// ### Passing language options
+///
+/// Two equivalent ways:
+///
+///   * **`options:` (preferred)** — a typed [RendererOptions] subclass
+///     with named parameters per flag:
+///
+///     ```dart
+///     options: const DartRendererOptions(
+///       useFreezed: true,
+///       nullSafety: true,
+///     ),
+///     ```
+///
+///   * **`args:` (deprecated)** — an iterable of legacy [Arg] instances:
+///
+///     ```dart
+///     args: [DartArgs.useFreezed..value = true, DartArgs.nullSafety..value = true],
+///     ```
+///
+/// Both paths resolve to the same `Map<String, String>` that quicktype-core
+/// consumes internally. The typed [options] path is the long-term API; the
+/// `args:` path will be removed in v0.4.0.
 class QuicktypeDart {
   QuicktypeDart._();
 
+  /// The current [BundleSource]. Defaults to [BundleSource.embedded]. Change
+  /// via [setBundleSource] before the first `generate` call; afterwards
+  /// Flutter Web caches the loaded bundle so changes have no effect until
+  /// a full page reload. (Native ignores the setting in v0.3.0 — always
+  /// uses the embedded QuickJS bundle.)
+  static BundleSource _bundleSource = const BundleSource.embedded();
+
+  /// See [_bundleSource]. Intended for plugin-internal use; callers go
+  /// through [setBundleSource].
+  static BundleSource get bundleSource => _bundleSource;
+
+  /// Configures where the quicktype-core JS bundle is loaded from. See
+  /// [BundleSource] for supported variants and platform coverage.
+  static void setBundleSource(BundleSource source) {
+    _bundleSource = source;
+  }
+
   /// Generates typed source code from any JSON-encodable Dart value.
   ///
-  /// [data] may be any value `dart:convert`'s [jsonEncode] accepts —
-  /// a [Map], [List], [num], [String], [bool], or a nested composition
-  /// thereof. Anything else throws [JsonUnsupportedObjectError].
-  ///
-  /// [label] becomes the top-level type name in the generated code.
-  ///
-  /// [target] selects the output language.
-  ///
-  /// [args] carries language-specific flags — e.g. for Dart:
-  /// `[DartArgs.useFreezed..value = true, DartArgs.nullSafety..value = true]`.
-  /// See the `*Args` classes for each target language. All three transports
-  /// honor args.
-  ///
-  /// [transport] picks the runtime — see [GenerateTransport]. Defaults to
-  /// [GenerateTransport.auto].
-  ///
-  /// Returns the generated source as a string. Throws [QuicktypeException]
-  /// on failure.
+  /// See class-level docs for parameter semantics.
   static Future<String> generate({
     required String label,
     required Object data,
     required TargetType target,
+    RendererOptions? options,
     Iterable<Arg> args = const [],
     GenerateTransport transport = GenerateTransport.auto,
   }) =>
@@ -78,6 +106,7 @@ class QuicktypeDart {
         label: label,
         json: jsonEncode(data),
         target: target,
+        options: options,
         args: args,
         transport: transport,
       );
@@ -91,14 +120,34 @@ class QuicktypeDart {
     required String label,
     required String json,
     required TargetType target,
+    RendererOptions? options,
     Iterable<Arg> args = const [],
     GenerateTransport transport = GenerateTransport.auto,
-  }) =>
-      backend.generateFromString(
-        label: label,
-        json: json,
-        target: target,
-        args: args,
-        transport: transport,
-      );
+  }) {
+    final merged = _mergeOptions(options, args);
+    return backend.generateFromString(
+      label: label,
+      json: json,
+      target: target,
+      rendererOptions: merged,
+      transport: transport,
+    );
+  }
+
+  /// Resolves either-or-both `options:` and `args:` into a single
+  /// `Map<String, String>`. When both are supplied, `args:` entries
+  /// override `options:` entries on key collision (legacy wins so
+  /// callers mid-migration don't surprise themselves).
+  static Map<String, String> _mergeOptions(
+    RendererOptions? options,
+    Iterable<Arg> args,
+  ) {
+    final merged = <String, String>{};
+    if (options != null) merged.addAll(options.toRendererOptions());
+    for (final arg in args) {
+      final entry = arg.toRendererOption();
+      if (entry != null) merged[entry.key] = entry.value;
+    }
+    return merged;
+  }
 }

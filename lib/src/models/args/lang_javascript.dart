@@ -4,6 +4,7 @@ import '../args.dart';
 ///
 /// Provides methods to generate properly formatted command-line arguments
 /// for JavaScript-specific features of quicktype.
+@Deprecated('Use JavaScriptRendererOptions instead — removal planned for v0.4.0')
 class JavaScriptArgs {
   /// Private constructor to prevent instantiation
   JavaScriptArgs._();

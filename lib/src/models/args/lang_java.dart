@@ -4,6 +4,7 @@ import '../args.dart';
 ///
 /// Provides methods to generate properly formatted command-line arguments
 /// for Java-specific features of quicktype.
+@Deprecated('Use JavaRendererOptions instead — removal planned for v0.4.0')
 class JavaArgs {
   /// Private constructor to prevent instantiation
   JavaArgs._();

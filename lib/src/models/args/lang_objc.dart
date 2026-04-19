@@ -4,6 +4,7 @@ import '../args.dart';
 ///
 /// Provides methods to generate properly formatted command-line arguments
 /// for Objective-C-specific features of quicktype.
+@Deprecated('Use ObjectiveCRendererOptions instead — removal planned for v0.4.0')
 class ObjectiveCArgs {
   /// Private constructor to prevent instantiation
   ObjectiveCArgs._();

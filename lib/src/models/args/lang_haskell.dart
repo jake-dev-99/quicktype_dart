@@ -1,6 +1,7 @@
 import '../args.dart';
 
 /// Haskell language specific options for quicktype code generation.
+@Deprecated('Use HaskellRendererOptions instead — removal planned for v0.4.0')
 class HaskellArgs {
   HaskellArgs._();
 
