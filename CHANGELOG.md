@@ -77,13 +77,15 @@ no Node CLI required. ~2ms per call after warmup, ~680KB of native code +
 
 ### Deferred to later releases
 
-- **Flutter Web.** The package exports fine on web (no FFI imported at the
-  top level), but `QuicktypeDart.generate` at runtime is no-op on web.
-  Future work: a JS-interop path that uses the browser's native JS engine
-  with the same bundle.
+- **Flutter Web.** Not supported in v0.2.0 — the package imports `dart:io`,
+  `dart:ffi`, and `dart:isolate`, which aren't available on web. Importing
+  `package:quicktype_dart/quicktype_dart.dart` from a Flutter Web app will
+  fail at compile time. Tracked for **v0.2.1**: a web transport using
+  `dart:js_interop` + the bundled quicktype-core JS, behind conditional
+  imports so the FFI/Process paths don't poison the web compile.
 - **Bundle-as-asset** option to ship `quicktype_bundle.js` via Flutter's
   asset pipeline instead of embedding it in the binary. Would shave
-  ~2.9MB off each platform binary. Tracked for v0.2.x or v0.3.0.
+  ~2.9MB off each platform binary. Tracked for v0.3.0.
 - **Legacy process-global FFI API** (`qt_init` / `qt_convert` / `qt_shutdown`
   on the C side) is preserved in this release for compatibility with
   dev.1–dev.6 users. Removal planned for v0.3.0.

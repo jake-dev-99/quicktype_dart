@@ -196,10 +196,14 @@ flags as typed getters — `DartArgs.useFreezed`, `SwiftArgs.structOrClass`,
 
 ## Roadmap
 
-- **v0.2.x** — current. FFI on macOS / iOS / Linux / Windows / Android;
-  Process.run fallback for dev environments.
+- **v0.2.0** — current. FFI on macOS / iOS / Linux / Windows / Android;
+  Process.run fallback for dev environments. Flutter Web is NOT supported
+  — importing the package from a web target fails at compile time.
+- **v0.2.1** — Flutter Web transport via `dart:js_interop`, loading the
+  bundled quicktype-core as a `<script>`. Conditional imports so the
+  existing FFI + Process transports keep working on non-web.
 - **v0.3.0** — bundle-as-Flutter-asset option (smaller app binaries),
-  Flutter Web support via JS interop.
+  removal of the legacy process-global FFI API.
 
 ---
 
