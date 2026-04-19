@@ -4,6 +4,11 @@
 // running a full build; to regenerate locally:
 //
 //     cd example && dart run build_runner build --delete-conflicting-outputs
+//     dart format lib/models
+//
+// The `dart format` pass normalizes quicktype's 4-space indent to the
+// project's 2-space style — both the CI drift check and the committed
+// file assume that pass has happened.
 //
 // If this test starts failing, someone either changed the input fixture
 // without regenerating, or the quicktype_dart builder changed its

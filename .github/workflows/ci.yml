@@ -105,9 +105,13 @@ jobs:
         working-directory: example
         run: |
           dart run build_runner build --delete-conflicting-outputs
+          # build_runner emits quicktype's 4-space indent; committed file
+          # is dart-format-normalized. Apply the formatter before the
+          # drift check so only semantic changes show up.
+          dart format lib/models
           if ! git diff --quiet lib/models/user.dart; then
             echo '::error::Generated file lib/models/user.dart drifted.'
-            echo 'Re-run: cd example && dart run build_runner build --delete-conflicting-outputs'
+            echo 'Re-run locally: cd example && dart run build_runner build --delete-conflicting-outputs && dart format lib/models'
             git --no-pager diff lib/models/user.dart
             exit 1
           fi
