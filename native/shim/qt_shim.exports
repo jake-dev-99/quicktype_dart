@@ -1,4 +1,6 @@
 _qt_runtime_create
+_qt_runtime_load_embedded
+_qt_runtime_load_bundle
 _qt_runtime_destroy
 _qt_runtime_convert
 _qt_free

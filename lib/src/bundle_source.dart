@@ -17,10 +17,16 @@
 /// await QuicktypeDart.generate(label: 'User', data: ..., target: TargetType.dart);
 /// ```
 ///
-/// **Platform coverage in v0.3.0:** Flutter Web honors both [embedded] and
-/// [remote]. Native targets (macOS / iOS / Linux / Windows / Android) always
-/// use the embedded QuickJS bundle regardless of this setting — remote
-/// bundle support on native ships in v0.3.1.
+/// **Platform coverage:** Both Flutter Web and native targets (macOS / iOS
+/// / Linux / Windows / Android) honor [embedded] and [remote]. On native,
+/// remote bundles are fetched once via `dart:io` `HttpClient`, cached
+/// on-disk under the system temp dir keyed by URL hash, and loaded into
+/// the QuickJS runtime. Pass [RemoteBundleSource.integrity] for
+/// Subresource-Integrity verification (SHA-256/384/512).
+///
+/// Pair `BundleSource.remote` with a native library built using
+/// `-DQT_NO_EMBEDDED_BUNDLE` (or `cmake -DQT_EMBED_BUNDLE=OFF`) to shed
+/// the ~2.9MB embedded bundle from the final binary.
 sealed class BundleSource {
   const BundleSource();
 
@@ -28,10 +34,16 @@ sealed class BundleSource {
   /// Flutter plugin asset.
   const factory BundleSource.embedded() = EmbeddedBundleSource;
 
-  /// Load the bundle from [url]. On Flutter Web, injects a `<script>` tag
-  /// with the URL. Pass [integrity] to have the browser enforce a
-  /// Subresource Integrity hash (e.g. `'sha384-…'`) — strongly recommended
-  /// for third-party CDNs.
+  /// Load the bundle from [url].
+  ///
+  /// On Flutter Web, injects a `<script>` tag with the URL; the browser
+  /// enforces [integrity] natively.
+  ///
+  /// On native, the bytes are fetched, cached on-disk, and verified
+  /// against [integrity] (SRI-format: `'sha256-…'`, `'sha384-…'`, or
+  /// `'sha512-…'`) before being handed to the QuickJS runtime.
+  ///
+  /// Passing [integrity] is strongly recommended for third-party CDNs.
   const factory BundleSource.remote(Uri url, {String? integrity}) =
       RemoteBundleSource;
 }

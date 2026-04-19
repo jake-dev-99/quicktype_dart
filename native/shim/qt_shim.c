@@ -1,9 +1,12 @@
 // quicktype_dart native bridge.
 //
 // Public surface documented in qt_shim.h. Each caller creates its own
-// opaque runtime handle via qt_runtime_create() and destroys it via
-// qt_runtime_destroy(). QuickJS is single-threaded, so one handle per
-// Dart isolate keeps things race-free.
+// opaque runtime handle via qt_runtime_create() — empty, with just the
+// prelude loaded — then calls either qt_runtime_load_embedded() or
+// qt_runtime_load_bundle() before qt_runtime_convert().
+//
+// QuickJS is single-threaded, so one handle per Dart isolate keeps
+// things race-free.
 
 #include "qt_shim.h"
 #include "quickjs.h"
@@ -35,11 +38,15 @@ static int asprintf(char** strp, const char* fmt, ...) {
 }
 #endif
 
-// Embedded by embed_bundle.py at build time.
+// Embedded by embed_bundle.py at build time. When the library is built
+// with -DQT_NO_EMBEDDED_BUNDLE, bundle_data.c is NOT compiled in, the
+// symbols are undefined, and qt_runtime_load_embedded returns -1.
+#ifndef QT_NO_EMBEDDED_BUNDLE
 extern const unsigned char qt_prelude_js[];
 extern const unsigned long qt_prelude_js_len;
 extern const unsigned char qt_bundle_js[];
 extern const unsigned long qt_bundle_js_len;
+#endif
 
 // --- Opaque runtime handle -----------------------------------------------
 
@@ -58,30 +65,20 @@ static void pump(JSContext* ctx) {
   }
 }
 
-static int load_sources(JSContext* ctx) {
-  JSValue r = JS_Eval(ctx, (const char*)qt_prelude_js, qt_prelude_js_len,
-                      "<prelude>", JS_EVAL_TYPE_GLOBAL);
+// Evaluates a JS source chunk under a given filename tag. Returns 0 on
+// success, or a negative error code — stderr gets a diagnostic when it
+// fails.
+static int eval_js(JSContext* ctx, const char* js, size_t len,
+                   const char* filename) {
+  JSValue r = JS_Eval(ctx, js, len, filename, JS_EVAL_TYPE_GLOBAL);
   if (JS_IsException(r)) {
     JSValue e = JS_GetException(ctx);
     const char* msg = JS_ToCString(ctx, e);
-    fprintf(stderr, "qt_shim: prelude error: %s\n", msg ? msg : "?");
+    fprintf(stderr, "qt_shim: %s error: %s\n", filename, msg ? msg : "?");
     JS_FreeCString(ctx, msg);
     JS_FreeValue(ctx, e);
     JS_FreeValue(ctx, r);
     return -1;
-  }
-  JS_FreeValue(ctx, r);
-
-  r = JS_Eval(ctx, (const char*)qt_bundle_js, qt_bundle_js_len,
-              "<bundle>", JS_EVAL_TYPE_GLOBAL);
-  if (JS_IsException(r)) {
-    JSValue e = JS_GetException(ctx);
-    const char* msg = JS_ToCString(ctx, e);
-    fprintf(stderr, "qt_shim: bundle error: %s\n", msg ? msg : "?");
-    JS_FreeCString(ctx, msg);
-    JS_FreeValue(ctx, e);
-    JS_FreeValue(ctx, r);
-    return -2;
   }
   JS_FreeValue(ctx, r);
   return 0;
@@ -100,14 +97,44 @@ QT_EXPORT QtRuntime* qt_runtime_create(void) {
     return NULL;
   }
 
-  if (load_sources(handle->ctx) != 0) {
+  // Load the prelude (small, always embedded even when QT_NO_EMBEDDED_BUNDLE
+  // is set — it's needed for any quicktype-core bundle to run). When the
+  // prelude isn't embedded either, the caller is responsible for loading
+  // equivalent environment shims via qt_runtime_load_bundle.
+#ifndef QT_NO_EMBEDDED_BUNDLE
+  if (eval_js(handle->ctx, (const char*)qt_prelude_js, qt_prelude_js_len,
+              "<prelude>") != 0) {
     JS_FreeContext(handle->ctx);
     JS_FreeRuntime(handle->rt);
     free(handle);
     return NULL;
   }
+#endif
 
   return handle;
+}
+
+QT_EXPORT int qt_runtime_load_embedded(QtRuntime* rt) {
+  if (!rt || !rt->ctx) return -1;
+#ifdef QT_NO_EMBEDDED_BUNDLE
+  fprintf(stderr, "qt_shim: qt_runtime_load_embedded called but the library "
+                  "was built with QT_NO_EMBEDDED_BUNDLE. Use "
+                  "qt_runtime_load_bundle with caller-provided JS instead.\n");
+  return -2;
+#else
+  return eval_js(rt->ctx, (const char*)qt_bundle_js, qt_bundle_js_len,
+                 "<bundle>");
+#endif
+}
+
+QT_EXPORT int qt_runtime_load_bundle(QtRuntime* rt, const char* js,
+                                     size_t len) {
+  if (!rt || !rt->ctx || !js) return -1;
+  // When QT_NO_EMBEDDED_BUNDLE is set the prelude wasn't loaded in
+  // qt_runtime_create. The caller's `js` is expected to be a
+  // prelude-plus-bundle concatenation (see native/bundle/prelude.js
+  // for the shims required).
+  return eval_js(rt->ctx, js, len, "<bundle>");
 }
 
 QT_EXPORT void qt_runtime_destroy(QtRuntime* rt) {
