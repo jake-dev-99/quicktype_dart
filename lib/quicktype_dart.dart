@@ -15,7 +15,7 @@
 /// ```
 library quicktype_dart;
 
-export 'src/quicktype_dart.dart' show QuicktypeDart;
+export 'src/quicktype_dart.dart' show GenerateTransport, QuicktypeDart;
 
 // Types
 export 'src/models/type.dart'
