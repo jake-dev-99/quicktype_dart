@@ -7,7 +7,6 @@ tool/
 
 # Platforms not yet wired up for the FFI plugin — each lands in a
 # subsequent v0.2.0-dev.N release.
-ios/
 web/
 
 # IDE / tool caches
