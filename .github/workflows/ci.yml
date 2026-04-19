@@ -19,14 +19,15 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - name: Install deps
-        run: flutter pub get
+      - run: flutter pub get
       - name: dart format
         run: dart format --set-exit-if-changed lib test tool bin example
       - name: dart analyze
         run: dart analyze --fatal-infos --fatal-warnings
       - name: Version stamps in sync
         run: dart run tool/sync_version.dart
+      - name: API snapshot in sync
+        run: dart run tool/api_snapshot.dart
       - name: Pub publish dry-run
         run: flutter pub publish --dry-run
 
@@ -42,10 +43,35 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - name: Install deps
-        run: flutter pub get
-      - name: Unit tests
-        run: dart test test/unit --reporter=expanded
+      - run: flutter pub get
+      - name: Unit tests (+ slow)
+        run: dart test test/unit --run-skipped --tags=slow
+
+  coverage:
+    name: Coverage threshold
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: Activate coverage
+        run: dart pub global activate coverage
+      - name: Run tests with coverage
+        run: |
+          dart pub global run coverage:test_with_coverage \
+            --package=. \
+            --function-coverage \
+            --branch-coverage
+      - name: Check thresholds
+        run: dart run tool/check_coverage.dart
+      - name: Upload lcov
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov
+          path: coverage/lcov.info
 
   integration:
     name: Integration tests (ubuntu)
@@ -60,10 +86,9 @@ jobs:
           node-version: '20'
       - name: Install quicktype globally
         run: npm install -g quicktype
-      - name: Install deps
-        run: flutter pub get
+      - run: flutter pub get
       - name: Integration tests
-        run: dart test test/integration --reporter=expanded --tags=integration
+        run: dart test test/integration --tags=integration
 
   example:
     name: Example build_runner
@@ -89,3 +114,16 @@ jobs:
       - name: Example tests
         working-directory: example
         run: dart test
+
+  deps:
+    name: Dependency audit (weekly)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: Check for outdated / null-safety lag
+        run: flutter pub outdated --mode=null-safety --no-dev-dependencies
