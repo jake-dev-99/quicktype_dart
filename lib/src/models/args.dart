@@ -33,7 +33,8 @@ export 'args/lang_typescript.dart';
 /// Base class for a quicktype CLI argument.
 ///
 /// The convention is **null value → argument absent**. Non-null values
-/// serialize per-subclass into an argv list via [argv].
+/// serialize per-subclass via [argv] (for the Process transport) and
+/// [toRendererOption] (for the embedded FFI transport).
 abstract class Arg<T> {
   Arg(this.name, {this.value});
 
@@ -44,6 +45,13 @@ abstract class Arg<T> {
   /// `Process.run` (each element is one argv entry; no shell escaping).
   /// Returns an empty list when the argument should be omitted entirely.
   List<String> argv();
+
+  /// Serialize this argument into a quicktype-core `rendererOptions`
+  /// entry — an (`option-name`, stringified value) pair.
+  ///
+  /// Returns `null` when the argument should be omitted (value is null
+  /// or — for [SimpleArg] — false).
+  MapEntry<String, String>? toRendererOption();
 
   /// Display form for debugging and logging. Mirrors [argv] joined by spaces.
   @override
@@ -57,6 +65,10 @@ class SimpleArg extends Arg<bool> {
 
   @override
   List<String> argv() => value == true ? ['--$name'] : const [];
+
+  @override
+  MapEntry<String, String>? toRendererOption() =>
+      value == true ? MapEntry(name, 'true') : null;
 }
 
 /// A string-valued argument. Emits `['--name', value]` when non-null.
@@ -65,6 +77,10 @@ class StringArg extends Arg<String?> {
 
   @override
   List<String> argv() => value == null ? const [] : ['--$name', value!];
+
+  @override
+  MapEntry<String, String>? toRendererOption() =>
+      value == null ? null : MapEntry(name, value!);
 }
 
 /// An enum-valued argument. Emits `['--name', enum.toString()]` when set.
@@ -74,6 +90,10 @@ class EnumArg<T extends Enum> extends Arg<Enum?> {
   @override
   List<String> argv() =>
       value == null ? const [] : ['--$name', value!.toString()];
+
+  @override
+  MapEntry<String, String>? toRendererOption() =>
+      value == null ? null : MapEntry(name, value!.toString());
 }
 
 /// A positive/negative toggle. `true` emits `--name`; `false` emits
@@ -86,9 +106,19 @@ class BoolArg extends Arg<bool> {
     if (value == null) return const [];
     return value! ? ['--$name'] : ['--no-$name'];
   }
+
+  @override
+  MapEntry<String, String>? toRendererOption() =>
+      value == null ? null : MapEntry(name, value! ? 'true' : 'false');
 }
 
 /// A repeatable argument. Emits `--name v1 --name v2 ...` for each value.
+///
+/// quicktype-core's `rendererOptions` don't support repeated keys, so the
+/// FFI path joins values with commas as a best-effort. Most CLI flags
+/// that use repetition (`--src`, `--header`) are handled internally by
+/// the runtime rather than surfaced via this arg; it's here for
+/// completeness.
 class RepeatableArg extends Arg<List<String>> {
   RepeatableArg(super.name, List<String> values)
       : values = values,
@@ -104,4 +134,8 @@ class RepeatableArg extends Arg<List<String>> {
     }
     return out;
   }
+
+  @override
+  MapEntry<String, String>? toRendererOption() =>
+      values.isEmpty ? null : MapEntry(name, values.join(','));
 }

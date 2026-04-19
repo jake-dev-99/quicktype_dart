@@ -1,27 +1,28 @@
-# v0.1.0 ships as a pure-Dart package. The following are either dev-only,
-# pending-for-v0.2.0, or too large for pub.dev.
+# Files excluded from the pub.dev tarball but kept in source control.
+# Most ignored-by-git things are already excluded by .gitignore — this
+# list covers in-repo things we don't want shipped.
 
-# Bundled node_modules (≈157MB). Consumers install quicktype via
-# `npm install -g quicktype` or rely on `dart run build_runner`.
+# Node CLI bundle used for the Process transport's dev convenience. Large
+# and redundant on machines that install `quicktype` globally via npm.
 tool/
 
-# Flutter plugin scaffolding — re-added in v0.2.0 when the QuickJS FFI path
-# lands. These dirs are currently empty template code.
-android/
-ios/
-macos/
-linux/
-windows/
-web/
+# Bundle regeneration workflow — devs only. The compiled bundle is
+# already embedded in native/shim/bundle_data.c which ships.
+native/bundle/shim.mjs
+native/bundle/build_bundle.sh
+native/bundle/package.json
+native/bundle/package-lock.json
+native/bundle/empty.cjs
+native/bundle/quicktype_bundle.js
 
-# IDE / tool caches
+# Internal smoke tests (not part of the public surface).
+bin/smoke.dart
+bin/ffi_smoke.dart
+bin/ffi_args_smoke.dart
+bin/ffi_isolate_smoke.dart
+
+# CI caches / editor state that might slip through.
 .dart_tool/
 .idea/
 .vscode/
 build/
-
-# OS clutter
-.DS_Store
-
-# Local smoke test (not part of the public surface)
-bin/smoke.dart

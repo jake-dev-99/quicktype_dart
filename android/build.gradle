@@ -1,0 +1,56 @@
+// Flutter FFI plugin Gradle build for Android.
+//
+// Drives the Android NDK build of the shared native/ tree via CMake.
+// Flutter's plugin system expects this file at `android/build.gradle`.
+
+group = "io.simplezen.quicktype_dart"
+version = "0.2.0"
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.1.0")
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: "com.android.library"
+
+android {
+    namespace = "io.simplezen.quicktype_dart"
+
+    compileSdk = 34
+    ndkVersion = android.ndkVersion
+
+    // Build our native code through the shared CMake at ../native/.
+    externalNativeBuild {
+        cmake {
+            path = "../native/CMakeLists.txt"
+        }
+    }
+
+    defaultConfig {
+        minSdk = 21
+        externalNativeBuild {
+            cmake {
+                arguments = ["-DCMAKE_BUILD_TYPE=Release"]
+                // Flutter's standard Android ABIs.
+                abiFilters = ["arm64-v8a", "armeabi-v7a", "x86_64"]
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
