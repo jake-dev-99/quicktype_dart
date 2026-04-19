@@ -1,4 +1,3 @@
-
 import '../enums.dart';
 import '../renderer_options.dart';
 

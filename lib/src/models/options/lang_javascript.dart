@@ -1,4 +1,3 @@
-
 import '../enums.dart';
 import '../renderer_options.dart';
 
@@ -25,9 +24,13 @@ class JavaScriptRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (copyAccessorAnnotations != null) m['copy-accessor-annotations'] = copyAccessorAnnotations.toString();
-    if (runtimeTypecheck != null) m['runtime-typecheck'] = runtimeTypecheck.toString();
-    if (runtimeTypecheckIgnoreUnknownProperties != null) m['runtime-typecheck-ignore-unknown-properties'] = runtimeTypecheckIgnoreUnknownProperties.toString();
+    if (copyAccessorAnnotations != null)
+      m['copy-accessor-annotations'] = copyAccessorAnnotations.toString();
+    if (runtimeTypecheck != null)
+      m['runtime-typecheck'] = runtimeTypecheck.toString();
+    if (runtimeTypecheckIgnoreUnknownProperties != null)
+      m['runtime-typecheck-ignore-unknown-properties'] =
+          runtimeTypecheckIgnoreUnknownProperties.toString();
     if (acronymStyle != null) m['acronym-style'] = acronymStyle!.toString();
     if (converters != null) m['converters'] = converters!.toString();
     if (rawType != null) m['raw-type'] = rawType!.toString();

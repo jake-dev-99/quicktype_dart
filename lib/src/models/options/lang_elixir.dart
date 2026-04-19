@@ -1,4 +1,3 @@
-
 import '../renderer_options.dart';
 
 /// Named-parameter options for the Elixir target.

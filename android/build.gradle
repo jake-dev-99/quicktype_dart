@@ -4,7 +4,7 @@
 // Flutter's plugin system expects this file at `android/build.gradle`.
 
 group = "io.simplezen.quicktype_dart"
-version = "0.4.0"
+version = "0.4.4"
 
 buildscript {
     repositories {

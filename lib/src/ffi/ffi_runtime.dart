@@ -33,6 +33,10 @@ class QtFfiRuntime {
   static QtShimBindings? _cachedBindings;
   static Object? _resolveError;
   static QtFfiRuntime? _sharedInstance;
+  // Guards concurrent callers of [instance] so two simultaneous init
+  // attempts share the same in-flight runtime instead of each allocating
+  // their own and leaking one.
+  static Completer<QtFfiRuntime>? _sharedInstancePending;
 
   static final Finalizer<_FinalizationToken> _finalizer =
       Finalizer<_FinalizationToken>((token) {
@@ -48,12 +52,25 @@ class QtFfiRuntime {
   /// For most consumers this is the right entry point — one runtime per
   /// process, lazy-initialized on first use. Callers needing isolate-level
   /// isolation should construct a fresh [QtFfiRuntime.create] instead.
-  static Future<QtFfiRuntime> instance() async {
-    if (_sharedInstance != null && !_sharedInstance!._disposed) {
-      return _sharedInstance!;
+  static Future<QtFfiRuntime> instance() {
+    final existing = _sharedInstance;
+    if (existing != null && !existing._disposed) {
+      return Future.value(existing);
     }
-    _sharedInstance = await create();
-    return _sharedInstance!;
+    final pending = _sharedInstancePending;
+    if (pending != null) return pending.future;
+
+    final completer = Completer<QtFfiRuntime>();
+    _sharedInstancePending = completer;
+    create().then((rt) {
+      _sharedInstance = rt;
+      _sharedInstancePending = null;
+      completer.complete(rt);
+    }, onError: (Object e, StackTrace st) {
+      _sharedInstancePending = null;
+      completer.completeError(e, st);
+    });
+    return completer.future;
   }
 
   /// Creates a fresh runtime backed by a new QuickJS instance. The caller
@@ -87,8 +104,8 @@ class QtFfiRuntime {
     return QtFfiRuntime._(bindings, handle);
   }
 
-  static Future<void> _loadBundle(
-      QtShimBindings bindings, Pointer<Void> handle, BundleSource source) async {
+  static Future<void> _loadBundle(QtShimBindings bindings, Pointer<Void> handle,
+      BundleSource source) async {
     switch (source) {
       case EmbeddedBundleSource():
         final rc = bindings.qtRuntimeLoadEmbedded(handle);
@@ -106,17 +123,14 @@ class QtFfiRuntime {
         }
       case RemoteBundleSource(:final url, :final integrity):
         final js = await fetchAndCacheBundle(url, integrity);
-        final jsP = js.toNativeUtf8();
-        try {
-          final rc =
-              bindings.qtRuntimeLoadBundle(handle, jsP, jsP.length);
+        using((arena) {
+          final jsP = js.toNativeUtf8(allocator: arena);
+          final rc = bindings.qtRuntimeLoadBundle(handle, jsP, jsP.length);
           if (rc != 0) {
             throw QuicktypeException(
                 'qt_runtime_load_bundle failed with code $rc for $url.');
           }
-        } finally {
-          calloc.free(jsP);
-        }
+        });
     }
   }
 
@@ -144,11 +158,14 @@ class QtFfiRuntime {
       throw StateError('QtFfiRuntime has been disposed');
     }
 
-    final langP = jsonEncode(target.argName).toNativeUtf8();
-    final nameP = jsonEncode(label).toNativeUtf8();
-    final jsonP = jsonEncode(json).toNativeUtf8();
-    final optsP = jsonEncode(rendererOptions).toNativeUtf8();
-    try {
+    // Arena guarantees every allocation is freed on any return path,
+    // including when jsonEncode throws mid-allocation.
+    return using((arena) {
+      final langP = jsonEncode(target.argName).toNativeUtf8(allocator: arena);
+      final nameP = jsonEncode(label).toNativeUtf8(allocator: arena);
+      final jsonP = jsonEncode(json).toNativeUtf8(allocator: arena);
+      final optsP = jsonEncode(rendererOptions).toNativeUtf8(allocator: arena);
+
       final resultP =
           _bindings.qtRuntimeConvert(_handle, langP, nameP, jsonP, optsP);
       if (resultP == nullptr) {
@@ -160,12 +177,7 @@ class QtFfiRuntime {
       final result = resultP.toDartString();
       _bindings.qtFree(resultP);
       return result;
-    } finally {
-      calloc.free(langP);
-      calloc.free(nameP);
-      calloc.free(jsonP);
-      calloc.free(optsP);
-    }
+    });
   }
 
   /// Explicitly tears down this runtime's native handle.
@@ -177,7 +189,10 @@ class QtFfiRuntime {
       _bindings.qtRuntimeDestroy(_handle);
       _handle = nullptr;
     }
-    if (identical(_sharedInstance, this)) _sharedInstance = null;
+    if (identical(_sharedInstance, this)) {
+      _sharedInstance = null;
+      _sharedInstancePending = null;
+    }
   }
 
   /// Loads the native library once per isolate and caches the bindings.
@@ -227,8 +242,8 @@ class QtFfiRuntime {
       final packageRoot = p.dirname(p.dirname(packageUri.toFilePath()));
       final ext = _dylibExtension();
       final prefix = Platform.isWindows ? '' : 'lib';
-      return p.join(packageRoot, 'build', 'native',
-          '${prefix}quicktype_dart$ext');
+      return p.join(
+          packageRoot, 'build', 'native', '${prefix}quicktype_dart$ext');
     } catch (_) {
       return null;
     }

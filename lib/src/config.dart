@@ -167,9 +167,17 @@ class Config {
   Config._fromFile(File configFile) {
     try {
       final content = configFile.readAsStringSync();
-      final map = jsonDecode(content) as Map<String, dynamic>;
-      this.sources = _parseSources(map['sources']);
-      this.targets = _parseTargets(map['targets']);
+      final decoded = jsonDecode(content);
+      if (decoded is! Map<String, dynamic>) {
+        throw ConfigException(
+          'Config root must be a JSON object, got ${decoded.runtimeType} '
+          'in "${configFile.path}".',
+        );
+      }
+      this.sources = _parseSources(decoded['sources']);
+      this.targets = _parseTargets(decoded['targets']);
+    } on ConfigException {
+      rethrow;
     } catch (e) {
       throw ConfigException('Failed to parse configuration file', e);
     }
@@ -181,9 +189,13 @@ class Config {
       Log.warning('Sources missing in config file. Using default sources.');
       return _defaultSources(_defaultModelPath);
     }
-
+    if (sourcesMap is! Map<String, dynamic>) {
+      throw ConfigException(
+        '"sources" must be an object, got ${sourcesMap.runtimeType}.',
+      );
+    }
     return _parseTypeConfigs<SourceType>(
-      sourcesMap as Map<String, dynamic>,
+      sourcesMap,
       SourceType.values,
       'source',
     );
@@ -195,9 +207,13 @@ class Config {
       Log.warning('Targets missing in config file. Using default targets.');
       return _defaultTargets();
     }
-
+    if (targetsMap is! Map<String, dynamic>) {
+      throw ConfigException(
+        '"targets" must be an object, got ${targetsMap.runtimeType}.',
+      );
+    }
     return _parseTypeConfigs<TargetType>(
-      targetsMap as Map<String, dynamic>,
+      targetsMap,
       TargetType.values,
       'target',
     );
@@ -222,11 +238,24 @@ class Config {
           break;
         }
       }
-      final configs = (entry.value as List).map((config) {
+      if (matchingType == null) {
+        final names =
+            validTypes.map((t) => t.argName).toList(growable: false).join(', ');
+        throw ConfigException(
+          'Unknown $section "${entry.key}". Expected one of: $names.',
+        );
+      }
+      final rawList = entry.value;
+      if (rawList is! List) {
+        throw ConfigException(
+          '"$section.${entry.key}" must be a list, got ${rawList.runtimeType}.',
+        );
+      }
+      final configs = rawList.map((config) {
         return TypeConfig.fromJson(matchingType!, config);
       }).toSet();
 
-      result[matchingType!] = configs;
+      result[matchingType] = configs;
     }
 
     return result;

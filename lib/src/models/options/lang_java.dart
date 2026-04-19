@@ -1,4 +1,3 @@
-
 import '../enums.dart';
 import '../renderer_options.dart';
 
@@ -29,11 +28,13 @@ class JavaRendererOptions extends RendererOptions {
     final m = <String, String>{};
     if (arrayType != null) m['array-type'] = arrayType!.toString();
     if (justTypes != null) m['just-types'] = justTypes.toString();
-    if (datetimeProvider != null) m['datetime-provider'] = datetimeProvider!.toString();
+    if (datetimeProvider != null)
+      m['datetime-provider'] = datetimeProvider!.toString();
     if (acronymStyle != null) m['acronym-style'] = acronymStyle!.toString();
     if (package != null) m['package'] = package!;
     if (lombok != null) m['lombok'] = lombok.toString();
-    if (lombokCopyAnnotations != null) m['lombok-copy-annotations'] = lombokCopyAnnotations.toString();
+    if (lombokCopyAnnotations != null)
+      m['lombok-copy-annotations'] = lombokCopyAnnotations.toString();
     return m;
   }
 }

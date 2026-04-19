@@ -76,5 +76,39 @@ void main() {
         throwsA(isA<QuicktypeException>()),
       );
     });
+
+    test('concurrent fetches of the same URL settle on identical contents',
+        () async {
+      // Races the atomic-write path added in 0.4.4: many isolates fetching
+      // the same URL simultaneously must all see the same final body.
+      final futures = List.generate(
+        16,
+        (_) => fetchAndCacheBundle(Uri.file(bundleFile.path), null),
+      );
+      final results = await Future.wait(futures);
+      for (final r in results) {
+        expect(r, equals(bundleBody));
+      }
+    });
+
+    test('stale cache file is deleted when integrity token no longer matches',
+        () async {
+      // Prime the cache with correct content.
+      final firstIntegrity = await fetchAndCacheBundle(
+        Uri.file(bundleFile.path),
+        null,
+      );
+      expect(firstIntegrity, equals(bundleBody));
+
+      // Rewrite the source to new content, then ask for it under a wrong
+      // (old) integrity tag. The stale cached copy must get dropped before
+      // the re-fetch even runs.
+      bundleFile.writeAsStringSync('globalThis.qtConvert = () => "new";');
+      const wrong = 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+      await expectLater(
+        fetchAndCacheBundle(Uri.file(bundleFile.path), wrong),
+        throwsA(isA<QuicktypeException>()),
+      );
+    });
   });
 }

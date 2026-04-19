@@ -32,8 +32,8 @@ import 'src/utils/logging.dart';
 Builder quicktypeBuilder(BuilderOptions options) {
   final targetName = options.config['target'] as String? ?? 'dart';
   final targetType = _resolveTarget(targetName);
-  final rendererOptions = _coerceRendererOptions(
-      options.config['args'], targetType);
+  final rendererOptions =
+      _coerceRendererOptions(options.config['args'], targetType);
   return _QuicktypeBuilder(
       targetType: targetType, rendererOptions: rendererOptions);
 }
@@ -143,8 +143,8 @@ Map<String, String> _coerceRendererOptions(
     } else {
       Log.warning(
         'Renderer option "$key" for target ${targetType.name} has '
-        'unsupported value type ${value.runtimeType}; '
-        'coercing via toString().',
+            'unsupported value type ${value.runtimeType}; '
+            'coercing via toString().',
         'QuicktypeBuilder',
       );
       out[key] = value.toString();
@@ -152,4 +152,3 @@ Map<String, String> _coerceRendererOptions(
   }
   return out;
 }
-
