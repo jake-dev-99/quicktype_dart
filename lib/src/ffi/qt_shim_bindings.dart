@@ -4,10 +4,24 @@ import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
 
-/// `QtRuntime* qt_runtime_create(void)` — creates a runtime and loads the
-/// embedded bundle. Returns `nullptr` on failure.
+/// `QtRuntime* qt_runtime_create(void)` — creates a runtime with only the
+/// prelude loaded. Call [QtRuntimeLoadEmbedded] or [QtRuntimeLoadBundle]
+/// before [QtRuntimeConvert]. Returns `nullptr` on failure.
 typedef QtRuntimeCreateNative = Pointer<Void> Function();
 typedef QtRuntimeCreate = Pointer<Void> Function();
+
+/// `int qt_runtime_load_embedded(QtRuntime*)` — loads the compiled-in
+/// quicktype-core bundle. Returns 0 on success, -2 if the library was
+/// built with `-DQT_NO_EMBEDDED_BUNDLE`.
+typedef QtRuntimeLoadEmbeddedNative = Int32 Function(Pointer<Void>);
+typedef QtRuntimeLoadEmbedded = int Function(Pointer<Void>);
+
+/// `int qt_runtime_load_bundle(QtRuntime*, const char* js, size_t len)` —
+/// loads caller-supplied JS into the runtime. Returns 0 on success.
+typedef QtRuntimeLoadBundleNative = Int32 Function(
+    Pointer<Void>, Pointer<Utf8>, Size);
+typedef QtRuntimeLoadBundle = int Function(
+    Pointer<Void>, Pointer<Utf8>, int);
 
 /// `void qt_runtime_destroy(QtRuntime*)` — tears down a runtime. Safe with
 /// `nullptr`.
@@ -31,6 +45,11 @@ class QtShimBindings {
   QtShimBindings(this._lib)
       : qtRuntimeCreate = _lib.lookupFunction<QtRuntimeCreateNative,
             QtRuntimeCreate>('qt_runtime_create'),
+        qtRuntimeLoadEmbedded = _lib.lookupFunction<
+            QtRuntimeLoadEmbeddedNative,
+            QtRuntimeLoadEmbedded>('qt_runtime_load_embedded'),
+        qtRuntimeLoadBundle = _lib.lookupFunction<QtRuntimeLoadBundleNative,
+            QtRuntimeLoadBundle>('qt_runtime_load_bundle'),
         qtRuntimeDestroy = _lib.lookupFunction<QtRuntimeDestroyNative,
             QtRuntimeDestroy>('qt_runtime_destroy'),
         qtRuntimeConvert = _lib.lookupFunction<QtRuntimeConvertNative,
@@ -41,6 +60,8 @@ class QtShimBindings {
   final DynamicLibrary _lib;
 
   final QtRuntimeCreate qtRuntimeCreate;
+  final QtRuntimeLoadEmbedded qtRuntimeLoadEmbedded;
+  final QtRuntimeLoadBundle qtRuntimeLoadBundle;
   final QtRuntimeDestroy qtRuntimeDestroy;
   final QtRuntimeConvert qtRuntimeConvert;
   final QtFree qtFree;

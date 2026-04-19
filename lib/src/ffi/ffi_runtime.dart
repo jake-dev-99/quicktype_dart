@@ -7,8 +7,11 @@ import 'dart:isolate';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as p;
 
+import '../bundle_source.dart';
 import '../models/type.dart';
 import '../quicktype.dart';
+import '../quicktype_dart.dart';
+import 'native_bundle_cache.dart';
 import 'qt_shim_bindings.dart';
 
 /// Embedded QuickJS + quicktype-core runtime, called via FFI.
@@ -56,7 +59,18 @@ class QtFfiRuntime {
   /// Creates a fresh runtime backed by a new QuickJS instance. The caller
   /// owns the returned runtime and should [dispose] it when done, or rely
   /// on Dart GC finalization.
-  static Future<QtFfiRuntime> create() async {
+  ///
+  /// [bundleSource] controls which quicktype-core JS is loaded into the
+  /// runtime. Defaults to [QuicktypeDart.bundleSource] — i.e. respects any
+  /// process-wide override set via [QuicktypeDart.setBundleSource].
+  ///
+  /// With [EmbeddedBundleSource], the compiled-in bundle is loaded (fails
+  /// if the library was built with `-DQT_NO_EMBEDDED_BUNDLE`).
+  /// With [RemoteBundleSource], the JS is fetched via HTTP (cached on-disk
+  /// by URL hash) and handed to the runtime directly — shrinks the binary
+  /// when paired with a no-embed build.
+  static Future<QtFfiRuntime> create({BundleSource? bundleSource}) async {
+    final source = bundleSource ?? QuicktypeDart.bundleSource;
     final bindings = await _resolveBindings();
     final handle = bindings.qtRuntimeCreate();
     if (handle == nullptr) {
@@ -64,7 +78,46 @@ class QtFfiRuntime {
           'qt_runtime_create returned null — the embedded QuickJS runtime '
           'failed to initialize.');
     }
+    try {
+      await _loadBundle(bindings, handle, source);
+    } catch (_) {
+      bindings.qtRuntimeDestroy(handle);
+      rethrow;
+    }
     return QtFfiRuntime._(bindings, handle);
+  }
+
+  static Future<void> _loadBundle(
+      QtShimBindings bindings, Pointer<Void> handle, BundleSource source) async {
+    switch (source) {
+      case EmbeddedBundleSource():
+        final rc = bindings.qtRuntimeLoadEmbedded(handle);
+        if (rc == -2) {
+          throw QuicktypeException(
+            'qt_runtime_load_embedded: this quicktype_dart native library '
+            'was built with QT_NO_EMBEDDED_BUNDLE. Configure a '
+            'BundleSource.remote(...) via QuicktypeDart.setBundleSource() '
+            'before the first generate call.',
+          );
+        }
+        if (rc != 0) {
+          throw QuicktypeException(
+              'qt_runtime_load_embedded failed with code $rc.');
+        }
+      case RemoteBundleSource(:final url, :final integrity):
+        final js = await fetchAndCacheBundle(url, integrity);
+        final jsP = js.toNativeUtf8();
+        try {
+          final rc =
+              bindings.qtRuntimeLoadBundle(handle, jsP, jsP.length);
+          if (rc != 0) {
+            throw QuicktypeException(
+                'qt_runtime_load_bundle failed with code $rc for $url.');
+          }
+        } finally {
+          calloc.free(jsP);
+        }
+    }
   }
 
   /// Returns `true` if the FFI library can be resolved in this isolate.
