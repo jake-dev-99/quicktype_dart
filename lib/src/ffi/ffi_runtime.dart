@@ -160,9 +160,15 @@ class QtFfiRuntime {
   }
 
   static String _flutterLibName() {
-    if (Platform.isMacOS || Platform.isIOS) return 'qt_shim.framework/qt_shim';
-    if (Platform.isLinux || Platform.isAndroid) return 'libqt_shim.so';
-    if (Platform.isWindows) return 'qt_shim.dll';
+    // Flutter compiles the plugin's native code into a framework/library
+    // named after the plugin's pod/pubspec `name`, not our internal
+    // `qt_shim` CMake target. On macOS/iOS that's a framework; on the
+    // Unixes it's `libquicktype_dart.so`; on Windows `quicktype_dart.dll`.
+    if (Platform.isMacOS || Platform.isIOS) {
+      return 'quicktype_dart.framework/quicktype_dart';
+    }
+    if (Platform.isLinux || Platform.isAndroid) return 'libquicktype_dart.so';
+    if (Platform.isWindows) return 'quicktype_dart.dll';
     throw UnsupportedError('Unsupported platform: ${Platform.operatingSystem}');
   }
 
