@@ -18,7 +18,7 @@ library;
 
 export 'src/bundle_source.dart'
     show BundleSource, EmbeddedBundleSource, RemoteBundleSource;
-export 'src/quicktype_dart.dart' show GenerateTransport, QuicktypeDart;
+export 'src/facade.dart' show GenerateTransport, QuicktypeDart;
 
 // Types
 export 'src/models/type.dart'

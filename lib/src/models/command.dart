@@ -1,4 +1,5 @@
 import 'package:build/build.dart';
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as path;
 
 import '../utils/type_infer.dart';
@@ -13,6 +14,7 @@ import 'type.dart';
 /// `*RendererOptions` classes (e.g. `DartRendererOptions`) expose
 /// `toRendererOptions()` for converting their named parameters into this
 /// map.
+@immutable
 class QuicktypeCommand {
   /// Source file path.
   final String sourcePath;

@@ -1,5 +1,5 @@
 // Web backend — used on Flutter Web and any other `dart:js_interop`-capable
-// target. Selected via conditional import in [quicktype_dart.dart].
+// target. Selected via conditional import in [facade.dart].
 //
 // Loads the bundled quicktype-core JS as a script asset on first call,
 // then invokes `globalThis.qtConvert` via js_interop. No subprocess, no FFI.
@@ -11,9 +11,9 @@ import 'dart:js_interop';
 import 'package:web/web.dart' as web;
 
 import 'bundle_source.dart';
+import 'facade.dart' show GenerateTransport, QuicktypeDart;
 import 'models/type.dart';
 import 'quicktype.dart';
-import 'quicktype_dart.dart' show GenerateTransport, QuicktypeDart;
 
 /// Matches [backend_io.generateFromString] signature. [transport] is
 /// honored as follows on web:

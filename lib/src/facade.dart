@@ -8,6 +8,11 @@ import 'models/type.dart';
 
 /// Selects which code-generation transport [QuicktypeDart] uses.
 ///
+/// **Prefer [auto]** — the non-auto values are escape hatches for tests,
+/// benchmarks, and environments where the default selection picks wrong.
+/// Pinning to [ffi] or [process] forces a specific runtime even when a
+/// faster or more-portable one is available on the current platform.
+///
 /// * [auto] — default. On Flutter Web, picks the `dart:js_interop` web
 ///   path. On native targets, prefers the in-process FFI runtime when
 ///   available and falls back to [process] otherwise.

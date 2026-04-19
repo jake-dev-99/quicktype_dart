@@ -1,5 +1,75 @@
 # Changelog
 
+## 0.5.0
+
+**Breaking-change release — de-singleton architecture.** Removes the
+`Config` and `Quicktype` process-wide singletons, enables multi-config
+use in a single process, and renames the internal facade file to match
+its public role.
+
+### Removed — breaking
+
+- `Config.initialize(...)` / `Config.reset()` — the singleton factory
+  is gone. Build a `Config` directly with `Config.fromFile(path)`,
+  `Config.fromMap(map)`, `Config.defaults()`, or
+  `Config.loadOrDefaults(path)` (the last is the one the CLI uses —
+  "load if present, otherwise defaults").
+- `Quicktype.initialize(...)` / `Quicktype.reset()` — replaced with a
+  plain constructor: `Quicktype(Config config)`. Multiple instances
+  with different configs coexist without sharing state.
+
+### Changed — breaking
+
+- `Config` is now `@immutable`; its `sources` and `targets` maps are
+  still the same shape and type.
+- `Quicktype.config` is `final` (was `late`).
+
+### Changed
+
+- `lib/src/quicktype_dart.dart` renamed to `lib/src/facade.dart`.
+  Purely internal — the public `package:quicktype_dart/quicktype_dart.dart`
+  export surface is unchanged.
+- `GenerateTransport` doc now leads with "Prefer `auto`", clarifying
+  that `ffi` / `process` are escape hatches for tests and pinned
+  environments rather than everyday choices.
+- `QuicktypeCommand`, `QuicktypeResult`, `QuicktypeException`,
+  `TypeConfig`, and `ConfigException` now carry `@immutable` from
+  `package:meta` — the contract was already honored, the annotation
+  just makes it enforceable.
+
+### Added dependency
+
+- `meta: ^1.16.0` (runtime) — needed for `@immutable`. Pulled in
+  transitively by pretty much every Dart package already; listing it
+  explicitly avoids relying on a transitive.
+
+### Migration
+
+```dart
+// before (0.4.x)
+final qt = Quicktype.initialize('quicktype.json');
+await qt.executeAll(await qt.buildCommandsFromConfig());
+Quicktype.reset();
+
+// after (0.5.0)
+final qt = Quicktype(Config.loadOrDefaults('quicktype.json'));
+await qt.executeAll(await qt.buildCommandsFromConfig());
+// No reset() — let the instance go out of scope.
+```
+
+Direct `Config` users:
+
+```dart
+// before
+final cfg = Config.initialize('quicktype.json');
+
+// after — pick the one that matches your intent:
+final cfg = Config.fromFile('quicktype.json');       // throws if missing
+final cfg = Config.loadOrDefaults('quicktype.json'); // falls back if missing
+final cfg = Config.fromMap(parsedJsonMap);           // from an in-memory map
+final cfg = Config.defaults();                       // built-in defaults
+```
+
 ## 0.4.6
 
 **Resource safety + error propagation polish — Batch C of the road to

@@ -1,3 +1,5 @@
+import 'package:meta/meta.dart';
+
 import '../config.dart';
 import '../utils/logging.dart';
 
@@ -150,6 +152,7 @@ enum TargetType implements TypeEnum {
 ///   rendererOptions: {'use-freezed': 'true'},
 /// );
 /// ```
+@immutable
 class TypeConfig {
   /// The source format or target language for this slot.
   final TypeEnum type;

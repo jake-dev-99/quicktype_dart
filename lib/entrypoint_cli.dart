@@ -59,13 +59,13 @@ class QuicktypeCLI {
     }
   }
 
-  /// Loads [configPath] into a [Quicktype] singleton, expands into commands,
-  /// and executes them. Returns exit code 0 on full success, 1 if any
-  /// command failed.
+  /// Loads [configPath] into a [Quicktype] instance, expands into
+  /// commands, and executes them. Returns exit code 0 on full success,
+  /// 1 if any command failed.
   static Future<int> _generateFromConfig(String configPath) async {
     Log.off('Running quicktype with config: $configPath');
 
-    final quicktype = Quicktype.initialize();
+    final quicktype = Quicktype(Config.loadOrDefaults(configPath));
     final commands = await quicktype.buildCommandsFromConfig();
     final results = await quicktype.executeAll(commands);
 
