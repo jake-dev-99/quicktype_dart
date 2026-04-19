@@ -17,13 +17,14 @@ A thin Dart wrapper around the [quicktype](https://quicktype.io) code generator.
 
 ```yaml
 dependencies:
-  quicktype_dart: ^0.2.0
+  quicktype_dart: ^0.2.1
 ```
 
 No other tooling required for Flutter apps on macOS, iOS, Linux, Windows,
-or Android — `quicktype_dart` embeds quicktype-core in a QuickJS runtime
-and ships it via a Flutter FFI plugin. ~2ms per generation after a
-~1s first-call warm-up.
+Android, or Web — `quicktype_dart` embeds quicktype-core in a QuickJS
+runtime (native platforms) or calls through `dart:js_interop` to the
+browser's JS engine (web), and ships the JS bundle as a Flutter asset.
+~2ms per generation after a ~1s first-call warm-up.
 
 For dev-time tooling (CI codegen, build_runner flows) on machines that
 lack the FFI plugin, install the `quicktype` CLI:
@@ -196,14 +197,12 @@ flags as typed getters — `DartArgs.useFreezed`, `SwiftArgs.structOrClass`,
 
 ## Roadmap
 
-- **v0.2.0** — current. FFI on macOS / iOS / Linux / Windows / Android;
-  Process.run fallback for dev environments. Flutter Web is NOT supported
-  — importing the package from a web target fails at compile time.
-- **v0.2.1** — Flutter Web transport via `dart:js_interop`, loading the
-  bundled quicktype-core as a `<script>`. Conditional imports so the
-  existing FFI + Process transports keep working on non-web.
-- **v0.3.0** — bundle-as-Flutter-asset option (smaller app binaries),
-  removal of the legacy process-global FFI API.
+- **v0.2.1** — current. Full platform coverage: FFI on macOS / iOS /
+  Linux / Windows / Android; `dart:js_interop` on Flutter Web. Same
+  quicktype-core bundle powers every transport.
+- **v0.3.0** — bundle-as-remote-asset option (smaller app binaries),
+  removal of the legacy process-global FFI API, per-renderer defaults
+  tighter-typed than the current `Map<String, String>` rendererOptions.
 
 ---
 
