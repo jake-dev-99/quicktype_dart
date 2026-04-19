@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.6.2
+
+**Native build reproducibility + developer onboarding.** No public API
+change; targets the dev experience around regenerating the bundled
+quicktype-core JS and the native shim.
+
+### Added
+
+- **`tool/refresh_bundle.dart`** — one-command regeneration of the
+  embedded quicktype-core JS bundle and the resulting
+  `native/shim/bundle_data.c`. Replaces the previous two-step
+  (`native/bundle/build_bundle.sh` → `shim/embed_bundle.py`) ritual.
+- **`tool/README.md`** — single entry point that documents every
+  script under `tool/`: `sync_version.dart`, `refresh_bundle.dart`,
+  `install_hooks.dart`, and `smoke/`.
+- **`tool/install_hooks.dart`** — opt-in installer for a git
+  `pre-commit` hook that runs `dart format --set-exit-if-changed`
+  and `dart analyze --fatal-infos --fatal-warnings`. Mirrors the CI
+  static-job contract so failing commits never hit CI. Removable
+  via `--remove`; verifiable via `--check`.
+
+### Changed
+
+- **`native/CMakeLists.txt`** — the embed step now validates that
+  `prelude.js`, `quicktype_bundle.js`, and `embed_bundle.py` all
+  exist before invoking Python. Missing inputs now fail with a
+  clear FATAL_ERROR and a pointer to
+  `dart run tool/refresh_bundle.dart` instead of a cryptic Python
+  stack trace.
+
+### Skipped from plan
+
+- Android Gradle plugin version bump (8.1.0 → 8.4+) — low priority
+  and risks breaking downstream Flutter setups that pin AGP. Revisit
+  with a real platform matrix before 1.0.
+- Android ABI runtime fallback — Flutter's loader already handles
+  ABI selection correctly for declared platforms. No code change
+  warranted.
+- iOS/macOS podspec `Classes/` audit — confirmed the `Classes/*.c`
+  files are thin forwarders that `#include "../../native/shim/…"`
+  and header search paths are wired correctly. Nothing to fix.
+
 ## 0.6.1
 
 **Test suite reorganization + CI coverage expansion.** No public API
