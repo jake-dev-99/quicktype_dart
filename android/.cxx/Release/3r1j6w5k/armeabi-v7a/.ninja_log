@@ -1,0 +1,18 @@
+# ninja log v5
+0	158	1776620165830241387	CMakeFiles/qjs.dir/quickjs/dtoa.c.o	c5a1c75db728819f
+0	237	1776620165909473803	CMakeFiles/qjs.dir/quickjs/libunicode.c.o	fab3827ed695a640
+0	281	1776620165952610041	CMakeFiles/qjs.dir/quickjs/libregexp.c.o	6b4db134fd6237c
+0	8235	1776620173857039883	CMakeFiles/qjs.dir/quickjs/quickjs.c.o	ae3617d33804295c
+8236	8276	1776620173950381000	libqjs.a	86f49456099e2527
+8276	8503	1776620174175330509	bundle_data.c	c9275b1af8e7acc9
+8276	8503	1776620174175330509	/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a/bundle_data.c	c9275b1af8e7acc9
+8503	8536	1776620174209511890	CMakeFiles/quicktype_dart.dir/bundle_data.c.o	ce5fe00e1a442909
+8503	8537	1776620174211288853	CMakeFiles/quicktype_dart.dir/shim/qt_shim.c.o	86b815419c28070f
+8537	8585	1776620174246184570	/Users/jake/Development/internal/android_data_view/build/quicktype_dart/intermediates/cxx/Release/3r1j6w5k/obj/armeabi-v7a/libquicktype_dart.so	3efc9d7b1c1cabf3
+0	218	1776620371426854531	bundle_data.c	c9275b1af8e7acc9
+0	218	1776620371426854531	/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a/bundle_data.c	c9275b1af8e7acc9
+218	269	1776620371466282144	CMakeFiles/quicktype_dart.dir/bundle_data.c.o	ce5fe00e1a442909
+218	269	1776620371481726982	CMakeFiles/quicktype_dart.dir/shim/qt_shim.c.o	86b815419c28070f
+269	332	1776620371530479216	/Users/jake/Development/internal/android_data_view/build/quicktype_dart/intermediates/cxx/Release/3r1j6w5k/obj/armeabi-v7a/libquicktype_dart.so	3efc9d7b1c1cabf3
+0	180	1776620660634343336	CMakeFiles/quicktype_dart.dir/shim/qt_shim.c.o	86b815419c28070f
+180	264	1776620660697774529	/Users/jake/Development/internal/android_data_view/build/quicktype_dart/intermediates/cxx/Release/3r1j6w5k/obj/armeabi-v7a/libquicktype_dart.so	3efc9d7b1c1cabf3

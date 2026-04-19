@@ -9391,13 +9391,13 @@
   var ALIAS, DOC, MAP, PAIR, SCALAR, SEQ, NODE_TYPE, isAlias, isDocument, isMap, isPair, isScalar, isSeq, hasAnchor;
   var init_identity = __esm({
     "node_modules/yaml/browser/dist/nodes/identity.js"() {
-      ALIAS = /* @__PURE__ */ Symbol.for("yaml.alias");
-      DOC = /* @__PURE__ */ Symbol.for("yaml.document");
-      MAP = /* @__PURE__ */ Symbol.for("yaml.map");
-      PAIR = /* @__PURE__ */ Symbol.for("yaml.pair");
-      SCALAR = /* @__PURE__ */ Symbol.for("yaml.scalar");
-      SEQ = /* @__PURE__ */ Symbol.for("yaml.seq");
-      NODE_TYPE = /* @__PURE__ */ Symbol.for("yaml.node.type");
+      ALIAS = Symbol.for("yaml.alias");
+      DOC = Symbol.for("yaml.document");
+      MAP = Symbol.for("yaml.map");
+      PAIR = Symbol.for("yaml.pair");
+      SCALAR = Symbol.for("yaml.scalar");
+      SEQ = Symbol.for("yaml.seq");
+      NODE_TYPE = Symbol.for("yaml.node.type");
       isAlias = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === ALIAS;
       isDocument = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === DOC;
       isMap = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === MAP;
@@ -9552,9 +9552,9 @@
   var init_visit = __esm({
     "node_modules/yaml/browser/dist/visit.js"() {
       init_identity();
-      BREAK = /* @__PURE__ */ Symbol("break visit");
-      SKIP = /* @__PURE__ */ Symbol("skip children");
-      REMOVE = /* @__PURE__ */ Symbol("remove node");
+      BREAK = Symbol("break visit");
+      SKIP = Symbol("skip children");
+      REMOVE = Symbol("remove node");
       visit.BREAK = BREAK;
       visit.SKIP = SKIP;
       visit.REMOVE = REMOVE;
@@ -14752,9 +14752,9 @@ ${end.comment}` : end.comment;
   var BREAK2, SKIP2, REMOVE2;
   var init_cst_visit = __esm({
     "node_modules/yaml/browser/dist/parse/cst-visit.js"() {
-      BREAK2 = /* @__PURE__ */ Symbol("break visit");
-      SKIP2 = /* @__PURE__ */ Symbol("skip children");
-      REMOVE2 = /* @__PURE__ */ Symbol("remove item");
+      BREAK2 = Symbol("break visit");
+      SKIP2 = Symbol("skip children");
+      REMOVE2 = Symbol("remove item");
       visit2.BREAK = BREAK2;
       visit2.SKIP = SKIP2;
       visit2.REMOVE = REMOVE2;
@@ -61071,8 +61071,8 @@ to another part of the input.`,
         SymbolAsyncIterator: Symbol.asyncIterator,
         SymbolHasInstance: Symbol.hasInstance,
         SymbolIterator: Symbol.iterator,
-        SymbolDispose: Symbol.dispose || /* @__PURE__ */ Symbol("Symbol.dispose"),
-        SymbolAsyncDispose: Symbol.asyncDispose || /* @__PURE__ */ Symbol("Symbol.asyncDispose"),
+        SymbolDispose: Symbol.dispose || Symbol("Symbol.dispose"),
+        SymbolAsyncDispose: Symbol.asyncDispose || Symbol("Symbol.asyncDispose"),
         TypedArrayPrototypeSet(self2, buf, len) {
           return self2.set(buf, len);
         },
@@ -61649,7 +61649,7 @@ to another part of the input.`,
           return ac.signal;
         }
       };
-      module.exports.promisify.custom = /* @__PURE__ */ Symbol.for("nodejs.util.promisify.custom");
+      module.exports.promisify.custom = Symbol.for("nodejs.util.promisify.custom");
     }
   });
 
@@ -61659,7 +61659,7 @@ to another part of the input.`,
       "use strict";
       var { format, inspect, AggregateError: CustomAggregateError } = require_util();
       var AggregateError = globalThis.AggregateError || CustomAggregateError;
-      var kIsNodeError = /* @__PURE__ */ Symbol("kIsNodeError");
+      var kIsNodeError = Symbol("kIsNodeError");
       var kTypes = [
         "string",
         "function",
@@ -63391,7 +63391,7 @@ to another part of the input.`,
           return ret;
         }
         // Make sure the linked list only shows the minimal necessary information.
-        [/* @__PURE__ */ Symbol.for("nodejs.util.inspect.custom")](_, options) {
+        [Symbol.for("nodejs.util.inspect.custom")](_, options) {
           return inspect(this, {
             ...options,
             // Only inspect one level.
@@ -67366,9 +67366,9 @@ to another part of the input.`,
     }
   });
 
-  // empty.js
+  // empty.cjs
   var require_empty = __commonJS({
-    "empty.js"(exports, module) {
+    "empty.cjs"(exports, module) {
       module.exports = {};
     }
   });
@@ -68826,12 +68826,16 @@ to another part of the input.`,
 
   // shim.mjs
   var import_quicktype_core = __toESM(require_dist4(), 1);
-  globalThis.qtConvert = async function(lang, name, jsonString) {
+  globalThis.qtConvert = async function(lang, name, jsonString, rendererOptions) {
     const jsonInput = (0, import_quicktype_core.jsonInputForTargetLanguage)(lang);
     await jsonInput.addSource({ name, samples: [jsonString] });
     const inputData = new import_quicktype_core.InputData();
     inputData.addInput(jsonInput);
-    const result = await (0, import_quicktype_core.quicktype)({ inputData, lang });
+    const result = await (0, import_quicktype_core.quicktype)({
+      inputData,
+      lang,
+      rendererOptions: rendererOptions || {}
+    });
     return result.lines.join("\n");
   };
 })();

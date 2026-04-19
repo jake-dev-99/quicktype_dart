@@ -1,0 +1,32 @@
+[
+{
+  "directory": "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a",
+  "command": "/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=armv7-none-linux-androideabi21 --sysroot=/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -I/Users/jake/Development/internal/quicktype_dart/native/quickjs -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -O3 -DNDEBUG  -fPIC -Wno-unused-parameter -Wno-implicit-fallthrough -Wno-sign-compare -std=gnu11 -o CMakeFiles/qjs.dir/quickjs/quickjs.c.o -c /Users/jake/Development/internal/quicktype_dart/native/quickjs/quickjs.c",
+  "file": "/Users/jake/Development/internal/quicktype_dart/native/quickjs/quickjs.c"
+},
+{
+  "directory": "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a",
+  "command": "/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=armv7-none-linux-androideabi21 --sysroot=/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -I/Users/jake/Development/internal/quicktype_dart/native/quickjs -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -O3 -DNDEBUG  -fPIC -Wno-unused-parameter -Wno-implicit-fallthrough -Wno-sign-compare -std=gnu11 -o CMakeFiles/qjs.dir/quickjs/libregexp.c.o -c /Users/jake/Development/internal/quicktype_dart/native/quickjs/libregexp.c",
+  "file": "/Users/jake/Development/internal/quicktype_dart/native/quickjs/libregexp.c"
+},
+{
+  "directory": "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a",
+  "command": "/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=armv7-none-linux-androideabi21 --sysroot=/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -I/Users/jake/Development/internal/quicktype_dart/native/quickjs -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -O3 -DNDEBUG  -fPIC -Wno-unused-parameter -Wno-implicit-fallthrough -Wno-sign-compare -std=gnu11 -o CMakeFiles/qjs.dir/quickjs/libunicode.c.o -c /Users/jake/Development/internal/quicktype_dart/native/quickjs/libunicode.c",
+  "file": "/Users/jake/Development/internal/quicktype_dart/native/quickjs/libunicode.c"
+},
+{
+  "directory": "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a",
+  "command": "/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=armv7-none-linux-androideabi21 --sysroot=/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -I/Users/jake/Development/internal/quicktype_dart/native/quickjs -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -O3 -DNDEBUG  -fPIC -Wno-unused-parameter -Wno-implicit-fallthrough -Wno-sign-compare -std=gnu11 -o CMakeFiles/qjs.dir/quickjs/dtoa.c.o -c /Users/jake/Development/internal/quicktype_dart/native/quickjs/dtoa.c",
+  "file": "/Users/jake/Development/internal/quicktype_dart/native/quickjs/dtoa.c"
+},
+{
+  "directory": "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a",
+  "command": "/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=armv7-none-linux-androideabi21 --sysroot=/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -Dquicktype_dart_EXPORTS -I/Users/jake/Development/internal/quicktype_dart/native/shim -I/Users/jake/Development/internal/quicktype_dart/native/quickjs -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -O3 -DNDEBUG  -fPIC -fvisibility=hidden -std=gnu11 -o CMakeFiles/quicktype_dart.dir/shim/qt_shim.c.o -c /Users/jake/Development/internal/quicktype_dart/native/shim/qt_shim.c",
+  "file": "/Users/jake/Development/internal/quicktype_dart/native/shim/qt_shim.c"
+},
+{
+  "directory": "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a",
+  "command": "/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang --target=armv7-none-linux-androideabi21 --sysroot=/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -Dquicktype_dart_EXPORTS -I/Users/jake/Development/internal/quicktype_dart/native/shim -I/Users/jake/Development/internal/quicktype_dart/native/quickjs -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -O3 -DNDEBUG  -fPIC -fvisibility=hidden -std=gnu11 -o CMakeFiles/quicktype_dart.dir/bundle_data.c.o -c /Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a/bundle_data.c",
+  "file": "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a/bundle_data.c"
+}
+]

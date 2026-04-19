@@ -1,0 +1,1 @@
+/Users/jake/Development/internal/quicktype_dart/native/CMakeLists.txt

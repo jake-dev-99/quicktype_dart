@@ -1,0 +1,44 @@
+{
+  "buildFiles": [
+    "/Users/jake/Development/internal/quicktype_dart/native/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/jake/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/jake/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "qjs::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "qjs",
+      "output": "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/x86_64/libqjs.a"
+    },
+    "quicktype_dart::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "quicktype_dart",
+      "output": "/Users/jake/Development/internal/android_data_view/build/quicktype_dart/intermediates/cxx/Release/3r1j6w5k/obj/x86_64/libquicktype_dart.so",
+      "runtimeFiles": []
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang.lld",
+      "cppCompilerExecutable": "/Users/jake/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++.lld"
+    }
+  },
+  "cFileExtensions": [
+    "c"
+  ],
+  "cppFileExtensions": []
+}

@@ -1,0 +1,33 @@
+{
+  "buildFiles": [
+    "/Users/jake/Development/internal/quicktype_dart/native/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/jake/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/jake/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "qjs::@6890427a1f51a3e7e1df": {
+      "artifactName": "qjs",
+      "abi": "armeabi-v7a",
+      "output": "/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a/libqjs.a",
+      "runtimeFiles": []
+    },
+    "quicktype_dart::@6890427a1f51a3e7e1df": {
+      "artifactName": "quicktype_dart",
+      "abi": "armeabi-v7a",
+      "output": "/Users/jake/Development/internal/android_data_view/build/quicktype_dart/intermediates/cxx/Release/3r1j6w5k/obj/armeabi-v7a/libquicktype_dart.so",
+      "runtimeFiles": []
+    }
+  }
+}

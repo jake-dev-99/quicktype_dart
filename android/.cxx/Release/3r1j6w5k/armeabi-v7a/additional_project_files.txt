@@ -1,0 +1,1 @@
+/Users/jake/Development/internal/quicktype_dart/android/.cxx/Release/3r1j6w5k/armeabi-v7a/bundle_data.c.rule

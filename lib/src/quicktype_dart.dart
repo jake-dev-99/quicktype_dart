@@ -13,14 +13,12 @@ import 'utils/logging.dart';
 
 /// Selects which code-generation transport [QuicktypeDart] uses.
 ///
-/// * [auto] — prefer the in-process FFI runtime when it's available and
-///   the caller isn't using [Arg]s (which aren't plumbed through FFI yet);
+/// * [auto] — prefer the in-process FFI runtime when it's available;
 ///   fall back to [process] otherwise. This is the default.
 /// * [ffi] — require the FFI runtime. Throws [QuicktypeException] if the
-///   native library isn't resolvable on this platform or args are set.
-/// * [process] — always shell out to the `quicktype` Node CLI. Identical
-///   to v0.1.x behaviour. Required for `args` passthrough until the
-///   FFI path learns to forward them (tracked for v0.2.0-dev.2+).
+///   native library isn't resolvable on this platform.
+/// * [process] — always shell out to the `quicktype` Node CLI. Useful
+///   for dev tooling or environments where the FFI plugin isn't built.
 enum GenerateTransport { auto, ffi, process }
 
 /// Entry point for ad-hoc, runtime JSON → typed-code conversion.
@@ -66,8 +64,8 @@ class QuicktypeDart {
   ///
   /// [args] carries language-specific flags — e.g. for Dart:
   /// `[DartArgs.useFreezed..value = true, DartArgs.nullSafety..value = true]`.
-  /// See the `*Args` classes for each target language. Requires
-  /// [transport] of [GenerateTransport.process] in v0.2.0-dev.1.
+  /// See the `*Args` classes for each target language. Both transports
+  /// support arg passthrough as of v0.2.0-dev.7.
   ///
   /// [transport] picks the runtime — see [GenerateTransport]. Defaults to
   /// [GenerateTransport.auto].
@@ -130,19 +128,11 @@ class QuicktypeDart {
   ) async {
     switch (requested) {
       case GenerateTransport.ffi:
-        if (args.isNotEmpty) {
-          throw QuicktypeException(
-            'GenerateTransport.ffi does not yet support passing Arg '
-            'instances. Use GenerateTransport.process or drop the args.',
-          );
-        }
         return GenerateTransport.ffi;
       case GenerateTransport.process:
         return GenerateTransport.process;
       case GenerateTransport.auto:
-        if (args.isEmpty && await QtFfiRuntime.probe()) {
-          return GenerateTransport.ffi;
-        }
+        if (await QtFfiRuntime.probe()) return GenerateTransport.ffi;
         return GenerateTransport.process;
     }
   }
