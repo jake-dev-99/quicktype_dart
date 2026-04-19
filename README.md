@@ -203,10 +203,12 @@ flags as typed getters — `DartArgs.useFreezed`, `SwiftArgs.structOrClass`,
 
 ---
 
-## Bundle source (Flutter Web)
+## Bundle source
 
-On Flutter Web the 2.9MB quicktype-core JS bundle ships as a plugin
-asset by default. Apps that prefer a CDN can switch:
+The 2.9MB quicktype-core JS bundle ships with the plugin by default —
+embedded in the C library on native and shipped as a Flutter asset on
+web. Apps that prefer to load from a CDN (or their own origin) can
+switch:
 
 ```dart
 QuicktypeDart.setBundleSource(BundleSource.remote(
@@ -217,17 +219,36 @@ QuicktypeDart.setBundleSource(BundleSource.remote(
 // Subsequent calls use the remote bundle.
 ```
 
-Native targets always use the embedded QuickJS bundle in v0.3.0 —
-remote bundle on native ships in v0.3.1.
+`BundleSource.remote` is honored on both web and native. On native the
+bytes are fetched via `HttpClient`, cached under the system temp dir
+keyed by a URL hash, and verified against `integrity` before being fed
+to QuickJS. SRI tokens support `sha256-…`, `sha384-…`, and `sha512-…`.
+
+### Shedding the embedded bundle (~2.9MB per binary)
+
+If every call site uses `BundleSource.remote`, the embedded copy is dead
+weight. On CMake-driven targets (Linux / Windows / Android), rebuild the
+native library with:
+
+```
+cmake -S native -B build -DQT_EMBED_BUNDLE=OFF
+cmake --build build
+```
+
+On macOS / iOS (CocoaPods), define `QT_NO_EMBEDDED_BUNDLE` in the pod's
+`OTHER_CFLAGS` and remove `Classes/bundle_data.c` from the source set.
+
+Once embedding is off, `QuicktypeDart.setBundleSource(BundleSource.remote(...))`
+**must** be called before the first generate — the library will otherwise
+return an error that the embedded bundle is unavailable.
 
 ---
 
 ## Roadmap
 
-- **v0.3.0** — current. Typed `*RendererOptions` classes, Flutter Web
-  remote bundle option, legacy process-global FFI API removed.
-- **v0.3.1** — native remote bundle + binary-size reduction on native
-  when remote is configured (strip the embedded 2.9MB JS).
+- **v0.3.1** — current. Native remote bundle, `QT_EMBED_BUNDLE=OFF` opt-out.
+- **v0.3.0** — typed `*RendererOptions` classes, Flutter Web remote bundle,
+  legacy process-global FFI API removed.
 - **v0.4.0** — remove the deprecated `*Args` classes in favor of
   `*RendererOptions`.
 

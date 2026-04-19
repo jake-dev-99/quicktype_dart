@@ -1,5 +1,59 @@
 # Changelog
 
+## 0.3.1
+
+Native remote-bundle support + opt-out embedding. Finishes the remote-bundle
+story started in v0.3.0, where only Flutter Web honored
+`BundleSource.remote`. Apps that lean on remote bundles now have a path to
+~2.9MB native-binary savings.
+
+### Remote bundle on native (macOS / iOS / Linux / Windows / Android)
+
+- `QtFfiRuntime.create({BundleSource? bundleSource})` now dispatches on
+  the configured source. `BundleSource.remote(Uri, {integrity})` fetches
+  the JS via `dart:io` `HttpClient`, caches it under the system temp dir
+  keyed by a URL hash, and verifies an optional Subresource-Integrity
+  token (`sha256-…`, `sha384-…`, or `sha512-…`) before loading it into
+  QuickJS. `file://` URLs are supported for tests and tooling.
+- `QuicktypeDart.setBundleSource(...)` now affects native as well as web.
+  The default remains `BundleSource.embedded()` — zero behavior change
+  for callers that don't touch it.
+
+### Opt-out embedding — shed ~2.9MB per-platform
+
+- New CMake option `QT_EMBED_BUNDLE` (default `ON`). Build with
+  `-DQT_EMBED_BUNDLE=OFF` to skip the embedded prelude+bundle; the
+  library then requires a runtime `BundleSource.remote(...)` before the
+  first generate call. Covers Linux / Windows / Android (all CMake-driven).
+- libquicktype_dart.dylib: **~4.0MB → ~1.1MB** with `QT_EMBED_BUNDLE=OFF`
+  on a local macOS build.
+- macOS / iOS use the CocoaPods podspec rather than CMake. To strip the
+  bundle there, define `QT_NO_EMBEDDED_BUNDLE` in the pod's
+  `OTHER_CFLAGS` and remove `Classes/bundle_data.c` from the source set.
+
+### Native C API refactor
+
+- `qt_runtime_create` now loads only the prelude — embedded-bundle
+  loading moved to a new `qt_runtime_load_embedded(QtRuntime*)` (returns
+  `-2` when the library was built with `QT_NO_EMBEDDED_BUNDLE`), and a
+  new `qt_runtime_load_bundle(QtRuntime*, const char*, size_t)` accepts
+  caller-provided JS. No Dart API change — `QtFfiRuntime.create()` still
+  returns a fully-initialized runtime.
+
+### Dependencies
+
+- Adds `crypto: ^3.0.0` for on-disk SRI integrity verification.
+
+### Tests
+
+- `test/native_bundle_cache_test.dart` covers sha256/384/512 integrity,
+  mismatch rejection, malformed tokens, and unsupported algorithms.
+- `bin/ffi_remote_smoke.dart` + `bin/ffi_noembed_smoke.dart` exercise
+  the remote path end-to-end — the latter against a library built with
+  `QT_EMBED_BUNDLE=OFF`.
+- 48/48 test suite passing; all three legacy FFI smokes
+  (`ffi_smoke`, `ffi_args_smoke`, `ffi_isolate_smoke`) still green.
+
 ## 0.3.0
 
 API-shape release — typed renderer options + web remote-bundle option —
