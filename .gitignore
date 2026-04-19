@@ -1,8 +1,4 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
+# --- OS / editor cruft ---------------------------------------------------
 .DS_Store
 .atom/
 .build/
@@ -11,23 +7,75 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+*.class
+*.log
+*.pyc
+*.swp
 
-# IntelliJ related
+# --- IntelliJ ------------------------------------------------------------
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# --- VS Code — keep committed per-project, not user ----------------------
+.vscode/launch.json
+.vscode/settings.json
 
-# Flutter/Dart/Pub related
-# Libraries should not include pubspec.lock, per https://dart.dev/guides/libraries/private-files#pubspeclock.
+# --- Dart / Flutter / Pub ------------------------------------------------
+# Libraries shouldn't ship pubspec.lock (per dart.dev guidance).
 /pubspec.lock
+# Example apps check in their own pubspec.lock normally, but this one is a
+# thin demo — excluded for tarball size.
+example/pubspec.lock
+
 **/doc/api/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 build/
+**/.dart_tool/
+**/build/
+
+# --- Flutter plugin scaffolding (auto-regenerated) -----------------------
+# Each platform-specific Flutter/ or flutter/ subdir contains generated
+# registrants + ephemeral state. These are created by `flutter pub get`.
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Flutter/flutter_export_environment.sh
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/ephemeral/
+linux/flutter/generated_plugin_registrant.cc
+linux/flutter/generated_plugin_registrant.h
+linux/flutter/generated_plugins.cmake
+linux/flutter/ephemeral/
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugin_registrant.h
+windows/flutter/generated_plugins.cmake
+windows/flutter/ephemeral/
+
+# --- Xcode / CocoaPods ---------------------------------------------------
+**/*.xcworkspace/xcuserdata/
+**/*.xcodeproj/xcuserdata/
+**/Pods/
+**/Podfile.lock
+
+# --- Android / Gradle / NDK ---------------------------------------------
+.gradle/
+**/.gradle/
+android/.cxx/
+**/.cxx/
+android/local.properties
+**/local.properties
+android/captures/
+android/.externalNativeBuild/
+**/.externalNativeBuild/
+
+# --- Node (build-time bundle regeneration only; not shipped) -------------
+node_modules/
+**/node_modules/
+*.tgz
+
+# --- Scratch / in-flight work --------------------------------------------
+# Smoke tests shouldn't leave temp dirs around; if they do, ignore.
+/.tmp/
