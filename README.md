@@ -17,18 +17,23 @@ A thin Dart wrapper around the [quicktype](https://quicktype.io) code generator.
 
 ```yaml
 dependencies:
-  quicktype_dart: ^0.1.0
+  quicktype_dart: ^0.2.0
 ```
 
-And install the `quicktype` CLI globally:
+No other tooling required for Flutter apps on macOS, iOS, Linux, Windows,
+or Android — `quicktype_dart` embeds quicktype-core in a QuickJS runtime
+and ships it via a Flutter FFI plugin. ~2ms per generation after a
+~1s first-call warm-up.
+
+For dev-time tooling (CI codegen, build_runner flows) on machines that
+lack the FFI plugin, install the `quicktype` CLI:
 
 ```bash
 npm install -g quicktype
 ```
 
-> **v0.1.0 requires the node CLI.** `quicktype_dart` shells out to
-> `quicktype` for codegen. v0.2.0 will embed quicktype-core via a QuickJS
-> FFI plugin so the Node dependency goes away on mobile.
+`QuicktypeDart.generate` will automatically prefer the embedded FFI
+runtime and fall back to the CLI when the native library isn't available.
 
 ---
 
@@ -120,6 +125,48 @@ each produces the matching output extension next to the source.
 
 ---
 
+## Transports
+
+`QuicktypeDart.generate` and `generateFromString` accept a `transport:`
+parameter:
+
+```dart
+await QuicktypeDart.generate(
+  // ...
+  transport: GenerateTransport.auto,   // default — FFI if available, else Process
+);
+await QuicktypeDart.generate(
+  // ...
+  transport: GenerateTransport.ffi,    // force in-process QuickJS
+);
+await QuicktypeDart.generate(
+  // ...
+  transport: GenerateTransport.process, // always shell out to `quicktype`
+);
+```
+
+Under `ffi`, the first call warms up the embedded runtime (~1s to parse
+the bundled quicktype-core). Subsequent calls in the same process run in
+~ms. Each Dart isolate that calls `QuicktypeDart.generate` gets its own
+runtime — QuickJS is single-threaded, and `QtFfiRuntime` enforces that
+isolation.
+
+For long-running workflows or test setups, manage the runtime lifecycle
+explicitly:
+
+```dart
+import 'package:quicktype_dart/src/ffi/ffi_runtime.dart';
+
+final runtime = await QtFfiRuntime.create();
+try {
+  await runtime.generate(/* ... */);
+} finally {
+  runtime.dispose();
+}
+```
+
+---
+
 ## Supported target languages
 
 C • C++ • C# • Dart • Elixir • Elm • Flow • Go • Haskell • Java • JavaScript
@@ -149,10 +196,10 @@ flags as typed getters — `DartArgs.useFreezed`, `SwiftArgs.structOrClass`,
 
 ## Roadmap
 
-- **v0.1.x** — current. Build-time + runtime via the Node CLI.
-- **v0.2.0** — Flutter FFI plugin embedding quicktype-core via QuickJS.
-  Removes the Node dependency on mobile. Spike showed ~2ms per convert
-  after warmup, 680KB of native code, 2.8MB of bundled JS.
+- **v0.2.x** — current. FFI on macOS / iOS / Linux / Windows / Android;
+  Process.run fallback for dev environments.
+- **v0.3.0** — bundle-as-Flutter-asset option (smaller app binaries),
+  Flutter Web support via JS interop.
 
 ---
 

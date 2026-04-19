@@ -1,5 +1,93 @@
 # Changelog
 
+## 0.2.0
+
+**Headline: embedded QuickJS runtime via FFI.** `QuicktypeDart.generate` now
+runs quicktype-core in-process on macOS, iOS, Linux, Windows, and Android —
+no Node CLI required. ~2ms per call after warmup, ~680KB of native code +
+2.9MB of bundled JS added to the app.
+
+### FFI transport
+
+- New `GenerateTransport` enum (`auto`, `ffi`, `process`). `QuicktypeDart.generate`
+  and `generateFromString` accept a `transport:` parameter. Default `auto`
+  prefers the embedded FFI runtime when the native library is available,
+  falls back to `Process.run` otherwise.
+- `QtFfiRuntime` — per-instance handle around an embedded QuickJS runtime
+  loaded with the quicktype-core bundle. Exposes `.create()` for isolated
+  instances, `.instance()` for a shared lazy singleton, and `.dispose()` for
+  deterministic teardown. `Finalizer` handles cleanup on GC.
+- Isolate-safe: each isolate can create its own runtime; runtimes don't
+  share state. Post-dispose calls throw `StateError` rather than crashing.
+- Native library vendored under `native/`: trimmed quickjs-ng v0.14.0 source
+  (2.5MB) + 180-line C shim + 2.9MB embedded JS bundle.
+
+### Flutter plugin
+
+- `pubspec.yaml` declares the package as a Flutter FFI plugin for macOS,
+  iOS, Linux, Windows, and Android. Each platform uses a shared
+  `native/CMakeLists.txt` as the build entry point.
+- `macos/` and `ios/` ship CocoaPods podspecs that compile forwarder
+  `Classes/*.c` files which `#include` from `../native/`.
+- `linux/CMakeLists.txt` and `windows/CMakeLists.txt` delegate to the
+  shared native tree via `add_subdirectory`, re-exporting
+  `quicktype_dart_bundled_libraries` for Flutter's plugin embedding.
+- `android/build.gradle` configures AGP's `externalNativeBuild` to invoke
+  the same CMake; produces `libquicktype_dart.so` for arm64-v8a,
+  armeabi-v7a, and x86_64.
+
+### Arg plumbing
+
+- Each `Arg` subclass grew a `toRendererOption()` method returning a
+  `(name, stringified value)` entry that quicktype-core's `rendererOptions`
+  accepts. The FFI path serializes args as a JSON object and passes it to
+  quicktype alongside `lang`, `name`, and the sample.
+- FFI and Process transports are feature-equivalent for args. Callers don't
+  need to choose a transport based on whether they're passing `useFreezed`.
+
+### Bundle regeneration tooling
+
+- `native/bundle/shim.mjs` — the JS entry module bundled into
+  `quicktype_bundle.js`. Exposes `globalThis.qtConvert(lang, name, json, opts)`.
+- `native/bundle/build_bundle.sh` + `package.json` — run `npm install` then
+  `./build_bundle.sh` to rebuild `quicktype_bundle.js` after a quicktype-core
+  upgrade.
+- `native/shim/embed_bundle.py` converts bundle + prelude into
+  `native/shim/bundle_data.c` as C string literals.
+
+### Platform support
+
+| Platform | Status |
+|---|---|
+| macOS (arm64) | ✅ verified end-to-end in a Flutter app |
+| macOS (x64) | ✅ should work (same CMake, not locally tested) |
+| iOS | Podspec wired; runtime verification pending |
+| Linux | CMake configured; runtime verification pending |
+| Windows | CMake configured + MSVC shims in place; runtime verification pending |
+| Android | NDK externalNativeBuild configured; runtime verification pending |
+| Flutter Web | not supported (no FFI) |
+
+### Breaking (pre-1.0)
+
+- No renamed or removed public symbols vs v0.1.0.
+- The new `transport:` parameter has a default of `GenerateTransport.auto`,
+  which will prefer FFI over Process.run when the native library is
+  available. Consumers who want the v0.1.0 behaviour can pass
+  `transport: GenerateTransport.process`.
+
+### Deferred to later releases
+
+- **Flutter Web.** The package exports fine on web (no FFI imported at the
+  top level), but `QuicktypeDart.generate` at runtime is no-op on web.
+  Future work: a JS-interop path that uses the browser's native JS engine
+  with the same bundle.
+- **Bundle-as-asset** option to ship `quicktype_bundle.js` via Flutter's
+  asset pipeline instead of embedding it in the binary. Would shave
+  ~2.9MB off each platform binary. Tracked for v0.2.x or v0.3.0.
+- **Legacy process-global FFI API** (`qt_init` / `qt_convert` / `qt_shutdown`
+  on the C side) is preserved in this release for compatibility with
+  dev.1–dev.6 users. Removal planned for v0.3.0.
+
 ## 0.1.0
 
 First public release.
