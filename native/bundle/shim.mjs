@@ -23,6 +23,18 @@ import {
 } from 'quicktype-core';
 
 globalThis.qtConvert = async function (lang, name, jsonString, rendererOptions) {
+  // rendererOptions arrives as either a JS object literal (embedded via the
+  // C shim's `asprintf` interpolation) or as a JSON string (from Flutter
+  // Web's `dart:js_interop` path, which marshals Dart Strings). Accept both.
+  if (typeof rendererOptions === 'string') {
+    try {
+      rendererOptions = rendererOptions ? JSON.parse(rendererOptions) : {};
+    } catch (_) {
+      rendererOptions = {};
+    }
+  }
+  if (!rendererOptions) rendererOptions = {};
+
   const jsonInput = jsonInputForTargetLanguage(lang);
   await jsonInput.addSource({ name, samples: [jsonString] });
   const inputData = new InputData();
@@ -30,7 +42,7 @@ globalThis.qtConvert = async function (lang, name, jsonString, rendererOptions) 
   const result = await quicktype({
     inputData,
     lang,
-    rendererOptions: rendererOptions || {},
+    rendererOptions,
   });
   return result.lines.join('\n');
 };

@@ -1,5 +1,48 @@
 # Changelog
 
+## 0.2.1
+
+Adds Flutter Web support via `dart:js_interop`, covering the one
+platform v0.2.0 left out.
+
+### Flutter Web transport
+
+- `QuicktypeDart.generate` now works on Flutter Web. On non-web targets
+  nothing changes: `GenerateTransport.auto` still prefers the embedded
+  QuickJS FFI path; on web it routes to the new `dart:js_interop`
+  backend automatically.
+- `quicktype-core` ships as a plugin asset at
+  `packages/quicktype_dart/assets/quicktype_bundle.js`. On first call
+  the backend injects a `<script>` tag; subsequent calls go straight
+  to `globalThis.qtConvert`. The same bundle powers the FFI path.
+- `GenerateTransport.ffi` and `.process` throw `UnsupportedError` on
+  web with clear messaging (neither `dart:ffi` nor `dart:io` is
+  available in a browser).
+
+### Architecture
+
+- New `lib/src/backend_io.dart` (non-web) and `lib/src/backend_web.dart`
+  (web) behind a conditional import in `lib/src/quicktype_dart.dart`.
+  The public facade is platform-neutral; neither backend ever loads on
+  the wrong target.
+- Bundle shim (`native/bundle/shim.mjs`) updated to accept
+  `rendererOptions` as either a JS object (FFI path) or a JSON string
+  (web path, since `dart:js_interop` marshals Dart Strings as JS
+  strings). Both FFI and Web now share a single bundle.
+
+### Dependencies
+
+- `web: ^1.1.0` added for `dart:js_interop` bindings.
+
+### Verified
+
+- Non-web: 29/29 tests pass, `dart analyze lib bin` clean, FFI smoke
+  tests still pass with the updated bundle.
+- Flutter Web: `flutter build web --release` on a scratch app consuming
+  the plugin succeeds. The compiled `main.dart.js` references the
+  bundle URL. The bundle ships to `build/web/assets/packages/...`.
+  End-to-end bundle behaviour validated via qjs on the served bundle.
+
 ## 0.2.0
 
 **Headline: embedded QuickJS runtime via FFI.** `QuicktypeDart.generate` now
