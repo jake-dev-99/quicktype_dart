@@ -4,10 +4,11 @@ import '../config.dart' show ConfigException;
 /// `build.yaml` `args:` block) into the `Map<String, String>` shape
 /// quicktype-core expects.
 ///
-/// Accepts `bool`, `String`, or `null` (skipped). Anything else throws
-/// [ConfigException] so typos like `use-freezed: 1` or
-/// `part-name: [foo]` fail loud at config-load time instead of silently
-/// coercing via `toString()` and producing mystery output.
+/// Accepts `bool`, `String`, `num` (stringified), or `null` (skipped).
+/// Anything else — lists, maps, DateTimes — throws [ConfigException]
+/// with a hint. Silent `toString()` coercion of arbitrary objects is
+/// avoided so typos like `args: { framework: [foo] }` fail at
+/// config-load time instead of producing mystery CLI flags.
 ///
 /// Used by both `TypeConfig.fromJson` (config-driven flow) and the
 /// `quicktype_dart` builder in `lib/entrypoint_runner.dart`. Keeping a
@@ -25,15 +26,14 @@ Map<String, String> coerceRendererOptionsMap(
   for (final entry in raw.entries) {
     final v = entry.value;
     if (v == null) continue;
-    if (v is bool) {
+    if (v is bool || v is String || v is num) {
       out[entry.key] = v.toString();
-    } else if (v is String) {
-      out[entry.key] = v;
     } else {
       throw ConfigException(
         '$sectionLabel: renderer option "${entry.key}" has unsupported '
-        'value type ${v.runtimeType} (value: $v). Expected bool, '
-        'String, or null.',
+        'value type ${v.runtimeType} (value: $v). Expected bool, String, '
+        'num, or null. If you need a free-form value, stringify it at '
+        'the call site.',
       );
     }
   }

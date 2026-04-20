@@ -66,7 +66,11 @@ class QuicktypeCLI {
   static Future<int> _generateFromConfig(String configPath) async {
     stdout.writeln('Running quicktype with config: $configPath');
 
-    final quicktype = Quicktype(Config.loadOrDefaults(configPath));
+    // CLI invocations surface config-parse errors directly instead of
+    // silently running with defaults — the user asked for this config,
+    // we don't get to decide it's invalid.
+    final quicktype =
+        Quicktype(Config.loadOrDefaults(path: configPath, strict: true));
     final commands = await quicktype.buildCommandsFromConfig();
     final results = await quicktype.executeAll(commands);
 
