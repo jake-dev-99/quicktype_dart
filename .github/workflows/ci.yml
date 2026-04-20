@@ -73,6 +73,13 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install quicktype globally
+        # build_runner's auto transport falls through to Process on CI
+        # (FFI plugin isn't pre-built); needs `quicktype` on PATH.
+        run: npm install -g quicktype
       - name: Install deps
         working-directory: example
         run: dart pub get
@@ -80,9 +87,13 @@ jobs:
         working-directory: example
         run: |
           dart run build_runner build --delete-conflicting-outputs
+          # build_runner emits quicktype's 4-space indent; committed file
+          # is dart-format-normalized. Apply the formatter before the
+          # drift check so only semantic changes show up.
+          dart format lib/models
           if ! git diff --quiet lib/models/user.dart; then
             echo '::error::Generated file lib/models/user.dart drifted.'
-            echo 'Re-run: cd example && dart run build_runner build --delete-conflicting-outputs'
+            echo 'Re-run locally: cd example && dart run build_runner build --delete-conflicting-outputs && dart format lib/models'
             git --no-pager diff lib/models/user.dart
             exit 1
           fi
