@@ -85,51 +85,92 @@ Future<void> _loadBundle() async {
   final existing =
       web.document.querySelector('script[data-quicktype-dart="bundle"]');
   if (existing == null) {
-    final script = web.document.createElement('script') as web.HTMLScriptElement
-      ..src = url
-      ..async = true
-      ..setAttribute('data-quicktype-dart', 'bundle');
-    if (integrity != null) {
-      script.setAttribute('integrity', integrity);
-      script.setAttribute('crossorigin', 'anonymous');
-    }
-
-    final completer = Completer<void>();
-    script.onLoad.listen((_) {
-      if (!completer.isCompleted) completer.complete();
-    });
-    script.onError.listen((e) {
-      if (!completer.isCompleted) {
-        completer.completeError(QuicktypeException('Failed to load $url: $e'));
-      }
-    });
-    web.document.head!.appendChild(script);
-    await completer.future;
+    await _injectAndWait(url, integrity);
   } else {
-    // Someone else injected the tag (or we did, in a previous isolate).
-    // We can't rely on listeners — if the script already finished loading
-    // before this code ran, no further event will fire. Race its
-    // (possibly-pending) load/error events against a wall-clock deadline,
-    // with `qtConvert` going live as a third success signal. Uses
-    // exponential backoff instead of a 25ms busy-loop.
-    final completer = Completer<void>();
-    final script = existing as web.HTMLScriptElement;
-    script.onLoad.listen((_) {
-      if (!completer.isCompleted) completer.complete();
-    });
-    script.onError.listen((e) {
-      if (!completer.isCompleted) {
-        completer.completeError(QuicktypeException('Failed to load $url: $e'));
-      }
-    });
-    final start = DateTime.now();
-    var delayMs = 2;
-    while (!completer.isCompleted &&
-        _qtConvertRaw == null &&
-        DateTime.now().difference(start) < _bundleLoadTimeout) {
-      await Future<void>.delayed(Duration(milliseconds: delayMs));
-      if (delayMs < 100) delayMs *= 2;
+    await _waitForExistingScript(existing as web.HTMLScriptElement, url);
+  }
+
+  if (_qtConvertRaw == null) {
+    throw QuicktypeException(
+      'quicktype_dart: the bundle script finished loading but '
+      'globalThis.qtConvert is not defined. The JS bundle at $url is '
+      'either corrupt or not a quicktype_dart bundle.',
+    );
+  }
+}
+
+/// Creates a fresh `<script>` tag, attaches load/error listeners that are
+/// cancelled on resolution, and waits for one of: load, error, or timeout.
+Future<void> _injectAndWait(String url, String? integrity) async {
+  final script = web.document.createElement('script') as web.HTMLScriptElement
+    ..src = url
+    ..async = true
+    ..setAttribute('data-quicktype-dart', 'bundle');
+  if (integrity != null) {
+    script.setAttribute('integrity', integrity);
+    script.setAttribute('crossorigin', 'anonymous');
+  }
+
+  final parent = web.document.head ??
+      web.document.body ??
+      web.document.documentElement;
+  if (parent == null) {
+    throw QuicktypeException(
+      'quicktype_dart: document has no <head>, <body>, or <html> to '
+      'attach the bundle script to. Page may be tearing down.',
+    );
+  }
+
+  final completer = Completer<void>();
+  final loadSub = script.onLoad.listen((_) {
+    if (!completer.isCompleted) completer.complete();
+  });
+  final errorSub = script.onError.listen((e) {
+    if (!completer.isCompleted) {
+      completer.completeError(
+        QuicktypeException('Failed to load $url: $e'),
+      );
     }
+  });
+
+  try {
+    parent.appendChild(script);
+    await completer.future.timeout(
+      _bundleLoadTimeout,
+      onTimeout: () => throw QuicktypeException(
+        'quicktype_dart: timed out after ${_bundleLoadTimeout.inSeconds}s '
+        'loading the bundle script at $url.',
+      ),
+    );
+  } finally {
+    await loadSub.cancel();
+    await errorSub.cancel();
+  }
+}
+
+/// Someone else injected the tag (or we did, in a previous isolate).
+/// We can't rely on listeners — if the script already finished loading
+/// before this code ran, no further event will fire. Race its
+/// (possibly-pending) load/error events against a wall-clock deadline,
+/// with `qtConvert` going live as a third success signal.
+Future<void> _waitForExistingScript(
+  web.HTMLScriptElement script,
+  String url,
+) async {
+  final completer = Completer<void>();
+  final loadSub = script.onLoad.listen((_) {
+    if (!completer.isCompleted) completer.complete();
+  });
+  final errorSub = script.onError.listen((e) {
+    if (!completer.isCompleted) {
+      completer.completeError(
+        QuicktypeException('Failed to load $url: $e'),
+      );
+    }
+  });
+
+  try {
+    await _pollForQtConvert(completer);
     if (!completer.isCompleted) {
       if (_qtConvertRaw != null) {
         completer.complete();
@@ -143,14 +184,24 @@ Future<void> _loadBundle() async {
       }
     }
     await completer.future;
+  } finally {
+    await loadSub.cancel();
+    await errorSub.cancel();
   }
+}
 
-  if (_qtConvertRaw == null) {
-    throw QuicktypeException(
-      'quicktype_dart: the bundle script finished loading but '
-      'globalThis.qtConvert is not defined. The JS bundle at $url is '
-      'either corrupt or not a quicktype_dart bundle.',
-    );
+/// Polls `_qtConvertRaw` with exponential backoff up to
+/// [_bundleLoadTimeout]. Returns early as soon as [completer] resolves —
+/// the completer fires from the caller's onLoad/onError listeners when
+/// the script dispatches those events.
+Future<void> _pollForQtConvert(Completer<void> completer) async {
+  final start = DateTime.now();
+  var delayMs = 2;
+  while (!completer.isCompleted &&
+      _qtConvertRaw == null &&
+      DateTime.now().difference(start) < _bundleLoadTimeout) {
+    await Future<void>.delayed(Duration(milliseconds: delayMs));
+    if (delayMs < 100) delayMs *= 2;
   }
 }
 
