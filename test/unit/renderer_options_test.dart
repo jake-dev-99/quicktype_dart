@@ -89,7 +89,6 @@ void main() {
         const RubyRendererOptions(),
         const RustRendererOptions(),
         const Scala3RendererOptions(),
-        const SmithyRendererOptions(),
         const SwiftRendererOptions(),
         const TypeScriptRendererOptions(),
       ];

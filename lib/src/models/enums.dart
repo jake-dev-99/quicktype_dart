@@ -618,22 +618,6 @@ enum Scala3Framework {
   String toString() => value;
 }
 
-//===== SMITHY LANGUAGE SPECIFIC ENUMS =====
-
-/// Serialization framework options for Smithy code generation
-// (used by the corresponding *RendererOptions class)
-enum SmithyFramework {
-  /// Generate types only without serialization code
-  justTypes('just-types');
-
-  /// The framework option value
-  final String value;
-  const SmithyFramework(this.value);
-
-  @override
-  String toString() => value;
-}
-
 //===== SWIFT LANGUAGE SPECIFIC ENUMS =====
 
 /// Options for defining Swift type as struct or class
