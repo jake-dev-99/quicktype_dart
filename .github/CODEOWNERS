@@ -1,0 +1,26 @@
+# Code ownership. Every PR touching these paths requires review from
+# the listed owners before merge. Update when adding subsystems.
+
+# Default — everything needs review.
+*                               @jake-dev-99
+
+# Native bridge: QuickJS vendoring, C shim, embed pipeline.
+/native/                        @jake-dev-99
+/lib/src/ffi/                   @jake-dev-99
+
+# Backends
+/lib/src/backend_io.dart        @jake-dev-99
+/lib/src/backend_web.dart       @jake-dev-99
+
+# Dev tooling
+/tool/                          @jake-dev-99
+
+# CI + release plumbing
+/.github/workflows/             @jake-dev-99
+/tool/sync_version.dart         @jake-dev-99
+/tool/api_snapshot.dart         @jake-dev-99
+/tool/check_coverage.dart       @jake-dev-99
+
+# Generated snapshot — review the diff carefully; always paired with
+# a CHANGELOG entry when it changes.
+/tool/api_snapshot.txt          @jake-dev-99

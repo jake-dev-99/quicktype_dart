@@ -1,0 +1,60 @@
+name: Release
+
+# Fires when a release/vX.Y.Z branch gets tagged. Re-runs the full gate
+# and then publishes to pub.dev via OIDC-signed auth (no long-lived
+# token in secrets).
+#
+# Manual usage:
+#   gh release create v1.0.0-rc.1 --target main --title "v1.0.0-rc.1" --notes-file CHANGELOG.md
+#
+# Or push a tag directly; the job kicks off automatically.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish (vX.Y.Z or vX.Y.Z-rc.N)'
+        required: true
+
+permissions:
+  id-token: write   # OIDC for pub.dev authentication
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pub.dev
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install deps
+        run: flutter pub get
+
+      - name: Format
+        run: dart format --set-exit-if-changed lib test tool bin example
+
+      - name: Analyze
+        run: dart analyze --fatal-infos --fatal-warnings
+
+      - name: Version stamps in sync
+        run: dart run tool/sync_version.dart
+
+      - name: Verify API snapshot in sync
+        run: dart run tool/api_snapshot.dart
+
+      - name: Unit tests
+        run: dart test test/unit
+
+      - name: Publish dry-run
+        run: flutter pub publish --dry-run
+
+      - name: Publish to pub.dev
+        run: flutter pub publish --force
