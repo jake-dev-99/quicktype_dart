@@ -41,7 +41,8 @@ class TypeScriptRendererOptions extends RendererOptions {
     putOpt(m, 'nice-property-names', nicePropertyNames);
     putOpt(m, 'explicit-unions', explicitUnions);
     putOpt(m, 'runtime-typecheck', runtimeTypecheck);
-    putOpt(m, 'runtime-typecheck-ignore-unknown-properties', runtimeTypecheckIgnoreUnknownProperties);
+    putOpt(m, 'runtime-typecheck-ignore-unknown-properties',
+        runtimeTypecheckIgnoreUnknownProperties);
     putOpt(m, 'acronym-style', acronymStyle);
     putOpt(m, 'converters', converters);
     putOpt(m, 'raw-type', rawType);

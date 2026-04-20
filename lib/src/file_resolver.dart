@@ -88,9 +88,8 @@ class FileResolver {
     final targetName = '$sourceName$targetExt';
 
     final targetPath = targetConfig.path;
-    final parent = p.extension(targetPath).isEmpty
-        ? targetPath
-        : p.dirname(targetPath);
+    final parent =
+        p.extension(targetPath).isEmpty ? targetPath : p.dirname(targetPath);
     return p.join(parent, targetName);
   }
 

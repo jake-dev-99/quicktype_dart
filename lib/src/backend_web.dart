@@ -111,9 +111,8 @@ Future<void> _injectAndWait(String url, String? integrity) async {
     script.setAttribute('crossorigin', 'anonymous');
   }
 
-  final parent = web.document.head ??
-      web.document.body ??
-      web.document.documentElement;
+  final parent =
+      web.document.head ?? web.document.body ?? web.document.documentElement;
   if (parent == null) {
     throw QuicktypeException(
       'quicktype_dart: document has no <head>, <body>, or <html> to '

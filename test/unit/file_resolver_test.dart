@@ -50,8 +50,7 @@ void main() {
     test('matches multi-dot extensions (.schema.json) without collapsing', () {
       touch('user.schema.json');
       touch('other.json');
-      final matches =
-          FileResolver.getFiles(sandbox.path, {'.schema.json'});
+      final matches = FileResolver.getFiles(sandbox.path, {'.schema.json'});
       expect(matches.length, 1);
       expect(matches.single, endsWith('user.schema.json'));
     });
@@ -86,8 +85,7 @@ void main() {
       expect(matches, isEmpty);
     });
 
-    test('trailing slash vs no trailing slash both resolve the directory',
-        () {
+    test('trailing slash vs no trailing slash both resolve the directory', () {
       touch('a.json');
       final withSlash = FileResolver.getFiles('${sandbox.path}/', {'.json'});
       final without = FileResolver.getFiles(sandbox.path, {'.json'});
@@ -97,8 +95,7 @@ void main() {
     test('pre-existing trailing wildcard is preserved (no double /*)', () {
       touch('a.json');
       touch('b.json');
-      final matches =
-          FileResolver.getFiles('${sandbox.path}/*', {'.json'});
+      final matches = FileResolver.getFiles('${sandbox.path}/*', {'.json'});
       expect(matches.length, 2);
     });
   });

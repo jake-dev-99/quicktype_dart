@@ -10,7 +10,7 @@
   ctor Config.defaults()
   ctor Config.fromFile(req String path)
   ctor Config.fromMap(req Map<String, dynamic> map)
-  ctor Config.loadOrDefaults(String path)
+  ctor Config.loadOrDefaults(String {path}, bool {strict})
   ctor ConfigException(req String message, Object? cause)
   ctor CppRendererOptions(bool? {justTypes}, WStringType? {wstring}, ConstStyle? {constStyle}, String? {enumType}, String? {namespace}, CodeFormat? {codeFormat}, IncludeStyle? {includeStyle}, SourceStyle? {sourceStyle}, bool? {boost}, bool? {hideNullOptional}, NamingStyle? {typeStyle}, NamingStyle? {memberStyle}, NamingStyle? {enumeratorStyle})
   ctor DartRendererOptions(bool? {nullSafety}, bool? {justTypes}, bool? {codersInClass}, bool? {fromMap}, bool? {requiredProps}, bool? {finalProps}, bool? {copyWith}, bool? {useFreezed}, bool? {useHive}, bool? {useJsonAnnotation}, String? {partName})

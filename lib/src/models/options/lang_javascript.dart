@@ -27,7 +27,8 @@ class JavaScriptRendererOptions extends RendererOptions {
     final m = <String, String>{};
     putOpt(m, 'copy-accessor-annotations', copyAccessorAnnotations);
     putOpt(m, 'runtime-typecheck', runtimeTypecheck);
-    putOpt(m, 'runtime-typecheck-ignore-unknown-properties', runtimeTypecheckIgnoreUnknownProperties);
+    putOpt(m, 'runtime-typecheck-ignore-unknown-properties',
+        runtimeTypecheckIgnoreUnknownProperties);
     putOpt(m, 'acronym-style', acronymStyle);
     putOpt(m, 'converters', converters);
     putOpt(m, 'raw-type', rawType);
