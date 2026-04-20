@@ -130,10 +130,14 @@ For more details: https://github.com/jake-dev-99/quicktype_dart
     }
   }
 
-  /// Wires `Logger('quicktype')` records to stdout/stderr so library
-  /// diagnostics (`Log.info` etc.) reach the terminal when run as a CLI.
-  /// Idempotent: re-runs in the same process (tests) just replace the
-  /// single listener.
+  /// Wires the **root** logger's records (everything under
+  /// `Logger.root`, including our `Logger('quicktype')` tree and any
+  /// transitive `package:logging` consumers) to stdout/stderr so
+  /// library diagnostics (`Log.info` etc.) reach the terminal when run
+  /// as a CLI. Sets the root level to INFO on entry.
+  ///
+  /// Idempotent: re-runs in the same process (tests) cancel the
+  /// previous subscription before attaching a new one.
   static void _installLogForwarder() {
     Logger.root.level = Level.INFO;
     _logSubscription?.cancel();

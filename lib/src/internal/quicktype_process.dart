@@ -69,21 +69,45 @@ Future<ProcessResult> runQuicktypeProcess(
   final exe = await resolveQuicktypeExecutable();
   final effectiveTimeout = timeout ?? QuicktypeDart.processTimeout;
   final commandStr = formatCommand(exe, argv);
+
+  // Process.start + manual kill instead of Process.run().timeout(): the
+  // latter only times out the Dart-side Future; the OS child keeps
+  // running, holding the temp dir and whatever resources it had. We
+  // want the timeout to actually terminate the subprocess.
+  final Process proc;
   try {
-    return await Process.run(exe, argv).timeout(effectiveTimeout);
-  } on TimeoutException {
-    throw QuicktypeException(
-      'quicktype subprocess timed out after ${effectiveTimeout.inSeconds}s. '
-      'Raise the limit via QuicktypeDart.processTimeout if generations '
-      'legitimately take longer.',
-      command: commandStr,
-    );
+    proc = await Process.start(exe, argv);
   } catch (e, st) {
     throw QuicktypeException(
-      'Failed to run quicktype: $e',
+      'Failed to launch quicktype: $e',
       command: commandStr,
       cause: e,
       stackTrace: st,
+    );
+  }
+
+  final stdoutF = proc.stdout.transform(systemEncoding.decoder).join();
+  final stderrF = proc.stderr.transform(systemEncoding.decoder).join();
+
+  try {
+    final exitCode = await proc.exitCode.timeout(effectiveTimeout);
+    return ProcessResult(
+      proc.pid,
+      exitCode,
+      await stdoutF,
+      await stderrF,
+    );
+  } on TimeoutException {
+    proc.kill(ProcessSignal.sigkill);
+    // Drain pipes so the futures don't linger uncompleted; swallow any
+    // errors since the real failure is the timeout itself.
+    unawaited(stdoutF.catchError((_) => ''));
+    unawaited(stderrF.catchError((_) => ''));
+    throw QuicktypeException(
+      'quicktype subprocess timed out after ${effectiveTimeout.inSeconds}s '
+      'and was killed. Raise the limit via QuicktypeDart.processTimeout '
+      'if generations legitimately take longer.',
+      command: commandStr,
     );
   }
 }
