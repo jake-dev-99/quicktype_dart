@@ -34,6 +34,7 @@
   ctor QuicktypeResult.success(req String {sourcePath}, req String {targetPath}, String? {targetContent}, String? {stdout}, String? {stderr})
   ctor RemoteBundleSource(req Uri url, String? {integrity})
   ctor RendererOptions()
+  ctor RendererOptions.raw(req Map<String, String> options)
   ctor RubyRendererOptions(bool? {justTypes}, RubyStrictness? {strictness}, String? {namespace})
   ctor RustRendererOptions(Density? {density}, RustVisibility? {visibility}, bool? {deriveDebug}, bool? {deriveClone}, bool? {derivePartialEq}, bool? {edition2018}, bool? {leadingComments}, bool? {skipSerializingNone})
   ctor Scala3RendererOptions(Scala3Framework? {framework}, String? {package})
@@ -266,22 +267,10 @@
   static field DefaultPaths.DefaultPaths.web: String
   static field QuicktypeDart.QuicktypeDart.bundleSource: BundleSource
   static field QuicktypeDart.QuicktypeDart.processTimeout: Duration
-  static get QuicktypeDart.bundleSource: BundleSource
-  static method Log.all(req String message, String? className): void
-  static method Log.config(req String message, String? className): void
-  static method Log.fine(req String message, String? className): void
-  static method Log.finer(req String message, String? className): void
-  static method Log.finest(req String message, String? className): void
-  static method Log.info(req String message, String? className): void
-  static method Log.off(req String message, String? className): void
-  static method Log.severe(req String message, String? className): void
-  static method Log.shout(req String message, String? className): void
-  static method Log.warning(req String message, String? className): void
   static method Quicktype.executeNative(req List<String> args): Future<int>
   static method QuicktypeCommand.createCommandForFiles(req AssetId {sourceFile}, req AssetId {targetFile}, Map<String, String> {rendererOptions}): QuicktypeCommand
   static method QuicktypeDart.generate(req String {label}, req Object {data}, req TargetType {target}, RendererOptions? {options}, GenerateTransport {transport}): Future<String>
   static method QuicktypeDart.generateFromString(req String {label}, req String {json}, req TargetType {target}, RendererOptions? {options}, GenerateTransport {transport}): Future<String>
-  static method QuicktypeDart.setBundleSource(req BundleSource source): void
   value AcronymStyle.camel
   value AcronymStyle.lowerCase
   value AcronymStyle.original
@@ -428,7 +417,6 @@ class HaskellRendererOptions
 class JavaRendererOptions
 class JavaScriptRendererOptions
 class KotlinRendererOptions
-class Log
 class ObjectiveCRendererOptions
 class PHPRendererOptions
 class PropTypesRendererOptions
@@ -484,5 +472,3 @@ enum SwiftProtocol
 enum TargetType
 enum TypedefAlias
 enum WStringType
-function coerceRendererOptionsMap(req Map<String, Object?> raw, String {sectionLabel}): Map<String, String>
-function inferLangType(req List<T> candidates, req String path): T?

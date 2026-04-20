@@ -1,6 +1,9 @@
 // Barrel — re-exports every language-specific RendererOptions class.
+// Only the RendererOptions abstract base is re-exported from
+// renderer_options.dart; its internal `putOpt` helper stays
+// package-private.
 
-export '../renderer_options.dart';
+export '../renderer_options.dart' show RendererOptions;
 export 'lang_c.dart';
 export 'lang_cpp.dart';
 export 'lang_csharp.dart';
