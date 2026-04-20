@@ -4,4 +4,4 @@
 /// The current `quicktype_dart` package version. Mirrors the `version:`
 /// entry in pubspec.yaml so the CLI, native podspecs, and Gradle build
 /// files stay in lockstep.
-const String packageVersion = '1.0.0-rc.1';
+const String packageVersion = '1.0.0-rc.2';

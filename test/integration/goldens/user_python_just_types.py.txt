@@ -1,0 +1,25 @@
+from typing import List
+
+
+class Profile:
+    age: int
+    active: bool
+
+    def __init__(self, age: int, active: bool) -> None:
+        self.age = age
+        self.active = active
+
+
+class User:
+    id: int
+    name: str
+    email: str
+    roles: List[str]
+    profile: Profile
+
+    def __init__(self, id: int, name: str, email: str, roles: List[str], profile: Profile) -> None:
+        self.id = id
+        self.name = name
+        self.email = email
+        self.roles = roles
+        self.profile = profile

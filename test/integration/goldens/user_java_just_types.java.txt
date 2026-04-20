@@ -1,0 +1,41 @@
+// User.java
+
+package io.quicktype;
+
+public class User {
+    private long id;
+    private String name;
+    private String email;
+    private String[] roles;
+    private Profile profile;
+
+    public long getID() { return id; }
+    public void setID(long value) { this.id = value; }
+
+    public String getName() { return name; }
+    public void setName(String value) { this.name = value; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String value) { this.email = value; }
+
+    public String[] getRoles() { return roles; }
+    public void setRoles(String[] value) { this.roles = value; }
+
+    public Profile getProfile() { return profile; }
+    public void setProfile(Profile value) { this.profile = value; }
+}
+
+// Profile.java
+
+package io.quicktype;
+
+public class Profile {
+    private long age;
+    private boolean active;
+
+    public long getAge() { return age; }
+    public void setAge(long value) { this.age = value; }
+
+    public boolean getActive() { return active; }
+    public void setActive(boolean value) { this.active = value; }
+}

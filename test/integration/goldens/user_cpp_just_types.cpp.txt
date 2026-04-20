@@ -1,0 +1,58 @@
+#pragma once
+
+#include <boost/optional.hpp>
+#include <stdexcept>
+#include <regex>
+
+class Profile {
+    public:
+    Profile() = default;
+    virtual ~Profile() = default;
+
+    private:
+    int64_t age;
+    bool active;
+
+    public:
+    const int64_t & get_age() const { return age; }
+    int64_t & get_mutable_age() { return age; }
+    void set_age(const int64_t & value) { this->age = value; }
+
+    const bool & get_active() const { return active; }
+    bool & get_mutable_active() { return active; }
+    void set_active(const bool & value) { this->active = value; }
+};
+
+class User {
+    public:
+    User() = default;
+    virtual ~User() = default;
+
+    private:
+    int64_t id;
+    std::string name;
+    std::string email;
+    std::vector<std::string> roles;
+    Profile profile;
+
+    public:
+    const int64_t & get_id() const { return id; }
+    int64_t & get_mutable_id() { return id; }
+    void set_id(const int64_t & value) { this->id = value; }
+
+    const std::string & get_name() const { return name; }
+    std::string & get_mutable_name() { return name; }
+    void set_name(const std::string & value) { this->name = value; }
+
+    const std::string & get_email() const { return email; }
+    std::string & get_mutable_email() { return email; }
+    void set_email(const std::string & value) { this->email = value; }
+
+    const std::vector<std::string> & get_roles() const { return roles; }
+    std::vector<std::string> & get_mutable_roles() { return roles; }
+    void set_roles(const std::vector<std::string> & value) { this->roles = value; }
+
+    const Profile & get_profile() const { return profile; }
+    Profile & get_mutable_profile() { return profile; }
+    void set_profile(const Profile & value) { this->profile = value; }
+};

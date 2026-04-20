@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.0.0-rc.2
+
+**Golden test coverage expansion** — closes the last actionable gap
+from the war-plan audit before cutting 1.0.0 GA. Adds 9 new
+golden-file cases to `test/integration/golden_test.dart` so
+regressions in the top 10 consumer target languages get caught on
+every PR.
+
+### Added
+
+- **Goldens for 9 additional target languages** — `kotlin`, `swift`,
+  `typescript`, `csharp`, `python`, `java`, `go`, `rust`, `cpp`. Each
+  consumes a shared input (`test/integration/goldens/user_sample.input.json`)
+  and produces an expected-output file
+  (`test/integration/goldens/<case>.<ext>.txt`). Languages with a
+  `justTypes` renderer option use it for leaner, review-friendlier
+  goldens; the rest emit quicktype-core defaults.
+- **Regenerate all goldens in one pass**: `GOLDEN=update dart test
+  test/integration/golden_test.dart --tags=integration`.
+
+### Changed
+
+- `test/integration/golden_test.dart` refactored to share a single
+  `user_sample.input.json` fixture across every case. The existing
+  `user_dart_just_types.input.json` was renamed accordingly — cases
+  now reference `_sharedInput` instead of per-case input files.
+
+### Still intentionally uncovered (post-1.0 tracking)
+
+The 12 remaining `TargetType` values (elixir, elm, flow, haskell,
+javascript, objc, php, proptypes, ruby, scala, smithy, and the
+`Smithy` variant) don't have goldens yet. Adding one is a two-line
+change — append a `_Case` + rerun `GOLDEN=update`. Gated on a
+consumer asking.
+
 ## 1.0.0-rc.1
 
 **First release candidate for 1.0.** No code changes on top of 0.9.0 —
