@@ -71,7 +71,7 @@ class Config {
     if (!file.existsSync()) {
       throw ConfigException('Config file "$path" not found.');
     }
-    final dynamic decoded;
+    final Object? decoded;
     try {
       decoded = jsonDecode(file.readAsStringSync());
     } catch (e) {
@@ -99,10 +99,13 @@ class Config {
   /// Returns the built-in default config — every [SourceType] points at
   /// `models/` and every [TargetType] with a [TargetType.defaultPath]
   /// globs for matching files.
+  ///
+  /// **Side effect:** creates the `models/` directory on disk if missing.
+  /// The downstream `Quicktype` orchestrator assumes it exists by the time
+  /// commands get built; keeping the mkdir here means CLI users who fall
+  /// through to defaults don't hit a confusing "directory not found" on
+  /// the first run.
   factory Config.defaults() {
-    // The legacy singleton also created `models/` on disk here; preserve
-    // that behavior since build.yaml setups rely on the directory
-    // existing by the time commands are built.
     final modelDir = Directory(_defaultModelPath);
     if (!modelDir.existsSync()) {
       modelDir.createSync(recursive: true);
@@ -202,43 +205,56 @@ class Config {
     String section,
   ) {
     final result = <T, Set<TypeConfig>>{};
-
     for (final entry in configMap.entries) {
-      final key = entry.key.toLowerCase();
-      T? matchingType;
-      for (final validType in validTypes) {
-        if (validType.toString().toLowerCase() == key ||
-            validType.argName.toLowerCase() == key) {
-          matchingType = validType;
-          break;
-        }
-      }
-      if (matchingType == null) {
-        final names =
-            validTypes.map((t) => t.argName).toList(growable: false).join(', ');
-        throw ConfigException(
-          'Unknown $section "${entry.key}". Expected one of: $names.',
-        );
-      }
-      final rawList = entry.value;
-      if (rawList is! List) {
-        throw ConfigException(
-          '"$section.${entry.key}" must be a list, got ${rawList.runtimeType}.',
-        );
-      }
-      final configs = <TypeConfig>{};
-      for (final config in rawList) {
-        if (config is! Map<String, dynamic>) {
-          throw ConfigException(
-            '"$section.${entry.key}[]" entries must be objects, got '
-            '${config.runtimeType}.',
-          );
-        }
-        configs.add(TypeConfig.fromJson(matchingType, config));
-      }
-      result[matchingType] = configs;
+      final type = _findTypeByKey(entry.key, validTypes, section);
+      result[type] = _parseConfigList(entry.key, entry.value, type, section);
     }
-
     return result;
+  }
+
+  /// Resolves [key] against [validTypes], matching on either `name` or
+  /// `argName` case-insensitively. Throws [ConfigException] on no match.
+  static T _findTypeByKey<T extends TypeEnum>(
+    String key,
+    List<T> validTypes,
+    String section,
+  ) {
+    final lower = key.toLowerCase();
+    for (final t in validTypes) {
+      if (t.toString().toLowerCase() == lower ||
+          t.argName.toLowerCase() == lower) {
+        return t;
+      }
+    }
+    final names = validTypes.map((t) => t.argName).join(', ');
+    throw ConfigException(
+      'Unknown $section "$key". Expected one of: $names.',
+    );
+  }
+
+  /// Parses the list of [TypeConfig] entries under a single source/target
+  /// key. Throws [ConfigException] when the value shape is wrong.
+  static Set<TypeConfig> _parseConfigList<T extends TypeEnum>(
+    String key,
+    Object? rawList,
+    T type,
+    String section,
+  ) {
+    if (rawList is! List) {
+      throw ConfigException(
+        '"$section.$key" must be a list, got ${rawList.runtimeType}.',
+      );
+    }
+    final configs = <TypeConfig>{};
+    for (final entry in rawList) {
+      if (entry is! Map<String, dynamic>) {
+        throw ConfigException(
+          '"$section.$key[]" entries must be objects, got '
+          '${entry.runtimeType}.',
+        );
+      }
+      configs.add(TypeConfig.fromJson(type, entry));
+    }
+    return configs;
   }
 }

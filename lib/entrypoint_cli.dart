@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:args/args.dart';
 
 import 'src/config.dart';
-import 'src/quicktype.dart';
+import 'src/internal/quicktype_process.dart';
 import 'src/logging.dart';
+import 'src/quicktype.dart';
 import 'src/version.dart';
 
 /// Entry point for the `quicktype_dart` CLI.
@@ -40,7 +41,7 @@ class QuicktypeCLI {
 
       // Handle version request
       if (options.flag('version')) {
-        _printVersion();
+        await _printVersion();
         return 0;
       }
 
@@ -102,23 +103,25 @@ Examples:
   quicktype                  Generate using quicktype.json
   quicktype -c custom.json   Generate using custom.json
 
-For more details: https://github.com/yourusername/quicktype_dart
+For more details: https://github.com/jake-dev-99/quicktype_dart
 ''');
   }
 
   /// Print version information
-  static void _printVersion() {
+  static Future<void> _printVersion() async {
     Log.off('Quicktype Dart v$packageVersion');
-
     try {
-      final result = Process.runSync('quicktype', ['--version']);
+      final exe = await resolveQuicktypeExecutable();
+      final result = Process.runSync(exe, ['--version']);
       if (result.exitCode == 0) {
-        Log.off('Native quicktype: ${result.stdout.toString().trim()}');
+        Log.off('Native quicktype: ${(result.stdout as String).trim()}');
       } else {
-        Log.off('Native quicktype: not available');
+        Log.off('Native quicktype: exited ${result.exitCode}');
       }
-    } catch (_) {
+    } on QuicktypeException {
       Log.off('Native quicktype: not installed');
+    } catch (e) {
+      Log.off('Native quicktype: $e');
     }
   }
 }

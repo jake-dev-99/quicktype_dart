@@ -8,27 +8,34 @@ import 'package:test/test.dart';
 /// 0.5.0 de-singleton refactor. `Config` is now a plain value class —
 /// every test constructs its own instance; there is no shared state to
 /// reset between cases.
+
+/// Registers per-test setUp/tearDown that creates and deletes a temp dir.
+/// Returns a thunk that resolves to the current sandbox from inside a
+/// test body.
+Directory Function() _sandboxPerTest(String prefix) {
+  late Directory sandbox;
+  setUp(() {
+    sandbox = Directory.systemTemp.createTempSync(prefix);
+  });
+  tearDown(() {
+    sandbox.deleteSync(recursive: true);
+  });
+  return () => sandbox;
+}
+
 void main() {
   group('Config.fromFile', () {
-    late Directory sandbox;
-
-    setUp(() {
-      sandbox = Directory.systemTemp.createTempSync('qt_config_test_');
-    });
-
-    tearDown(() {
-      sandbox.deleteSync(recursive: true);
-    });
+    final sandbox = _sandboxPerTest('qt_config_test_');
 
     test('throws when the file is missing', () {
       expect(
-        () => Config.fromFile('${sandbox.path}/missing.json'),
+        () => Config.fromFile('${sandbox().path}/missing.json'),
         throwsA(isA<ConfigException>()),
       );
     });
 
     test('throws on a non-object root', () {
-      final f = File('${sandbox.path}/bad.json')..writeAsStringSync('[]');
+      final f = File('${sandbox().path}/bad.json')..writeAsStringSync('[]');
       expect(
         () => Config.fromFile(f.path),
         throwsA(isA<ConfigException>().having(
@@ -40,12 +47,12 @@ void main() {
     });
 
     test('throws on unparseable JSON', () {
-      final f = File('${sandbox.path}/bad.json')..writeAsStringSync('{not');
+      final f = File('${sandbox().path}/bad.json')..writeAsStringSync('{not');
       expect(() => Config.fromFile(f.path), throwsA(isA<ConfigException>()));
     });
 
     test('throws when sources is the wrong shape', () {
-      final f = File('${sandbox.path}/bad.json')
+      final f = File('${sandbox().path}/bad.json')
         ..writeAsStringSync('{"sources": "oops"}');
       expect(
         () => Config.fromFile(f.path),
@@ -58,7 +65,7 @@ void main() {
     });
 
     test('throws when a target value is not a list', () {
-      final f = File('${sandbox.path}/bad.json')
+      final f = File('${sandbox().path}/bad.json')
         ..writeAsStringSync('{"targets": {"dart": "oops"}}');
       expect(
         () => Config.fromFile(f.path),
@@ -71,7 +78,7 @@ void main() {
     });
 
     test('valid config loads without falling back', () {
-      final f = File('${sandbox.path}/q.json')
+      final f = File('${sandbox().path}/q.json')
         ..writeAsStringSync(
           '{"sources": {"json": [{"path": "models"}]}, "targets": {}}',
         );
@@ -95,23 +102,15 @@ void main() {
   });
 
   group('Config.loadOrDefaults', () {
-    late Directory sandbox;
-
-    setUp(() {
-      sandbox = Directory.systemTemp.createTempSync('qt_config_default_');
-    });
-
-    tearDown(() {
-      sandbox.deleteSync(recursive: true);
-    });
+    final sandbox = _sandboxPerTest('qt_config_default_');
 
     test('returns defaults when the file is missing', () {
-      final cfg = Config.loadOrDefaults('${sandbox.path}/missing.json');
+      final cfg = Config.loadOrDefaults('${sandbox().path}/missing.json');
       expect(cfg.sources, isNotEmpty);
     });
 
     test('returns defaults when the file is malformed', () {
-      final f = File('${sandbox.path}/bad.json')..writeAsStringSync('[]');
+      final f = File('${sandbox().path}/bad.json')..writeAsStringSync('[]');
       final cfg = Config.loadOrDefaults(f.path);
       expect(cfg.sources, isNotEmpty);
     });
