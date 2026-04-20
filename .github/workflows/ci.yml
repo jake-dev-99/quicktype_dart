@@ -87,7 +87,7 @@ jobs:
           channel: stable
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install quicktype globally
         # Pinned to the version whose Process-transport output the
         # golden files were generated against. Bump here + regenerate
@@ -131,7 +131,7 @@ jobs:
           channel: stable
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install quicktype globally
         # build_runner's auto transport falls through to Process on CI
         # (FFI plugin isn't pre-built); needs `quicktype` on PATH.
