@@ -115,6 +115,22 @@ void main() {
       expect(cfg.sources, isNotEmpty);
     });
 
+    test('strict: true rethrows ConfigException on a malformed file', () {
+      final f = File('${sandbox().path}/bad.json')..writeAsStringSync('[]');
+      expect(
+        () => Config.loadOrDefaults(path: f.path, strict: true),
+        throwsA(isA<ConfigException>()),
+      );
+    });
+
+    test('strict: true still falls back when the file is missing', () {
+      final cfg = Config.loadOrDefaults(
+        path: '${sandbox().path}/missing.json',
+        strict: true,
+      );
+      expect(cfg.sources, isNotEmpty);
+    });
+
     test('independent instances do not share state', () {
       final a = Config.fromMap(<String, dynamic>{
         'sources': <String, dynamic>{},
@@ -122,6 +138,106 @@ void main() {
       });
       final b = Config.defaults();
       expect(identical(a.sources, b.sources), isFalse);
+    });
+
+    test('Config.defaults() creates models/ when absent', () {
+      final prev = Directory.current;
+      try {
+        Directory.current = sandbox();
+        expect(Directory('models').existsSync(), isFalse);
+        final cfg = Config.defaults();
+        expect(Directory('models').existsSync(), isTrue);
+        expect(cfg.sources, isNotEmpty);
+      } finally {
+        Directory.current = prev;
+      }
+    });
+  });
+
+  group('ConfigException.toString', () {
+    test('omits "Caused by" when no cause was attached', () {
+      const e = ConfigException('bad config');
+      expect(e.toString(), 'ConfigException: bad config');
+    });
+
+    test('includes "Caused by" when a cause is present', () {
+      const cause = FormatException('bad json');
+      final e = ConfigException('wrap me', cause);
+      expect(e.toString(), contains('ConfigException: wrap me'));
+      expect(e.toString(), contains('Caused by: FormatException'));
+    });
+  });
+
+  group('Config.fromMap shape errors', () {
+    test('throws when a target key is not a recognized language', () {
+      expect(
+        () => Config.fromMap(<String, dynamic>{
+          'sources': <String, dynamic>{},
+          'targets': <String, dynamic>{'wat': <dynamic>[]},
+        }),
+        throwsA(isA<ConfigException>().having(
+          (e) => e.message,
+          'message',
+          contains('Unknown target'),
+        )),
+      );
+    });
+
+    test('throws when a list entry is not an object', () {
+      expect(
+        () => Config.fromMap(<String, dynamic>{
+          'sources': <String, dynamic>{
+            'json': <dynamic>['nope'],
+          },
+          'targets': <String, dynamic>{},
+        }),
+        throwsA(isA<ConfigException>().having(
+          (e) => e.message,
+          'message',
+          contains('entries must be objects'),
+        )),
+      );
+    });
+
+    test('missing targets key falls back to defaults', () {
+      final cfg = Config.fromMap(<String, dynamic>{
+        'sources': <String, dynamic>{
+          'json': [
+            <String, dynamic>{'path': 'models/'},
+          ],
+        },
+      });
+      expect(cfg.targets, isNotEmpty);
+    });
+
+    test('missing sources key falls back to defaults', () {
+      final cfg = Config.fromMap(<String, dynamic>{
+        'targets': <String, dynamic>{},
+      });
+      expect(cfg.sources, isNotEmpty);
+    });
+
+    test('argName alias resolves alongside the enum name', () {
+      // TargetType.csharp has argName 'cs'; both must route to the
+      // same enum via _findTypeByKey.
+      final byName = Config.fromMap(<String, dynamic>{
+        'sources': <String, dynamic>{},
+        'targets': <String, dynamic>{
+          'csharp': [
+            <String, dynamic>{'path': 'out'},
+          ],
+        },
+      });
+      final byArg = Config.fromMap(<String, dynamic>{
+        'sources': <String, dynamic>{},
+        'targets': <String, dynamic>{
+          'cs': [
+            <String, dynamic>{'path': 'out'},
+          ],
+        },
+      });
+      expect(byName.targets.keys.single, TargetType.csharp);
+      expect(byArg.targets.keys.single, TargetType.csharp);
     });
   });
 }
