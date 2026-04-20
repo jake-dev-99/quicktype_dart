@@ -484,4 +484,5 @@ enum SwiftProtocol
 enum TargetType
 enum TypedefAlias
 enum WStringType
+function coerceRendererOptionsMap(req Map<String, Object?> raw, String {sectionLabel}): Map<String, String>
 function inferLangType(req List<T> candidates, req String path): T?
