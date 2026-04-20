@@ -187,17 +187,21 @@ class Quicktype {
   /// (bundled first, then PATH), bypassing config and command construction.
   /// Used when the CLI is invoked with positional args beyond the known
   /// flags.
+  ///
+  /// Output is written verbatim to the process `stdout`/`stderr` — no
+  /// `[INFO]` log prefix, no trimming — so pipelines like
+  /// `dart run quicktype_dart -- --src foo.json --lang dart > out.dart`
+  /// produce clean bytes.
   static Future<int> executeNative(List<String> args) async {
-    Log.info('Running quicktype ${args.join(' ')}');
     try {
       final result = await runQuicktypeProcess(args);
-      final stdoutStr = (result.stdout as String).trimRight();
-      final stderrStr = (result.stderr as String).trimRight();
-      if (stdoutStr.isNotEmpty) Log.info(stdoutStr);
-      if (stderrStr.isNotEmpty) Log.warning(stderrStr);
+      final outStr = result.stdout as String;
+      final errStr = result.stderr as String;
+      if (outStr.isNotEmpty) stdout.write(outStr);
+      if (errStr.isNotEmpty) stderr.write(errStr);
       return result.exitCode;
     } on QuicktypeException catch (e) {
-      Log.severe(e.toString());
+      stderr.writeln(e);
       return 1;
     }
   }
