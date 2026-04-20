@@ -29,20 +29,14 @@ class RustRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (density != null) m['density'] = density!.toString();
-    if (visibility != null) m['visibility'] = visibility!.toString();
-    if (deriveDebug != null) m['derive-debug'] = deriveDebug.toString();
-    if (deriveClone != null) m['derive-clone'] = deriveClone.toString();
-    if (derivePartialEq != null) {
-      m['derive-partial-eq'] = derivePartialEq.toString();
-    }
-    if (edition2018 != null) m['edition-2018'] = edition2018.toString();
-    if (leadingComments != null) {
-      m['leading-comments'] = leadingComments.toString();
-    }
-    if (skipSerializingNone != null) {
-      m['skip-serializing-none'] = skipSerializingNone.toString();
-    }
+    putOpt(m, 'density', density);
+    putOpt(m, 'visibility', visibility);
+    putOpt(m, 'derive-debug', deriveDebug);
+    putOpt(m, 'derive-clone', deriveClone);
+    putOpt(m, 'derive-partial-eq', derivePartialEq);
+    putOpt(m, 'edition-2018', edition2018);
+    putOpt(m, 'leading-comments', leadingComments);
+    putOpt(m, 'skip-serializing-none', skipSerializingNone);
     return m;
   }
 }

@@ -17,8 +17,8 @@ class SmithyRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (framework != null) m['framework'] = framework!.toString();
-    if (package != null) m['package'] = package!;
+    putOpt(m, 'framework', framework);
+    putOpt(m, 'package', package);
     return m;
   }
 }

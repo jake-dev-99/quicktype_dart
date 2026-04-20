@@ -24,16 +24,12 @@ class GoRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (justTypes != null) m['just-types'] = justTypes.toString();
-    if (justTypesAndPackage != null) {
-      m['just-types-and-package'] = justTypesAndPackage.toString();
-    }
-    if (package != null) m['package'] = package!;
-    if (multiFileTarget != null) {
-      m['multi-file-dest'] = multiFileTarget.toString();
-    }
-    if (fieldTags != null) m['field-tags'] = fieldTags!;
-    if (omitEmpty != null) m['omit-empty'] = omitEmpty.toString();
+    putOpt(m, 'just-types', justTypes);
+    putOpt(m, 'just-types-and-package', justTypesAndPackage);
+    putOpt(m, 'package', package);
+    putOpt(m, 'multi-file-dest', multiFileTarget);
+    putOpt(m, 'field-tags', fieldTags);
+    putOpt(m, 'omit-empty', omitEmpty);
     return m;
   }
 }

@@ -19,9 +19,9 @@ class KotlinRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (framework != null) m['framework'] = framework!.toString();
-    if (acronymStyle != null) m['acronym-style'] = acronymStyle!.toString();
-    if (package != null) m['package'] = package!;
+    putOpt(m, 'framework', framework);
+    putOpt(m, 'acronym-style', acronymStyle);
+    putOpt(m, 'package', package);
     return m;
   }
 }

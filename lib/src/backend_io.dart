@@ -16,9 +16,10 @@ import 'facade.dart' show GenerateTransport;
 import 'ffi/ffi_runtime.dart';
 import 'internal/argv.dart';
 import 'internal/quicktype_process.dart';
+import 'internal/temp_dir_sweeper.dart';
+import 'logging.dart';
 import 'models/type.dart';
 import 'quicktype.dart';
-import 'logging.dart';
 
 /// Backend entry point. Platform-independent argument handling already
 /// happened in [QuicktypeDart.generateFromString]; this function just
@@ -117,48 +118,13 @@ Future<String> _runViaProcess({
 
     return targetFile.readAsString();
   } finally {
-    _cleanupTempDir(tempDir);
+    _sweeper.cleanup(tempDir);
   }
 }
 
-/// Deletes [tempDir] best-effort, with one retry + queue for a later
-/// sweep if the first attempt hits a Windows file-lock. The second-chance
-/// sweep runs on the next `_runViaProcess` invocation via [_sweepOrphans].
-void _cleanupTempDir(Directory tempDir) {
-  _sweepOrphans();
-  try {
-    if (tempDir.existsSync()) {
-      tempDir.deleteSync(recursive: true);
-    }
-  } catch (e) {
-    _deferredOrphans.add(tempDir.path);
-    Log.warning(
-      'Failed to clean up temp dir ${tempDir.path}: $e. Will retry on '
-      'next invocation.',
-    );
-  }
-}
-
-/// Paths queued for a second-chance cleanup pass. Windows can keep files
-/// locked briefly after the subprocess exits; this lets the next run
-/// reclaim them instead of leaking into the user's temp dir.
-final Set<String> _deferredOrphans = <String>{};
-
-void _sweepOrphans() {
-  if (_deferredOrphans.isEmpty) return;
-  final still = <String>{};
-  for (final path in _deferredOrphans) {
-    try {
-      final dir = Directory(path);
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
-    } catch (_) {
-      still.add(path);
-    }
-  }
-  _deferredOrphans
-    ..clear()
-    ..addAll(still);
-}
+/// Process-wide sweeper — the Process transport is stateless otherwise,
+/// but Windows file-locks sometimes persist past a single call.
+final TempDirSweeper _sweeper = TempDirSweeper();
 
 /// Makes [label] safe to use as a filename stem. Non-alphanumeric chars
 /// collapse to `_`; a leading digit gets a `T_` prefix. When any

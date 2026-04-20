@@ -19,9 +19,9 @@ class ElmRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (justTypes != null) m['just-types'] = justTypes.toString();
-    if (module != null) m['module'] = module!;
-    if (arrayType != null) m['array-type'] = arrayType!.toString();
+    putOpt(m, 'just-types', justTypes);
+    putOpt(m, 'module', module);
+    putOpt(m, 'array-type', arrayType);
     return m;
   }
 }

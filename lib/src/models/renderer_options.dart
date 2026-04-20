@@ -91,3 +91,14 @@ class _RawRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() => _map;
 }
+
+/// Assigns `value.toString()` to [into] under [key] when [value] is
+/// non-null. Used by every `*RendererOptions.toRendererOptions()` to
+/// collapse the repeated null-check + toString pattern into one line.
+///
+/// Package-private. Exposed to subclasses in lib/src/models/options/
+/// via a regular import.
+void putOpt(Map<String, String> into, String key, Object? value) {
+  if (value == null) return;
+  into[key] = value.toString();
+}
