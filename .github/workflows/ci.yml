@@ -74,8 +74,12 @@ jobs:
           path: coverage/lcov.info
 
   integration:
-    name: Integration tests (ubuntu)
-    runs-on: ubuntu-latest
+    name: Integration tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -89,6 +93,30 @@ jobs:
       - run: flutter pub get
       - name: Integration tests
         run: dart test test/integration --tags=integration
+
+  ffi-noembed:
+    name: FFI (no embedded bundle)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: Install CMake + build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential
+      - name: Configure + build with QT_EMBED_BUNDLE=OFF
+        # QT_EMBED_BUNDLE=OFF skips the embed_bundle.py custom command,
+        # so the native/bundle/ Node toolchain isn't needed for this
+        # leg — the binary ships without bundle bytes and relies on a
+        # runtime fetch via BundleSource.remote(...).
+        run: |
+          cmake -S native -B build/native -DQT_EMBED_BUNDLE=OFF
+          cmake --build build/native
+      - name: Run ffi_noembed smoke test
+        run: dart run tool/smoke/ffi_noembed_smoke.dart
 
   example:
     name: Example build_runner
