@@ -17,12 +17,9 @@
 // Any quicktype-core upgrade or renderer-option change that affects
 // output has to land with a matching golden update in the same PR.
 //
-// Primary consumer targets covered today:
-//   dart, kotlin, swift, typescript, csharp, python, java, go, rust,
-//   cpp (10 of 22 `TargetType` values). The remaining 12 (elixir,
-//   elm, flow, haskell, javascript, objc, php, proptypes, ruby, scala,
-//   smithy) are intentionally uncovered until a consumer asks; adding
-//   them is trivial — append another `_Case` + regenerate.
+// Coverage spans every TargetType value so a quicktype-core upgrade is
+// immediately visible across the full language matrix, not just the
+// primary consumer subset.
 
 @Tags(['integration'])
 library;
@@ -95,6 +92,24 @@ void main() {
       TargetType.cpp,
       CppRendererOptions(justTypes: true),
     ),
+    // Remaining languages — quicktype-core defaults; we care about
+    // regressing *any* shape, not just the opinionated ones.
+    const _Case('user_c', TargetType.c, null),
+    const _Case('user_elixir', TargetType.elixir, null),
+    const _Case('user_elm', TargetType.elm, null),
+    const _Case(
+      'user_flow_just_types',
+      TargetType.flow,
+      FlowRendererOptions(justTypes: true),
+    ),
+    const _Case('user_haskell', TargetType.haskell, null),
+    const _Case('user_javascript', TargetType.javascript, null),
+    const _Case('user_objc', TargetType.objc, null),
+    const _Case('user_php', TargetType.php, null),
+    const _Case('user_proptypes', TargetType.proptypes, null),
+    const _Case('user_ruby', TargetType.ruby, null),
+    const _Case('user_scala', TargetType.scala, null),
+    const _Case('user_smithy', TargetType.smithy, null),
   ];
 
   final updateMode = Platform.environment['GOLDEN'] == 'update';

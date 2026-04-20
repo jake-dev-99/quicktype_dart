@@ -1,0 +1,61 @@
+{-# LANGUAGE StrictData #-}
+{-# LANGUAGE OverloadedStrings #-}
+
+module QuickType
+    ( User (..)
+    , Profile (..)
+    , decodeTopLevel
+    ) where
+
+import Data.Aeson
+import Data.Aeson.Types (emptyObject)
+import Data.ByteString.Lazy (ByteString)
+import Data.HashMap.Strict (HashMap)
+import Data.Text (Text)
+import Data.Vector (Vector)
+
+data User = User
+    { userIDUser :: Int
+    , nameUser :: Text
+    , emailUser :: Text
+    , rolesUser :: Vector Text
+    , profileUser :: Profile
+    } deriving (Show)
+
+data Profile = Profile
+    { ageProfile :: Int
+    , activeProfile :: Bool
+    } deriving (Show)
+
+decodeTopLevel :: ByteString -> Maybe User
+decodeTopLevel = decode
+
+instance ToJSON User where
+    toJSON (User userIDUser nameUser emailUser rolesUser profileUser) =
+        object
+        [ "id" .= userIDUser
+        , "name" .= nameUser
+        , "email" .= emailUser
+        , "roles" .= rolesUser
+        , "profile" .= profileUser
+        ]
+
+instance FromJSON User where
+    parseJSON (Object v) = User
+        <$> v .: "id"
+        <*> v .: "name"
+        <*> v .: "email"
+        <*> v .: "roles"
+        <*> v .: "profile"
+
+instance ToJSON Profile where
+    toJSON (Profile ageProfile activeProfile) =
+        object
+        [ "age" .= ageProfile
+        , "active" .= activeProfile
+        ]
+
+instance FromJSON Profile where
+    parseJSON (Object v) = Profile
+        <$> v .: "age"
+        <*> v .: "active"

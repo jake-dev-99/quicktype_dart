@@ -1,0 +1,29 @@
+// Example usage:
+//
+// import { MyShape } from ./myShape.js;
+//
+// class MyComponent extends React.Component {
+//   //
+// }
+//
+// MyComponent.propTypes = {
+//   input: MyShape
+// };
+
+import PropTypes from "prop-types";
+
+let _User;
+let _Profile;
+_Profile = PropTypes.shape({
+    "age": PropTypes.number,
+    "active": PropTypes.bool,
+});
+_User = PropTypes.shape({
+    "id": PropTypes.number,
+    "name": PropTypes.string,
+    "email": PropTypes.string,
+    "roles": PropTypes.arrayOf(PropTypes.string),
+    "profile": _Profile,
+});
+
+export const User = _User;
