@@ -1,5 +1,56 @@
 # Changelog
 
+## 1.0.0-rc.1
+
+**First release candidate for 1.0.** No code changes on top of 0.9.0 —
+this is the version cut that moves the package out of pre-1.0 and
+onto pub.dev for consumer validation.
+
+### What's in 1.0
+
+Full summary of the road from 0.4.3 → 1.0.0-rc.1:
+
+- **0.4.4** — correctness hotfixes: subprocess / HTTP timeouts,
+  atomic cache writes, FFI pointer arena, config cast safety, error
+  propagation.
+- **0.4.5** — lint + packaging hygiene: `package:lints/recommended`
+  with strict-casts / strict-inference / strict-raw-types,
+  `tool/sync_version.dart`, initial CI workflow, `.pubignore` fix.
+- **0.4.6** — resource safety polish: deferred temp-dir cleanup,
+  Completer-based web bundle load, shell-quoted subprocess command
+  strings in exceptions, SRI base64 validation.
+- **0.5.0** — **breaking.** De-singletoned `Config` and `Quicktype`;
+  `Config.fromFile` / `Config.loadOrDefaults` / `Config.fromMap` /
+  `Config.defaults` replace `Config.initialize`. `Quicktype` now takes
+  a `Config` in its constructor.
+- **0.6.0** — **breaking.** Removed unused `SchemaValidator` and its
+  `json_schema` dep; strict renderer-option coercion;
+  collision-resistant label sanitization.
+- **0.6.1** — test tree split into `test/unit/` + `test/integration/`;
+  smoke scripts moved under `tool/smoke/`; CI matrix expanded
+  (static / unit / integration / example).
+- **0.6.2** — `tool/refresh_bundle.dart`, `tool/install_hooks.dart`,
+  CMake fails fast on missing bundle inputs.
+- **0.7.0** — permanent quality gates: coverage thresholds,
+  `tool/api_snapshot.dart`, OIDC-authed `release.yml`, concurrency
+  stress tests, config fuzz tests, CODEOWNERS, PR template.
+- **0.9.0** — docs + polish: `public_member_api_docs` lint enabled,
+  README rewritten for the 1.0 API, per-case `GenerateTransport`
+  docstrings, `dart doc --dry-run` clean.
+
+### Published as pre-release
+
+`1.0.0-rc.1` ships to pub.dev as a pre-release (pub honours SemVer;
+`rc.1` suffix marks it as non-stable). Consumers pin via:
+
+```yaml
+dependencies:
+  quicktype_dart: 1.0.0-rc.1
+```
+
+If no blocking bugs surface over the rc bake window, `1.0.0` is cut
+from the same commit with only the version-suffix change.
+
 ## 0.9.0
 
 **Final docs + polish before 1.0.0-rc.1.** No runtime API change; the
