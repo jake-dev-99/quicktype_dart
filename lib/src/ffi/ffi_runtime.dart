@@ -79,7 +79,7 @@ class QtFfiRuntime {
   ///
   /// [bundleSource] controls which quicktype-core JS is loaded into the
   /// runtime. Defaults to [QuicktypeDart.bundleSource] — i.e. respects any
-  /// process-wide override set via [QuicktypeDart.setBundleSource].
+  /// process-wide override assigned to [QuicktypeDart.bundleSource].
   ///
   /// With [EmbeddedBundleSource], the compiled-in bundle is loaded (fails
   /// if the library was built with `-DQT_NO_EMBEDDED_BUNDLE`).
@@ -112,9 +112,9 @@ class QtFfiRuntime {
         if (rc == -2) {
           throw QuicktypeException(
             'qt_runtime_load_embedded: this quicktype_dart native library '
-            'was built with QT_NO_EMBEDDED_BUNDLE. Configure a '
-            'BundleSource.remote(...) via QuicktypeDart.setBundleSource() '
-            'before the first generate call.',
+            'was built with QT_NO_EMBEDDED_BUNDLE. Assign '
+            '`QuicktypeDart.bundleSource = BundleSource.remote(...)` before '
+            'the first generate call.',
           );
         }
         if (rc != 0) {
