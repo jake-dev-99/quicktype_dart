@@ -6,17 +6,11 @@ import 'package:meta/meta.dart';
 import 'package:path/path.dart' as path;
 
 import 'config.dart';
+import 'internal/quicktype_process.dart';
 import 'models/command.dart';
 import 'models/result.dart';
 import 'utils/file_resolver.dart';
 import 'utils/logging.dart';
-
-/// Default path to the bundled quicktype Node CLI relative to the package
-/// root. Used by the `quicktype.json`-driven flow (see [Quicktype.execute])
-/// so dev tooling can exercise the Process transport without requiring
-/// a global install. If the bundled binary isn't present, callers fall
-/// through to a PATH lookup via [Quicktype.executeNative].
-const String _quicktypeExe = './tool/node_modules/.bin/quicktype';
 
 /// Thrown when a quicktype subprocess call fails or its output can't be
 /// consumed. Carries the failing command and exit code when available,
@@ -151,43 +145,36 @@ class Quicktype {
 
     try {
       final parentDir = Directory(path.dirname(targetPath));
-      if (!parentDir.existsSync()) {
-        parentDir.createSync(recursive: true);
-      }
+      if (!parentDir.existsSync()) parentDir.createSync(recursive: true);
 
-      final ProcessResult result;
-      try {
-        result = await Process.run(_quicktypeExe, command.argv);
-      } catch (e, st) {
-        throw QuicktypeException(
-          'Failed to run quicktype: $e',
-          command: '$_quicktypeExe ${command.argv.join(' ')}',
-          cause: e,
-          stackTrace: st,
-        );
-      }
-      if (result.exitCode == 0) {
-        if (result.stdout.toString().isNotEmpty) {
-          Log.off('${result.stdout}');
-        }
-        Log.off('Done!');
-      } else {
-        Log.severe('Error: ${result.stderr}');
+      final result = await runQuicktypeProcess(command.argv);
+
+      final stdoutStr = (result.stdout as String).trimRight();
+      final stderrStr = (result.stderr as String).trimRight();
+
+      if (result.exitCode != 0) {
+        if (stderrStr.isNotEmpty) Log.warning(stderrStr);
         return QuicktypeResult.failure(
           sourcePath: sourcePath,
           targetPath: targetPath,
-          errorMessage: result.stderr.toString(),
+          errorMessage: stderrStr.isNotEmpty
+              ? stderrStr
+              : 'quicktype exited with code ${result.exitCode}',
+          stdout: stdoutStr.isEmpty ? null : stdoutStr,
+          stderr: stderrStr.isEmpty ? null : stderrStr,
         );
       }
+
+      if (stdoutStr.isNotEmpty) Log.info(stdoutStr);
+      if (stderrStr.isNotEmpty) Log.warning(stderrStr);
       return QuicktypeResult.success(
         sourcePath: sourcePath,
         targetPath: targetPath,
+        stdout: stdoutStr.isEmpty ? null : stdoutStr,
+        stderr: stderrStr.isEmpty ? null : stderrStr,
       );
     } catch (e, s) {
-      Log.severe('Error: $e');
-      for (final line in s.toString().split('\n')) {
-        Log.severe(line);
-      }
+      Log.severe('Error: $e\n$s');
       return QuicktypeResult.failure(
         sourcePath: sourcePath,
         targetPath: targetPath,
@@ -196,33 +183,21 @@ class Quicktype {
     }
   }
 
-  /// Passes [args] straight through to the `quicktype` on `PATH`, bypassing
-  /// config and command construction. Used when the CLI is invoked with
-  /// positional args beyond the known flags.
+  /// Passes [args] straight through to the resolved `quicktype` CLI
+  /// (bundled first, then PATH), bypassing config and command construction.
+  /// Used when the CLI is invoked with positional args beyond the known
+  /// flags.
   static Future<int> executeNative(List<String> args) async {
-    Log.off('');
-    Log.off('Running native quicktype: ${args.join(' ')}');
-
+    Log.info('Running quicktype ${args.join(' ')}');
     try {
-      final result = await Process.run('quicktype', args);
-
-      if (result.stdout.toString().isNotEmpty) {
-        Log.off('Result: ${result.stdout}');
-      }
-
-      if (result.stderr.toString().isNotEmpty) {
-        Log.off('Result: ${result.stderr}');
-      }
-
+      final result = await runQuicktypeProcess(args);
+      final stdoutStr = (result.stdout as String).trimRight();
+      final stderrStr = (result.stderr as String).trimRight();
+      if (stdoutStr.isNotEmpty) Log.info(stdoutStr);
+      if (stderrStr.isNotEmpty) Log.warning(stderrStr);
       return result.exitCode;
-    } catch (e) {
-      if (e is ProcessException && e.executable == 'quicktype') {
-        Log.off('');
-        Log.off('Error: Native quicktype not found');
-        Log.off('Install with: npm install -g quicktype');
-      } else {
-        Log.off('Error: $e');
-      }
+    } on QuicktypeException catch (e) {
+      Log.severe(e.toString());
       return 1;
     }
   }

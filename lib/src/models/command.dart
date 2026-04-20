@@ -2,6 +2,7 @@ import 'package:build/build.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as path;
 
+import '../internal/argv.dart';
 import '../utils/type_infer.dart';
 import 'type.dart';
 
@@ -75,26 +76,15 @@ class QuicktypeCommand {
   /// Argv list suitable for `Process.run`.
   List<String> get argv => _toArgv();
 
-  List<String> _toArgv() {
-    final out = <String>[
-      '--src',
-      path.canonicalize(sourcePath),
-      '--src-lang',
-      sourceArg,
-      '--lang',
-      targetArg,
-      '--out',
-      path.canonicalize(targetPath),
-    ];
-    for (final entry in rendererOptions.entries) {
-      if (entry.value == 'true') {
-        out.add('--${entry.key}');
-      } else if (entry.value == 'false') {
-        out.add('--no-${entry.key}');
-      } else {
-        out.addAll(['--${entry.key}', entry.value]);
-      }
-    }
-    return out;
-  }
+  List<String> _toArgv() => <String>[
+        '--src',
+        path.canonicalize(sourcePath),
+        '--src-lang',
+        sourceArg,
+        '--lang',
+        targetArg,
+        '--out',
+        path.canonicalize(targetPath),
+        ...rendererOptionsToArgv(rendererOptions),
+      ];
 }
