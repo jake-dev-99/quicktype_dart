@@ -135,7 +135,7 @@ Future<Uint8List> _fetchOverHttp(HttpClient client, Uri url) async {
 
 /// Returns true if [bytes] hash to the SRI token [integrity].
 bool _matchesIntegrity(List<int> bytes, String integrity) {
-  final parsed = _parseSri(integrity);
+  final parsed = _tryParseSri(integrity);
   if (parsed == null) return false;
   final actual = _sriHash(parsed.$1, bytes);
   return actual == integrity;
@@ -145,7 +145,7 @@ bool _matchesIntegrity(List<int> bytes, String integrity) {
 /// (algorithm, base64hash) or null on bad format — including malformed
 /// base64 in the hash portion, so downstream hashing never blows up on
 /// garbage input.
-(String, String)? _parseSri(String token) {
+(String, String)? _tryParseSri(String token) {
   final idx = token.indexOf('-');
   if (idx <= 0) return null;
   final alg = token.substring(0, idx).toLowerCase();

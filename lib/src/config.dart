@@ -27,7 +27,7 @@ class ConfigException implements Exception {
       : 'ConfigException: $message';
 }
 
-/// Loaded `quicktype.json` (or the built-in defaults). Pure value class —
+/// Loaded `quicktype.json` (or the built-in defaults). Value class —
 /// construct one per unit of work; multiple configs can coexist in the
 /// same process without stepping on each other.
 ///
@@ -36,6 +36,12 @@ class ConfigException implements Exception {
 /// find input files. Targets are keyed by [TargetType] and describe
 /// where generated code lands plus any language-specific renderer
 /// options.
+///
+/// **Side effects:** [Config.defaults] (and, transitively,
+/// [Config.loadOrDefaults] when the file is missing or malformed)
+/// creates a `models/` directory on disk. Construction is otherwise
+/// pure — [Config.fromFile] / [Config.fromMap] touch no filesystem
+/// state.
 ///
 /// Consumers usually reach [Config] through [Quicktype.new]:
 ///

@@ -70,6 +70,8 @@ enum SourceType implements TypeEnum {
   @override
   final Set<String> extensions;
 
+  /// Returns [name]. Preferred for human-readable output; see
+  /// [argName] for the CLI flag value.
   @override
   String toString() => name;
 
@@ -126,26 +128,42 @@ enum TargetType implements TypeEnum {
   @override
   final Set<String> extensions;
 
-  /// Conventional output directory for this language, or `null` if none.
+  /// Conventional output directory for this language, or `null` if the
+  /// language has no conventional home (build_runner consumer decides).
   /// See [DefaultPaths] for the directory conventions.
+  ///
+  /// Exhaustive switch expression — adding a new [TargetType] triggers
+  /// a compile error here until the author decides whether the new
+  /// language gets a default path or maps to `null`.
   @override
-  String? get defaultPath {
-    switch (this) {
-      case TargetType.dart:
-        return DefaultPaths.dart;
-      case TargetType.kotlin:
-        return DefaultPaths.kotlin;
-      case TargetType.java:
-        return DefaultPaths.java;
-      case TargetType.swift:
-        return DefaultPaths.swift;
-      case TargetType.javascript || TargetType.typescript:
-        return DefaultPaths.web;
-      default:
-        return null;
-    }
-  }
+  String? get defaultPath => switch (this) {
+        TargetType.dart => DefaultPaths.dart,
+        TargetType.kotlin => DefaultPaths.kotlin,
+        TargetType.java => DefaultPaths.java,
+        TargetType.swift => DefaultPaths.swift,
+        TargetType.javascript || TargetType.typescript => DefaultPaths.web,
+        TargetType.c ||
+        TargetType.cpp ||
+        TargetType.csharp ||
+        TargetType.elixir ||
+        TargetType.elm ||
+        TargetType.flow ||
+        TargetType.go ||
+        TargetType.haskell ||
+        TargetType.objc ||
+        TargetType.php ||
+        TargetType.proptypes ||
+        TargetType.python ||
+        TargetType.ruby ||
+        TargetType.rust ||
+        TargetType.scala =>
+          null,
+      };
 
+  /// Returns [name] (e.g. `'dart'`, `'csharp'`). Preferred for
+  /// human-readable error messages. For the value that goes to the
+  /// `quicktype --lang` flag, use [argName] (they usually differ for
+  /// any language quicktype-core internally names differently).
   @override
   String toString() => name;
 }
