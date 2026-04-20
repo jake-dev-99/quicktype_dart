@@ -6,7 +6,7 @@ import 'package:glob/list_local_fs.dart';
 import 'package:meta/meta.dart';
 
 import 'models/type.dart';
-import 'utils/logging.dart';
+import 'logging.dart';
 
 /// Thrown when a `quicktype.json` can't be parsed or is semantically invalid.
 @immutable

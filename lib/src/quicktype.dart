@@ -9,8 +9,8 @@ import 'config.dart';
 import 'internal/quicktype_process.dart';
 import 'models/command.dart';
 import 'models/result.dart';
-import 'utils/file_resolver.dart';
-import 'utils/logging.dart';
+import 'file_resolver.dart';
+import 'logging.dart';
 
 /// Thrown when a quicktype subprocess call fails or its output can't be
 /// consumed. Carries the failing command and exit code when available,

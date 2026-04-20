@@ -18,7 +18,7 @@ import 'internal/argv.dart';
 import 'internal/quicktype_process.dart';
 import 'models/type.dart';
 import 'quicktype.dart';
-import 'utils/logging.dart';
+import 'logging.dart';
 
 /// Backend entry point. Platform-independent argument handling already
 /// happened in [QuicktypeDart.generateFromString]; this function just
