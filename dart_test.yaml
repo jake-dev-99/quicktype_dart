@@ -1,5 +1,18 @@
 tags:
   integration:
     description: >-
-      Requires the `quicktype` CLI on PATH or bundled locally. Run with
-      `dart test --tags=integration` (or unskip via environment).
+      End-to-end tests that require the `quicktype` CLI on PATH or
+      bundled at tool/node_modules/.bin/quicktype. Run via
+      `dart test --tags=integration`. Missing the CLI hard-fails in CI
+      unless `QUICKTYPE_OPTIONAL=1` is set in the environment.
+
+  slow:
+    description: >-
+      Tests taking longer than ~5s — concurrency stress, large-payload
+      generation, etc. Run via `dart test --tags=slow`; excluded from
+      default fast-loop runs.
+
+# CI entrypoint gets integration coverage explicitly; local developer
+# runs (`dart test`) stay fast by default.
+paths:
+  - test/unit

@@ -1,5 +1,56 @@
 # Changelog
 
+## 0.6.1
+
+**Test suite reorganization + CI coverage expansion.** No public API
+change; every consumer-visible behavior is identical to 0.6.0. This
+release reshapes how tests live on disk and widens the CI matrix so
+the next batch of work can land against a clearer quality signal.
+
+### Changed
+
+- **`test/` split into `test/unit/` + `test/integration/`.** The
+  default `dart test` run covers unit only (fast loop); integration
+  tests run explicitly via `dart test test/integration` or a
+  dedicated CI job. `dart_test.yaml` now pins the default path set
+  and declares both `integration` and `slow` tags.
+- **Smoke scripts moved from `bin/` to `tool/smoke/`.** `bin/` now
+  contains only `quicktype_dart.dart` — the one file that ships on
+  pub.dev. Smoke scripts stay as dev-time diagnostic tools,
+  excluded from the tarball via the existing blanket `tool/` rule.
+- **Integration-test missing-CLI behavior.** Previously silent; now
+  logs a `FATAL:` line to stderr and lets the tests run (so they
+  fail with a clear error). Set `QUICKTYPE_OPTIONAL=1` to restore
+  the old "skip quietly" mode for local runs on machines without
+  Node.
+
+### Added
+
+- **`lib/src/utils/paths.dart`** — centralizes the bundled-CLI path
+  constant (`bundledQuicktypeExeRelative`) and the
+  `packageRoot()` / `bundledQuicktypeExe()` resolvers so backend,
+  tests, and tooling can't drift on where the CLI is expected to
+  live.
+- **`test/unit/backend_web_test.dart`** — `@TestOn('browser')`
+  smoke tests for the web backend. Run via
+  `dart test --platform chrome test/unit/backend_web_test.dart`.
+- **`example/test/example_test.dart`** — guards the committed
+  build_runner output. CI regenerates the example and fails on
+  drift.
+- **CI workflow expanded** with dedicated jobs:
+  - `static` — format + analyze + sync_version + `pub publish
+    --dry-run`.
+  - `unit` — unit tests on Ubuntu / macOS / Windows.
+  - `integration` — installs `quicktype` via npm, runs
+    `test/integration`.
+  - `example` — regenerates the example bundle and asserts no drift,
+    then runs `example/test`.
+
+### Removed
+
+- References to non-existent smoke files in `.pubignore` (the list
+  became moot once smoke scripts moved under `tool/`).
+
 ## 0.6.0
 
 **Breaking-change release — dead code removal + strict mode.**

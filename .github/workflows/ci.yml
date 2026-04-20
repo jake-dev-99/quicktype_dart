@@ -22,7 +22,7 @@ jobs:
       - name: Install deps
         run: flutter pub get
       - name: dart format
-        run: dart format --set-exit-if-changed lib test tool bin
+        run: dart format --set-exit-if-changed lib test tool bin example
       - name: dart analyze
         run: dart analyze --fatal-infos --fatal-warnings
       - name: Version stamps in sync
@@ -30,8 +30,8 @@ jobs:
       - name: Pub publish dry-run
         run: flutter pub publish --dry-run
 
-  test:
-    name: Test (${{ matrix.os }})
+  unit:
+    name: Unit tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -44,10 +44,59 @@ jobs:
           channel: stable
       - name: Install deps
         run: flutter pub get
-      - name: Unit + integration tests
-        run: dart test --reporter=expanded
-        env:
-          # Integration test skips cleanly when `quicktype` isn't on PATH;
-          # CI doesn't pre-install it yet — that lands in Batch F once
-          # we add a dedicated integration-test job.
-          QUICKTYPE_OPTIONAL: '1'
+      - name: Unit tests
+        run: dart test test/unit --reporter=expanded
+
+  integration:
+    name: Integration tests (ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install quicktype globally
+        run: npm install -g quicktype
+      - name: Install deps
+        run: flutter pub get
+      - name: Integration tests
+        run: dart test test/integration --reporter=expanded --tags=integration
+
+  example:
+    name: Example build_runner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install quicktype globally
+        # build_runner's auto transport falls through to Process on CI
+        # (FFI plugin isn't pre-built); needs `quicktype` on PATH.
+        run: npm install -g quicktype
+      - name: Install deps
+        working-directory: example
+        run: dart pub get
+      - name: Regenerate + verify no drift
+        working-directory: example
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          # build_runner emits quicktype's 4-space indent; committed file
+          # is dart-format-normalized. Apply the formatter before the
+          # drift check so only semantic changes show up.
+          dart format lib/models
+          if ! git diff --quiet lib/models/user.dart; then
+            echo '::error::Generated file lib/models/user.dart drifted.'
+            echo 'Re-run locally: cd example && dart run build_runner build --delete-conflicting-outputs && dart format lib/models'
+            git --no-pager diff lib/models/user.dart
+            exit 1
+          fi
+      - name: Example tests
+        working-directory: example
+        run: dart test
