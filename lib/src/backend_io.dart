@@ -119,7 +119,15 @@ Future<String> _runViaProcess({
       );
     }
 
-    return targetFile.readAsString();
+    // MUST await — the `finally` block below deletes `tempDir`.
+    // Without `await`, Dart returns the unread Future *first*, the
+    // `finally` fires and `cleanup` deletes the temp dir, and only
+    // then does the file read actually start. On Linux the open FD
+    // survives the unlink so the read still succeeds; on macOS
+    // (APFS) it throws PathNotFoundException — which is exactly
+    // what broke the golden tests on `Integration tests
+    // (macos-latest)` while Ubuntu stayed green.
+    return await targetFile.readAsString();
   } finally {
     _sweeper.cleanup(tempDir);
   }
