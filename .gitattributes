@@ -1,0 +1,13 @@
+# Force LF line endings on checkout for files the build and tests
+# compare byte-for-byte. Git's default `core.autocrlf=true` on Windows
+# would otherwise rewrite committed LF to CRLF at checkout, breaking:
+#
+#   * Golden-file comparisons in test/integration/goldens/ — quicktype
+#     emits LF on every platform; the goldens were generated with LF.
+#   * API-snapshot drift detection in tool/api_snapshot.txt.
+#
+# Everything else stays on the repo default (Dart / Markdown / YAML
+# round-trip fine under either convention).
+test/integration/goldens/*.txt   text eol=lf
+test/integration/goldens/*.json  text eol=lf
+tool/api_snapshot.txt            text eol=lf
