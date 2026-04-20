@@ -15,13 +15,25 @@ import 'package:quicktype_dart/quicktype_dart.dart';
 import 'package:quicktype_dart/src/ffi/ffi_runtime.dart';
 import 'package:quicktype_dart/src/ffi/qt_shim_bindings.dart';
 
+/// Platform-specific shared-library filename.
+String get _dylibName {
+  if (Platform.isMacOS) return 'libquicktype_dart.dylib';
+  if (Platform.isWindows) return 'quicktype_dart.dll';
+  return 'libquicktype_dart.so';
+}
+
 Future<void> main() async {
   final pkgRoot = Directory.current.path;
-  final dylib = File(
-      p.join(pkgRoot, 'build', 'native-noembed', 'libquicktype_dart.dylib'));
+  // Accept either build/native-noembed/ (split-build) or
+  // build/native/ (single-build with -DQT_EMBED_BUNDLE=OFF) — CI uses
+  // the latter since it skips the two-way copy dance below.
+  final splitBuild =
+      File(p.join(pkgRoot, 'build', 'native-noembed', _dylibName));
+  final singleBuild = File(p.join(pkgRoot, 'build', 'native', _dylibName));
+  final dylib = splitBuild.existsSync() ? splitBuild : singleBuild;
   if (!dylib.existsSync()) {
-    stderr.writeln('FAIL: build/native-noembed/libquicktype_dart.dylib '
-        'not found — build with -DQT_EMBED_BUNDLE=OFF first');
+    stderr.writeln('FAIL: $_dylibName not found at ${splitBuild.path} '
+        'or ${singleBuild.path} — build with -DQT_EMBED_BUNDLE=OFF first');
     exit(1);
   }
 
@@ -40,16 +52,19 @@ Future<void> main() async {
   stdout.writeln('OK — qt_runtime_load_embedded returned -2 as expected');
 
   // Now run end-to-end via BundleSource.remote(file://...).
-  // Swap the shared library path: QtFfiRuntime would normally find
-  // build/native/libquicktype_dart.dylib first, which has the embedded
-  // bundle — copy the no-embed build over it for this smoke.
-  final devPath =
-      File(p.join(pkgRoot, 'build', 'native', 'libquicktype_dart.dylib'));
+  // When the caller used a split-build layout (build/native-noembed/),
+  // copy the no-embed binary over build/native/ so QtFfiRuntime's
+  // default resolver picks it up. For single-build layouts the dylib is
+  // already where it needs to be.
+  final devPath = File(p.join(pkgRoot, 'build', 'native', _dylibName));
   final backup = File('${devPath.path}.embed-backup');
-  if (devPath.existsSync() && !backup.existsSync()) {
-    devPath.copySync(backup.path);
+  final needsSwap = dylib.path != devPath.path;
+  if (needsSwap) {
+    if (devPath.existsSync() && !backup.existsSync()) {
+      devPath.copySync(backup.path);
+    }
+    dylib.copySync(devPath.path);
   }
-  dylib.copySync(devPath.path);
   try {
     final bundle = File(p.join(pkgRoot, 'assets', 'quicktype_bundle.js'));
     final rt = await QtFfiRuntime.create(
@@ -69,7 +84,7 @@ Future<void> main() async {
     stdout.writeln('OK — no-embed build + remote bundle produced '
         '${out.length} chars');
   } finally {
-    if (backup.existsSync()) {
+    if (needsSwap && backup.existsSync()) {
       backup.copySync(devPath.path);
       backup.deleteSync();
     }
