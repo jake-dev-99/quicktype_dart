@@ -35,10 +35,20 @@ void main(List<String> args) async {
   final bundleDir = p.join(repoRoot, 'native', 'bundle');
   final shimDir = p.join(repoRoot, 'native', 'shim');
 
+  _requireBinaryOnPath('bash');
+  _requireBinaryOnPath('python3');
+
   if (!Directory(p.join(bundleDir, 'node_modules')).existsSync()) {
     stderr.writeln(
       'refresh_bundle: native/bundle/node_modules/ is missing. '
       'Run `cd native/bundle && npm install` first.',
+    );
+    exit(1);
+  }
+  final buildScript = File(p.join(bundleDir, 'build_bundle.sh'));
+  if (!buildScript.existsSync()) {
+    stderr.writeln(
+      'refresh_bundle: ${buildScript.path} missing. Is this the right repo?',
     );
     exit(1);
   }
@@ -81,7 +91,34 @@ void main(List<String> args) async {
 }
 
 String _resolveRepoRoot() {
-  // Script lives at <repo>/tool/refresh_bundle.dart; go up one.
+  // Script lives at <repo>/tool/refresh_bundle.dart; walk up to the dir
+  // containing pubspec.yaml as a sanity check (symlinks can mislead a
+  // pure path-arithmetic approach).
   final scriptPath = Platform.script.toFilePath();
-  return p.dirname(p.dirname(scriptPath));
+  final guess = p.dirname(p.dirname(scriptPath));
+  if (!File(p.join(guess, 'pubspec.yaml')).existsSync()) {
+    stderr.writeln(
+      'refresh_bundle: could not locate repo root from '
+      '$scriptPath (no pubspec.yaml at $guess).',
+    );
+    exit(2);
+  }
+  return guess;
+}
+
+void _requireBinaryOnPath(String name) {
+  final sep = Platform.isWindows ? ';' : ':';
+  final pathEnv = Platform.environment['PATH'] ?? '';
+  final candidates =
+      Platform.isWindows ? ['$name.exe', '$name.cmd', name] : [name];
+  for (final dir in pathEnv.split(sep)) {
+    if (dir.isEmpty) continue;
+    for (final c in candidates) {
+      if (File(p.join(dir, c)).existsSync()) return;
+    }
+  }
+  stderr.writeln(
+    'refresh_bundle: `$name` not found on PATH. Install it and retry.',
+  );
+  exit(1);
 }
