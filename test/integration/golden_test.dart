@@ -109,7 +109,6 @@ void main() {
     const _Case('user_proptypes', TargetType.proptypes, null),
     const _Case('user_ruby', TargetType.ruby, null),
     const _Case('user_scala', TargetType.scala, null),
-    const _Case('user_smithy', TargetType.smithy, null),
   ];
 
   final updateMode = Platform.environment['GOLDEN'] == 'update';
@@ -130,6 +129,7 @@ void main() {
           target: c.target,
           options: c.options,
         );
+        _assertLooksLikeCode(actual, c.name);
         if (updateMode) {
           File(goldenPath).writeAsStringSync(actual);
           return;
@@ -144,4 +144,33 @@ void main() {
       });
     }
   });
+}
+
+/// Guards against silently capturing quicktype-core error output as a
+/// golden. Every legitimate golden we ship is ≥10 lines of real
+/// generated code; known error shapes ("Unknown language name: …",
+/// "Error: …", "at ReferenceError", bare stack traces) are rejected
+/// outright even in update mode.
+void _assertLooksLikeCode(String actual, String caseName) {
+  const sentinels = <String>[
+    'Unknown language name:',
+    'Error:',
+    'at ReferenceError',
+    'TypeError:',
+  ];
+  for (final s in sentinels) {
+    if (actual.startsWith(s) || actual.contains('\n$s')) {
+      fail(
+        'Generator produced error-shaped output for "$caseName": '
+        'starts with/contains "$s". Refusing to treat as a golden.',
+      );
+    }
+  }
+  final lines = actual.split('\n');
+  if (lines.length < 5) {
+    fail(
+      'Generator produced suspiciously short output for "$caseName" '
+      '(${lines.length} lines). Real goldens are at least ~10 lines.',
+    );
+  }
 }

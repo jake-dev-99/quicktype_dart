@@ -96,7 +96,7 @@ enum SourceType implements TypeEnum {
 /// ```
 enum TargetType implements TypeEnum {
   dart('dart', {'.dart'}),
-  c('c', {'.c', '.h'}),
+  c('cjson', {'.c', '.h'}),
   cpp('cpp', {'.cpp', '.h', '.hpp'}),
   csharp('cs', {'.cs'}),
   elixir('elixir', {'.ex'}),
@@ -114,7 +114,6 @@ enum TargetType implements TypeEnum {
   ruby('ruby', {'.rb'}),
   rust('rs', {'.rs'}),
   scala('scala3', {'.scala'}),
-  smithy('Smithy', {'.smithy'}),
   swift('swift', {'.swift'}),
   typescript('ts', {'.ts'}),
   ;

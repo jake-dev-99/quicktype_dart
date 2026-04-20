@@ -23,6 +23,5 @@ export 'lang_python.dart';
 export 'lang_ruby.dart';
 export 'lang_rust.dart';
 export 'lang_scala.dart';
-export 'lang_smithy.dart';
 export 'lang_swift.dart';
 export 'lang_typescript.dart';
