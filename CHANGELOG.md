@@ -1,5 +1,126 @@
 # Changelog
 
+## 1.0.0-rc.2
+
+**War-on-debt audit pass** — two rounds of code review before 1.0.0
+GA. Fixes two silent-but-real correctness bugs, closes architecture /
+hygiene gaps, expands test + CI coverage, tightens the public API
+with a few breaking changes that land cleanly pre-1.0.
+
+### Breaking
+
+- **`Log` and `inferLangType` dropped from the public barrel.** Both
+  had leaked out as internal helpers. Tests that need them import
+  from `package:quicktype_dart/src/...` directly.
+- **`Log.off` deleted.** It routed through `dart:developer.log` at
+  OFF level — nothing consumed it, so running
+  `quicktype_dart --help` produced zero stdout. CLI code now writes
+  `stdout`/`stderr` directly; structured events
+  (`Log.info`/`warning`/`severe`) route through `Logger('quicktype')`
+  from `package:logging`.
+- **`QuicktypeDart.setBundleSource(src)` → field assignment**:
+  `QuicktypeDart.bundleSource = src`. Getter unchanged.
+- **`Config.loadOrDefaults(path)` → named parameters**:
+  `Config.loadOrDefaults(path: 'foo.json', strict: true)`. Adds
+  `strict` (defaults to `false`); CLI opts in so malformed configs
+  don't silently fall back to defaults.
+- **`TargetType.smithy` removed.** No variant of the argName round-
+  trips through the bundled quicktype-core — the Smithy renderer
+  class is in the JS bundle but not wired to the language-dispatch
+  API upstream. Re-adds when upstream wires it up.
+
+### Fixed
+
+- **`TargetType.c.argName` was `'c'`; quicktype-core needs
+  `'cjson'`.** The committed golden had been a one-line `"Unknown
+  language name: c"` that passed trivially by matching the error
+  string. Fixed; the regenerated golden now contains real cJSON
+  struct + parse/serialize definitions.
+- **FileResolver multi-extension glob** — graphql (two extensions)
+  silently matched nothing because the set was concatenated as
+  `'{.graphqls, .graphql}'` (space-padded via `Set.toString()`).
+  Proper brace-expansion now.
+- **CLI silence** — `--help`, `--version`, and error messages were
+  swallowed by `Log.off` routing through `dart:developer.log`. See
+  above.
+- **Golden test accepts error output** — `_assertLooksLikeCode` now
+  rejects outputs starting with `Unknown language name:`, `Error:`,
+  `TypeError:`, `at ReferenceError`, or fewer than 5 lines, even in
+  `GOLDEN=update` mode.
+- **Web backend leaks** — script `onLoad`/`onError` subscriptions
+  now cancelled in a `finally`; parent element resolves `<head>` →
+  `<body>` → `<html>` instead of force-unwrapping `.head!`.
+- **CWD-relative quicktype path** — `Quicktype.execute` no longer
+  uses `./tool/node_modules/.bin/quicktype`. Routes through shared
+  `resolveQuicktypeExecutable()` so invocation from any cwd works.
+- **Lossy stack trace** in `Quicktype.execute`'s catch block.
+- **Process timeout actually kills the child** — `runQuicktypeProcess`
+  now uses `Process.start` + manual `.kill()` on timeout instead of
+  `Process.run().timeout()` (which only times out the Dart Future).
+
+### Added
+
+- **Goldens for every `TargetType`** — 21 cases (dart, kotlin,
+  swift, typescript, csharp, python, java, go, rust, c, elixir,
+  elm, flow, haskell, javascript, objc, php, proptypes, ruby,
+  scala). Deterministic under Process transport, `quicktype@23.2.0`
+  pinned in CI so local + CI agree byte-for-byte. `cpp` intentionally
+  absent: `quicktype --lang cpp` emits "Error: Internal error: ."
+  upstream on inputs with nested objects; re-add when fixed.
+- **`RendererOptions.raw(Map<String, String>)` factory** for callers
+  who already hold the kebab-case map (builder uses it).
+- **`coerceRendererOptionsMap` accepts `num`** — YAML
+  `indentation: 2` Just Works.
+- **Shared process runner** (`lib/src/internal/quicktype_process.dart`)
+  — `resolveQuicktypeExecutable`, `findOnPath`, `runQuicktypeProcess`.
+  Kills the `Quicktype.execute` ↔ `backend_io._runViaProcess`
+  duplication.
+- **`rendererOptionsToArgv` helper** (`lib/src/internal/argv.dart`)
+  — single source of truth for `--flag` / `--no-flag` / `--flag
+  value` encoding.
+- **`TempDirSweeper` class** — Windows-retry cleanup encapsulated,
+  testable, observable via `deferredCount`.
+- **`putOpt(map, key, value)` helper** — collapses ~120 lines of
+  null-check boilerplate across 22 language-option files.
+- **CI: integration matrix on Ubuntu + macOS + Windows** (was
+  Ubuntu-only).
+- **CI: `ffi-noembed` job** — builds `native/` with
+  `-DQT_EMBED_BUNDLE=OFF` and runs `tool/smoke/ffi_noembed_smoke.dart`.
+- **`tool/smoke/README.md`** documenting which smoke scripts are
+  CI-wired vs manual-only.
+- **Unit tests** for argv, `RendererOptions.raw`, `TempDirSweeper`,
+  `package_layout`, and expanded `config_test.dart` (strict mode,
+  fromMap shape errors, `ConfigException.toString`, mkdir side
+  effect).
+
+### Changed
+
+- **`lib/src/utils/` retired** in favor of purpose-named homes:
+  `paths.dart` → `internal/package_layout.dart`, `shell.dart` →
+  `internal/shell.dart`, `type_infer.dart` → `models/type_infer.dart`,
+  `logging.dart` → `src/logging.dart`, `file_resolver.dart` →
+  `src/file_resolver.dart`.
+- **`TargetType.defaultPath`** rewritten as an exhaustive Dart 3
+  switch expression — adding a new `TargetType` is now a compile
+  error here until handled.
+- **`_detectFilesForTarget`** narrows its catch from `Object` to
+  `FormatException` + `FileSystemException`, with remediation hints.
+- **`Config.defaults()`** side effect (mkdir `models/`) now
+  documented at factory and class level.
+- **Tool hardening**: `refresh_bundle.dart` probes `bash`/`python3`
+  and sanity-checks the repo root; `sync_version.dart` hard-fails on
+  missing targets (was warn-and-skip); `install_hooks.dart` checks
+  `chmod` exit; `embed_bundle.py` wraps file I/O with clear errors.
+
+### Deferred (post-1.0)
+
+- Upstream fix for `quicktype -l cpp` internal-error; re-add the cpp
+  golden when it lands.
+- Full `Log` migration to richer `package:logging` usage (per-
+  subsystem filtering, LogRecord formatting, test subscription
+  harness). Current setup (root INFO forwarded to stdout/stderr in
+  the CLI) is enough to ship.
+
 ## 1.0.0-rc.1
 
 **First release candidate for 1.0.** No code changes on top of 0.9.0 —

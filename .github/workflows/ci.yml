@@ -74,8 +74,12 @@ jobs:
           path: coverage/lcov.info
 
   integration:
-    name: Integration tests (ubuntu)
-    runs-on: ubuntu-latest
+    name: Integration tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -83,12 +87,39 @@ jobs:
           channel: stable
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install quicktype globally
-        run: npm install -g quicktype
+        # Pinned to the version whose Process-transport output the
+        # golden files were generated against. Bump here + regenerate
+        # goldens (GOLDEN=update) in the same commit when rolling.
+        run: npm install -g quicktype@23.2.0
       - run: flutter pub get
       - name: Integration tests
         run: dart test test/integration --tags=integration
+
+  ffi-noembed:
+    name: FFI (no embedded bundle)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: Install CMake + build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential
+      - name: Configure + build with QT_EMBED_BUNDLE=OFF
+        # QT_EMBED_BUNDLE=OFF skips the embed_bundle.py custom command,
+        # so the native/bundle/ Node toolchain isn't needed for this
+        # leg — the binary ships without bundle bytes and relies on a
+        # runtime fetch via BundleSource.remote(...).
+        run: |
+          cmake -S native -B build/native -DQT_EMBED_BUNDLE=OFF
+          cmake --build build/native
+      - name: Run ffi_noembed smoke test
+        run: dart run tool/smoke/ffi_noembed_smoke.dart
 
   example:
     name: Example build_runner
@@ -100,11 +131,13 @@ jobs:
           channel: stable
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install quicktype globally
         # build_runner's auto transport falls through to Process on CI
         # (FFI plugin isn't pre-built); needs `quicktype` on PATH.
-        run: npm install -g quicktype
+        # Pinned to the version example/lib/models/user.dart was
+        # generated against — bump here and regenerate in the same PR.
+        run: npm install -g quicktype@23.2.0
       - name: Install deps
         working-directory: example
         run: dart pub get

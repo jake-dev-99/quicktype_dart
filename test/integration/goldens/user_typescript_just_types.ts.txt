@@ -1,0 +1,12 @@
+export interface User {
+    id:      number;
+    name:    string;
+    email:   string;
+    roles:   string[];
+    profile: Profile;
+}
+
+export interface Profile {
+    age:    number;
+    active: boolean;
+}

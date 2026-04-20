@@ -19,9 +19,9 @@ class RubyRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (justTypes != null) m['just-types'] = justTypes.toString();
-    if (strictness != null) m['strictness'] = strictness!.toString();
-    if (namespace != null) m['namespace'] = namespace!;
+    putOpt(m, 'just-types', justTypes);
+    putOpt(m, 'strictness', strictness);
+    putOpt(m, 'namespace', namespace);
     return m;
   }
 }

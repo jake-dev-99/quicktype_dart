@@ -6,7 +6,7 @@ import 'package:glob/list_local_fs.dart';
 import 'package:meta/meta.dart';
 
 import 'models/type.dart';
-import 'utils/logging.dart';
+import 'logging.dart';
 
 /// Thrown when a `quicktype.json` can't be parsed or is semantically invalid.
 @immutable
@@ -27,7 +27,7 @@ class ConfigException implements Exception {
       : 'ConfigException: $message';
 }
 
-/// Loaded `quicktype.json` (or the built-in defaults). Pure value class —
+/// Loaded `quicktype.json` (or the built-in defaults). Value class —
 /// construct one per unit of work; multiple configs can coexist in the
 /// same process without stepping on each other.
 ///
@@ -37,10 +37,16 @@ class ConfigException implements Exception {
 /// where generated code lands plus any language-specific renderer
 /// options.
 ///
+/// **Side effects:** [Config.defaults] (and, transitively,
+/// [Config.loadOrDefaults] when the file is missing or malformed)
+/// creates a `models/` directory on disk. Construction is otherwise
+/// pure — [Config.fromFile] / [Config.fromMap] touch no filesystem
+/// state.
+///
 /// Consumers usually reach [Config] through [Quicktype.new]:
 ///
 /// ```dart
-/// final quicktype = Quicktype(Config.loadOrDefaults('quicktype.json'));
+/// final quicktype = Quicktype(Config.loadOrDefaults(path: 'quicktype.json'));
 /// await quicktype.executeAll(await quicktype.buildCommandsFromConfig());
 /// ```
 ///
@@ -71,7 +77,7 @@ class Config {
     if (!file.existsSync()) {
       throw ConfigException('Config file "$path" not found.');
     }
-    final dynamic decoded;
+    final Object? decoded;
     try {
       decoded = jsonDecode(file.readAsStringSync());
     } catch (e) {
@@ -99,10 +105,13 @@ class Config {
   /// Returns the built-in default config — every [SourceType] points at
   /// `models/` and every [TargetType] with a [TargetType.defaultPath]
   /// globs for matching files.
+  ///
+  /// **Side effect:** creates the `models/` directory on disk if missing.
+  /// The downstream `Quicktype` orchestrator assumes it exists by the time
+  /// commands get built; keeping the mkdir here means CLI users who fall
+  /// through to defaults don't hit a confusing "directory not found" on
+  /// the first run.
   factory Config.defaults() {
-    // The legacy singleton also created `models/` on disk here; preserve
-    // that behavior since build.yaml setups rely on the directory
-    // existing by the time commands are built.
     final modelDir = Directory(_defaultModelPath);
     if (!modelDir.existsSync()) {
       modelDir.createSync(recursive: true);
@@ -116,7 +125,17 @@ class Config {
 
   /// Convenience for the common "load from disk, fall back to defaults
   /// if absent or unparseable" flow used by the CLI.
-  factory Config.loadOrDefaults([String path = defaultConfigFile]) {
+  ///
+  /// With [strict] = `false` (the default), a missing or malformed file
+  /// logs a warning and silently falls back to [Config.defaults]. With
+  /// [strict] = `true`, a malformed file rethrows [ConfigException] so
+  /// the caller can surface the real parse error — useful for CLI
+  /// invocations where "silently ran with defaults" is surprising. A
+  /// missing file still falls back in both modes.
+  factory Config.loadOrDefaults({
+    String path = defaultConfigFile,
+    bool strict = false,
+  }) {
     final file = File(path);
     if (!file.existsSync()) {
       Log.info('Config file "$path" not found. Loading defaults...');
@@ -125,7 +144,8 @@ class Config {
     try {
       return Config.fromFile(path);
     } on ConfigException catch (e) {
-      Log.info('Failed to load config file "$path": $e. Using defaults.');
+      if (strict) rethrow;
+      Log.warning('Failed to load config file "$path": $e. Using defaults.');
       return Config.defaults();
     }
   }
@@ -152,12 +172,19 @@ class Config {
     final pattern = target.defaultPath;
     if (pattern == null) return configs;
     try {
-      final files = Glob(pattern).listSync();
-      for (final entity in files) {
+      for (final entity in Glob(pattern).listSync()) {
         configs.add(TypeConfig(path: entity.path, type: target));
       }
-    } catch (e) {
-      Log.warning('Could not detect files for ${target.name}: $e');
+    } on FormatException catch (e) {
+      Log.warning(
+        'Invalid glob pattern in DefaultPaths.${target.name} '
+        '("$pattern"): $e. Skipping ${target.name}.',
+      );
+    } on FileSystemException catch (e) {
+      Log.warning(
+        'Filesystem error expanding ${target.name} defaults '
+        '("$pattern"): $e. Skipping ${target.name}.',
+      );
     }
     return configs;
   }
@@ -202,43 +229,56 @@ class Config {
     String section,
   ) {
     final result = <T, Set<TypeConfig>>{};
-
     for (final entry in configMap.entries) {
-      final key = entry.key.toLowerCase();
-      T? matchingType;
-      for (final validType in validTypes) {
-        if (validType.toString().toLowerCase() == key ||
-            validType.argName.toLowerCase() == key) {
-          matchingType = validType;
-          break;
-        }
-      }
-      if (matchingType == null) {
-        final names =
-            validTypes.map((t) => t.argName).toList(growable: false).join(', ');
-        throw ConfigException(
-          'Unknown $section "${entry.key}". Expected one of: $names.',
-        );
-      }
-      final rawList = entry.value;
-      if (rawList is! List) {
-        throw ConfigException(
-          '"$section.${entry.key}" must be a list, got ${rawList.runtimeType}.',
-        );
-      }
-      final configs = <TypeConfig>{};
-      for (final config in rawList) {
-        if (config is! Map<String, dynamic>) {
-          throw ConfigException(
-            '"$section.${entry.key}[]" entries must be objects, got '
-            '${config.runtimeType}.',
-          );
-        }
-        configs.add(TypeConfig.fromJson(matchingType, config));
-      }
-      result[matchingType] = configs;
+      final type = _findTypeByKey(entry.key, validTypes, section);
+      result[type] = _parseConfigList(entry.key, entry.value, type, section);
     }
-
     return result;
+  }
+
+  /// Resolves [key] against [validTypes], matching on either `name` or
+  /// `argName` case-insensitively. Throws [ConfigException] on no match.
+  static T _findTypeByKey<T extends TypeEnum>(
+    String key,
+    List<T> validTypes,
+    String section,
+  ) {
+    final lower = key.toLowerCase();
+    for (final t in validTypes) {
+      if (t.toString().toLowerCase() == lower ||
+          t.argName.toLowerCase() == lower) {
+        return t;
+      }
+    }
+    final names = validTypes.map((t) => t.argName).join(', ');
+    throw ConfigException(
+      'Unknown $section "$key". Expected one of: $names.',
+    );
+  }
+
+  /// Parses the list of [TypeConfig] entries under a single source/target
+  /// key. Throws [ConfigException] when the value shape is wrong.
+  static Set<TypeConfig> _parseConfigList<T extends TypeEnum>(
+    String key,
+    Object? rawList,
+    T type,
+    String section,
+  ) {
+    if (rawList is! List) {
+      throw ConfigException(
+        '"$section.$key" must be a list, got ${rawList.runtimeType}.',
+      );
+    }
+    final configs = <TypeConfig>{};
+    for (final entry in rawList) {
+      if (entry is! Map<String, dynamic>) {
+        throw ConfigException(
+          '"$section.$key[]" entries must be objects, got '
+          '${entry.runtimeType}.',
+        );
+      }
+      configs.add(TypeConfig.fromJson(type, entry));
+    }
+    return configs;
   }
 }

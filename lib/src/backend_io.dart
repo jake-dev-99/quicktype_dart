@@ -12,13 +12,14 @@ import 'dart:io';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
 
-import 'facade.dart' show GenerateTransport, QuicktypeDart;
+import 'facade.dart' show GenerateTransport;
 import 'ffi/ffi_runtime.dart';
+import 'internal/argv.dart';
+import 'internal/quicktype_process.dart';
+import 'internal/temp_dir_sweeper.dart';
+import 'logging.dart';
 import 'models/type.dart';
 import 'quicktype.dart';
-import 'utils/logging.dart';
-import 'utils/paths.dart';
-import 'utils/shell.dart';
 
 /// Backend entry point. Platform-independent argument handling already
 /// happened in [QuicktypeDart.generateFromString]; this function just
@@ -48,7 +49,10 @@ Future<String> generateFromString({
         rendererOptions: rendererOptions,
       );
     case GenerateTransport.auto:
-      throw StateError('unreachable');
+      // Unreachable: _resolveTransport() below converts `auto` to a
+      // concrete ffi/process value before this switch runs. The case
+      // is present only to make the switch exhaustive.
+      throw StateError('auto should have been resolved to ffi or process');
   }
 }
 
@@ -70,7 +74,6 @@ Future<String> _runViaProcess({
   required TargetType target,
   required Map<String, String> rendererOptions,
 }) async {
-  final exe = await _resolveQuicktypeExecutable();
   final tempDir = await Directory.systemTemp.createTemp('quicktype_dart_');
   try {
     final safeLabel = _sanitizeLabel(label);
@@ -89,45 +92,14 @@ Future<String> _runViaProcess({
       target.argName,
       '--out',
       targetFile.path,
+      ...rendererOptionsToArgv(rendererOptions),
     ];
-    // Serialize renderer options as CLI flags. Boolean-style "false" values
-    // become --no-<name>; "true" collapses to --<name>; everything else
-    // is --<name> <value>.
-    for (final entry in rendererOptions.entries) {
-      if (entry.value == 'true') {
-        argv.add('--${entry.key}');
-      } else if (entry.value == 'false') {
-        argv.add('--no-${entry.key}');
-      } else {
-        argv.addAll(['--${entry.key}', entry.value]);
-      }
-    }
 
-    final timeout = QuicktypeDart.processTimeout;
-    final commandStr = formatCommand(exe, argv);
-    final ProcessResult result;
-    try {
-      result = await Process.run(exe, argv).timeout(timeout);
-    } on TimeoutException {
-      throw QuicktypeException(
-        'quicktype subprocess timed out after ${timeout.inSeconds}s. '
-        'Raise the limit via QuicktypeDart.processTimeout if generations '
-        'legitimately take longer.',
-        command: commandStr,
-      );
-    } catch (e, st) {
-      throw QuicktypeException(
-        'Failed to run quicktype: $e',
-        command: commandStr,
-        cause: e,
-        stackTrace: st,
-      );
-    }
+    final result = await runQuicktypeProcess(argv);
 
     if (result.exitCode != 0) {
       throw QuicktypeException(
         'quicktype exited with code ${result.exitCode}: ${result.stderr}',
-        command: commandStr,
         exitCode: result.exitCode,
       );
     }
@@ -135,102 +107,35 @@ Future<String> _runViaProcess({
     // Surface any advisory output the child emitted on success. Previously
     // deprecation notices and compatibility warnings were discarded; they
     // now land on Log.info / Log.warning so callers can see them.
-    final stdoutStr = result.stdout.toString();
-    if (stdoutStr.trim().isNotEmpty) {
-      Log.info(stdoutStr.trimRight());
-    }
-    final stderrStr = result.stderr.toString();
-    if (stderrStr.trim().isNotEmpty) {
-      Log.warning(stderrStr.trimRight());
-    }
+    final stdoutStr = result.stdout as String;
+    if (stdoutStr.trim().isNotEmpty) Log.info(stdoutStr.trimRight());
+    final stderrStr = result.stderr as String;
+    if (stderrStr.trim().isNotEmpty) Log.warning(stderrStr.trimRight());
 
     if (!targetFile.existsSync()) {
       throw QuicktypeException(
         'quicktype reported success but no output file was produced',
-        command: commandStr,
         exitCode: result.exitCode,
       );
     }
 
-    return targetFile.readAsString();
+    // MUST await — the `finally` block below deletes `tempDir`.
+    // Without `await`, Dart returns the unread Future *first*, the
+    // `finally` fires and `cleanup` deletes the temp dir, and only
+    // then does the file read actually start. On Linux the open FD
+    // survives the unlink so the read still succeeds; on macOS
+    // (APFS) it throws PathNotFoundException — which is exactly
+    // what broke the golden tests on `Integration tests
+    // (macos-latest)` while Ubuntu stayed green.
+    return await targetFile.readAsString();
   } finally {
-    _cleanupTempDir(tempDir);
+    _sweeper.cleanup(tempDir);
   }
 }
 
-/// Deletes [tempDir] best-effort, with one retry + queue for a later
-/// sweep if the first attempt hits a Windows file-lock. The second-chance
-/// sweep runs on the next `_runViaProcess` invocation via [_sweepOrphans].
-void _cleanupTempDir(Directory tempDir) {
-  _sweepOrphans();
-  try {
-    if (tempDir.existsSync()) {
-      tempDir.deleteSync(recursive: true);
-    }
-  } catch (e) {
-    _deferredOrphans.add(tempDir.path);
-    Log.warning(
-      'Failed to clean up temp dir ${tempDir.path}: $e. Will retry on '
-      'next invocation.',
-    );
-  }
-}
-
-/// Paths queued for a second-chance cleanup pass. Windows can keep files
-/// locked briefly after the subprocess exits; this lets the next run
-/// reclaim them instead of leaking into the user's temp dir.
-final Set<String> _deferredOrphans = <String>{};
-
-void _sweepOrphans() {
-  if (_deferredOrphans.isEmpty) return;
-  final still = <String>{};
-  for (final path in _deferredOrphans) {
-    try {
-      final dir = Directory(path);
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
-    } catch (_) {
-      still.add(path);
-    }
-  }
-  _deferredOrphans
-    ..clear()
-    ..addAll(still);
-}
-
-/// Resolves a usable `quicktype` executable, independent of caller CWD.
-/// Checks the bundled `tool/node_modules/.bin/quicktype` first; falls back
-/// to a `quicktype` found on `PATH`.
-Future<String> _resolveQuicktypeExecutable() async {
-  final bundled = await bundledQuicktypeExe();
-  if (bundled != null) return bundled;
-
-  final onPath = _findOnPath('quicktype');
-  if (onPath != null) return onPath;
-
-  throw const QuicktypeException(
-    'quicktype not found. Install it with `npm install -g quicktype`, or '
-    'make sure the bundled binary exists at '
-    '<package-root>/$bundledQuicktypeExeRelative. Alternatively, use '
-    '`transport: GenerateTransport.ffi` to run via the embedded '
-    'QuickJS runtime.',
-  );
-}
-
-String? _findOnPath(String name) {
-  final pathEnv = Platform.environment['PATH'];
-  if (pathEnv == null || pathEnv.isEmpty) return null;
-  final separator = Platform.isWindows ? ';' : ':';
-  final candidates =
-      Platform.isWindows ? ['$name.cmd', '$name.exe', name] : [name];
-  for (final dir in pathEnv.split(separator)) {
-    if (dir.isEmpty) continue;
-    for (final cand in candidates) {
-      final full = p.join(dir, cand);
-      if (File(full).existsSync()) return full;
-    }
-  }
-  return null;
-}
+/// Process-wide sweeper — the Process transport is stateless otherwise,
+/// but Windows file-locks sometimes persist past a single call.
+final TempDirSweeper _sweeper = TempDirSweeper();
 
 /// Makes [label] safe to use as a filename stem. Non-alphanumeric chars
 /// collapse to `_`; a leading digit gets a `T_` prefix. When any

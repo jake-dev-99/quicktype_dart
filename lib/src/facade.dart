@@ -82,21 +82,18 @@ enum GenerateTransport {
 class QuicktypeDart {
   QuicktypeDart._();
 
-  /// The current [BundleSource]. Defaults to [BundleSource.embedded]. Change
-  /// via [setBundleSource] before the first `generate` call; afterwards
-  /// the loaded bundle is cached for the process lifetime (web: the page
-  /// lifetime).
-  static BundleSource _bundleSource = const BundleSource.embedded();
-
-  /// See [_bundleSource]. Intended for plugin-internal use; callers go
-  /// through [setBundleSource].
-  static BundleSource get bundleSource => _bundleSource;
-
-  /// Configures where the quicktype-core JS bundle is loaded from. See
-  /// [BundleSource] for supported variants and platform coverage.
-  static void setBundleSource(BundleSource source) {
-    _bundleSource = source;
-  }
+  /// Where the quicktype-core JS bundle is loaded from. Defaults to
+  /// [BundleSource.embedded]. Assign **before the first `generate` call**;
+  /// afterwards the loaded bundle is cached for the process lifetime
+  /// (web: the page lifetime) and later reassignments are ignored for any
+  /// runtime that already picked one up.
+  ///
+  /// ```dart
+  /// QuicktypeDart.bundleSource = BundleSource.remote(
+  ///   Uri.parse('https://cdn.example.com/quicktype-bundle.js'),
+  /// );
+  /// ```
+  static BundleSource bundleSource = const BundleSource.embedded();
 
   /// Maximum wall-clock duration for a single `quicktype` subprocess run
   /// via [GenerateTransport.process]. A hung child no longer blocks the

@@ -1,0 +1,14 @@
+// @flow
+
+export type User = {
+    id:      number;
+    name:    string;
+    email:   string;
+    roles:   string[];
+    profile: Profile;
+};
+
+export type Profile = {
+    age:    number;
+    active: boolean;
+};

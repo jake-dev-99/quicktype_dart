@@ -84,8 +84,12 @@ void main(List<String> args) {
   for (final t in _targets) {
     final file = File(t.path);
     if (!file.existsSync()) {
-      stderr.writeln('  ! ${t.path} missing; skipping');
-      continue;
+      stderr.writeln(
+        'sync_version: ${t.path} missing — every target listed in '
+        'tool/sync_version.dart _targets must exist. Either restore the '
+        'file or remove its entry.',
+      );
+      exit(2);
     }
     final content = file.readAsStringSync();
     final match = t.pattern.firstMatch(content);

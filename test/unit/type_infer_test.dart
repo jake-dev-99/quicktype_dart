@@ -1,4 +1,5 @@
 import 'package:quicktype_dart/quicktype_dart.dart';
+import 'package:quicktype_dart/src/models/type_infer.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -1,4 +1,4 @@
-import 'package:quicktype_dart/src/utils/shell.dart';
+import 'package:quicktype_dart/src/internal/shell.dart';
 import 'package:test/test.dart';
 
 void main() {

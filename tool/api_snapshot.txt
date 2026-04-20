@@ -10,7 +10,7 @@
   ctor Config.defaults()
   ctor Config.fromFile(req String path)
   ctor Config.fromMap(req Map<String, dynamic> map)
-  ctor Config.loadOrDefaults(String path)
+  ctor Config.loadOrDefaults(String {path}, bool {strict})
   ctor ConfigException(req String message, Object? cause)
   ctor CppRendererOptions(bool? {justTypes}, WStringType? {wstring}, ConstStyle? {constStyle}, String? {enumType}, String? {namespace}, CodeFormat? {codeFormat}, IncludeStyle? {includeStyle}, SourceStyle? {sourceStyle}, bool? {boost}, bool? {hideNullOptional}, NamingStyle? {typeStyle}, NamingStyle? {memberStyle}, NamingStyle? {enumeratorStyle})
   ctor DartRendererOptions(bool? {nullSafety}, bool? {justTypes}, bool? {codersInClass}, bool? {fromMap}, bool? {requiredProps}, bool? {finalProps}, bool? {copyWith}, bool? {useFreezed}, bool? {useHive}, bool? {useJsonAnnotation}, String? {partName})
@@ -34,10 +34,10 @@
   ctor QuicktypeResult.success(req String {sourcePath}, req String {targetPath}, String? {targetContent}, String? {stdout}, String? {stderr})
   ctor RemoteBundleSource(req Uri url, String? {integrity})
   ctor RendererOptions()
+  ctor RendererOptions.raw(req Map<String, String> options)
   ctor RubyRendererOptions(bool? {justTypes}, RubyStrictness? {strictness}, String? {namespace})
   ctor RustRendererOptions(Density? {density}, RustVisibility? {visibility}, bool? {deriveDebug}, bool? {deriveClone}, bool? {derivePartialEq}, bool? {edition2018}, bool? {leadingComments}, bool? {skipSerializingNone})
   ctor Scala3RendererOptions(Scala3Framework? {framework}, String? {package})
-  ctor SmithyRendererOptions(SmithyFramework? {framework}, String? {package})
   ctor SwiftRendererOptions(bool? {justTypes}, StructOrClass? {structOrClass}, Density? {density}, bool? {initializers}, bool? {codingKeys}, String? {codingKeysProtocol}, SwiftAccessLevel? {accessLevel}, bool? {alamofire}, bool? {supportLinux}, String? {typePrefix}, SwiftProtocol? {protocol}, AcronymStyle? {acronymStyle}, bool? {objectiveCSupport}, bool? {optionalEnums}, bool? {sendable}, bool? {swift5Support}, bool? {multiFileTarget}, bool? {mutableProperties})
   ctor TypeConfig(req TypeEnum {type}, req String {path}, Map<String, String> {rendererOptions})
   ctor TypeConfig.fromJson(req TypeEnum type, req Map<String, dynamic> json)
@@ -184,8 +184,6 @@
   field RustRendererOptions.RustRendererOptions.visibility: RustVisibility?
   field Scala3RendererOptions.Scala3RendererOptions.framework: Scala3Framework?
   field Scala3RendererOptions.Scala3RendererOptions.package: String?
-  field SmithyRendererOptions.SmithyRendererOptions.framework: SmithyFramework?
-  field SmithyRendererOptions.SmithyRendererOptions.package: String?
   field SwiftRendererOptions.SwiftRendererOptions.accessLevel: SwiftAccessLevel?
   field SwiftRendererOptions.SwiftRendererOptions.acronymStyle: AcronymStyle?
   field SwiftRendererOptions.SwiftRendererOptions.alamofire: bool?
@@ -253,7 +251,6 @@
   method RubyRendererOptions.toRendererOptions(): Map<String, String>
   method RustRendererOptions.toRendererOptions(): Map<String, String>
   method Scala3RendererOptions.toRendererOptions(): Map<String, String>
-  method SmithyRendererOptions.toRendererOptions(): Map<String, String>
   method SwiftRendererOptions.toRendererOptions(): Map<String, String>
   method TypeConfig.toJson(): Map<String, dynamic>
   method TypeScriptRendererOptions.toRendererOptions(): Map<String, String>
@@ -266,22 +263,10 @@
   static field DefaultPaths.DefaultPaths.web: String
   static field QuicktypeDart.QuicktypeDart.bundleSource: BundleSource
   static field QuicktypeDart.QuicktypeDart.processTimeout: Duration
-  static get QuicktypeDart.bundleSource: BundleSource
-  static method Log.all(req String message, String? className): void
-  static method Log.config(req String message, String? className): void
-  static method Log.fine(req String message, String? className): void
-  static method Log.finer(req String message, String? className): void
-  static method Log.finest(req String message, String? className): void
-  static method Log.info(req String message, String? className): void
-  static method Log.off(req String message, String? className): void
-  static method Log.severe(req String message, String? className): void
-  static method Log.shout(req String message, String? className): void
-  static method Log.warning(req String message, String? className): void
   static method Quicktype.executeNative(req List<String> args): Future<int>
   static method QuicktypeCommand.createCommandForFiles(req AssetId {sourceFile}, req AssetId {targetFile}, Map<String, String> {rendererOptions}): QuicktypeCommand
   static method QuicktypeDart.generate(req String {label}, req Object {data}, req TargetType {target}, RendererOptions? {options}, GenerateTransport {transport}): Future<String>
   static method QuicktypeDart.generateFromString(req String {label}, req String {json}, req TargetType {target}, RendererOptions? {options}, GenerateTransport {transport}): Future<String>
-  static method QuicktypeDart.setBundleSource(req BundleSource source): void
   value AcronymStyle.camel
   value AcronymStyle.lowerCase
   value AcronymStyle.original
@@ -370,7 +355,6 @@
   value Scala3Framework.circe
   value Scala3Framework.justTypes
   value Scala3Framework.upickle
-  value SmithyFramework.justTypes
   value SourceStyle.multiSource
   value SourceStyle.singleSource
   value SourceStyle.splitHeader
@@ -404,7 +388,6 @@
   value TargetType.ruby
   value TargetType.rust
   value TargetType.scala
-  value TargetType.smithy
   value TargetType.swift
   value TargetType.typescript
   value TypedefAlias.addTypedef
@@ -428,7 +411,6 @@ class HaskellRendererOptions
 class JavaRendererOptions
 class JavaScriptRendererOptions
 class KotlinRendererOptions
-class Log
 class ObjectiveCRendererOptions
 class PHPRendererOptions
 class PropTypesRendererOptions
@@ -443,7 +425,6 @@ class RendererOptions
 class RubyRendererOptions
 class RustRendererOptions
 class Scala3RendererOptions
-class SmithyRendererOptions
 class SwiftRendererOptions
 class TypeConfig
 class TypeEnum
@@ -475,7 +456,6 @@ enum RawType
 enum RubyStrictness
 enum RustVisibility
 enum Scala3Framework
-enum SmithyFramework
 enum SourceStyle
 enum SourceType
 enum StructOrClass
@@ -484,5 +464,3 @@ enum SwiftProtocol
 enum TargetType
 enum TypedefAlias
 enum WStringType
-function coerceRendererOptionsMap(req Map<String, Object?> raw, String {sectionLabel}): Map<String, String>
-function inferLangType(req List<T> candidates, req String path): T?

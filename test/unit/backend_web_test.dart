@@ -39,10 +39,8 @@ void main() {
     });
 
     test('QuicktypeDart.bundleSource defaults to embedded', () {
-      expect(
-        QuicktypeDart.bundleSource,
-        isA<BundleSource>(),
-      );
+      expect(QuicktypeDart.bundleSource, isA<EmbeddedBundleSource>());
+      expect(QuicktypeDart.bundleSource, same(const BundleSource.embedded()));
     });
   });
 }

@@ -31,10 +31,10 @@ void main() {
     });
   });
 
-  group('QuicktypeDart.setBundleSource', () {
+  group('QuicktypeDart.bundleSource', () {
     tearDown(() {
       // Restore default so other tests aren't affected.
-      QuicktypeDart.setBundleSource(const BundleSource.embedded());
+      QuicktypeDart.bundleSource = const BundleSource.embedded();
     });
 
     test('default is embedded', () {
@@ -43,7 +43,7 @@ void main() {
 
     test('round-trips a remote source', () {
       final src = BundleSource.remote(Uri.parse('https://example.com/b.js'));
-      QuicktypeDart.setBundleSource(src);
+      QuicktypeDart.bundleSource = src;
       expect(QuicktypeDart.bundleSource, same(src));
     });
   });

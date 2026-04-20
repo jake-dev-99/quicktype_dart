@@ -21,14 +21,10 @@ class PythonRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (pythonVersion != null) m['python-version'] = pythonVersion!.toString();
-    if (justTypes != null) m['just-types'] = justTypes.toString();
-    if (nicePropertyNames != null) {
-      m['nice-property-names'] = nicePropertyNames.toString();
-    }
-    if (pydanticBaseModel != null) {
-      m['pydantic-base-model'] = pydanticBaseModel.toString();
-    }
+    putOpt(m, 'python-version', pythonVersion);
+    putOpt(m, 'just-types', justTypes);
+    putOpt(m, 'nice-property-names', nicePropertyNames);
+    putOpt(m, 'pydantic-base-model', pydanticBaseModel);
     return m;
   }
 }

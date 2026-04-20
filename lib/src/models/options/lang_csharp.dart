@@ -37,20 +37,18 @@ class CSharpRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (framework != null) m['framework'] = framework!.toString();
-    if (namespace != null) m['namespace'] = namespace!;
-    if (csharpVersion != null) m['csharp-version'] = csharpVersion!.toString();
-    if (density != null) m['density'] = density!.toString();
-    if (arrayType != null) m['array-type'] = arrayType!.toString();
-    if (numberType != null) m['number-type'] = numberType!.toString();
-    if (anyType != null) m['any-type'] = anyType!.toString();
-    if (virtual != null) m['virtual'] = virtual.toString();
-    if (features != null) m['features'] = features!.toString();
-    if (baseClass != null) m['base-class'] = baseClass!.toString();
-    if (checkRequired != null) m['check-required'] = checkRequired.toString();
-    if (keepPropertyName != null) {
-      m['keep-property-name'] = keepPropertyName.toString();
-    }
+    putOpt(m, 'framework', framework);
+    putOpt(m, 'namespace', namespace);
+    putOpt(m, 'csharp-version', csharpVersion);
+    putOpt(m, 'density', density);
+    putOpt(m, 'array-type', arrayType);
+    putOpt(m, 'number-type', numberType);
+    putOpt(m, 'any-type', anyType);
+    putOpt(m, 'virtual', virtual);
+    putOpt(m, 'features', features);
+    putOpt(m, 'base-class', baseClass);
+    putOpt(m, 'check-required', checkRequired);
+    putOpt(m, 'keep-property-name', keepPropertyName);
     return m;
   }
 }

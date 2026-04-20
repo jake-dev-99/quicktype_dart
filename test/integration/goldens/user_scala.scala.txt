@@ -1,0 +1,14 @@
+package quicktype
+
+case class User (
+    val id : Long,
+    val name : String,
+    val email : String,
+    val roles : Seq[String],
+    val profile : Profile
+)
+
+case class Profile (
+    val age : Long,
+    val active : Boolean
+)

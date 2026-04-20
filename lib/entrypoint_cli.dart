@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:args/args.dart';
+import 'package:logging/logging.dart';
 
 import 'src/config.dart';
+import 'src/internal/quicktype_process.dart';
 import 'src/quicktype.dart';
-import 'src/utils/logging.dart';
 import 'src/version.dart';
 
 /// Entry point for the `quicktype_dart` CLI.
@@ -19,6 +21,8 @@ import 'src/version.dart';
 class QuicktypeCLI {
   /// Runs the CLI with [args] and returns the exit code (0 on success).
   static Future<int> run(List<String> args) async {
+    _installLogForwarder();
+
     final parser = ArgParser()
       ..addOption('config',
           abbr: 'c',
@@ -32,15 +36,13 @@ class QuicktypeCLI {
     try {
       final options = parser.parse(args);
 
-      // Handle help request
       if (options.flag('help')) {
         _printUsage();
         return 0;
       }
 
-      // Handle version request
       if (options.flag('version')) {
-        _printVersion();
+        await _printVersion();
         return 0;
       }
 
@@ -49,12 +51,11 @@ class QuicktypeCLI {
         return await Quicktype.executeNative(options.rest);
       }
 
-      // Run with specified config
       final configPath = options.option('config') ?? Config.defaultConfigFile;
       return await _generateFromConfig(configPath);
     } catch (e, stackTrace) {
-      Log.off('Error: $e');
-      Log.off('Stack trace: $stackTrace');
+      stderr.writeln('Error: $e');
+      stderr.writeln(stackTrace);
       return 1;
     }
   }
@@ -63,21 +64,26 @@ class QuicktypeCLI {
   /// commands, and executes them. Returns exit code 0 on full success,
   /// 1 if any command failed.
   static Future<int> _generateFromConfig(String configPath) async {
-    Log.off('Running quicktype with config: $configPath');
+    stdout.writeln('Running quicktype with config: $configPath');
 
-    final quicktype = Quicktype(Config.loadOrDefaults(configPath));
+    // CLI invocations surface config-parse errors directly instead of
+    // silently running with defaults — the user asked for this config,
+    // we don't get to decide it's invalid.
+    final quicktype =
+        Quicktype(Config.loadOrDefaults(path: configPath, strict: true));
     final commands = await quicktype.buildCommandsFromConfig();
     final results = await quicktype.executeAll(commands);
 
     final successCount = results.where((r) => r.success).length;
-    Log.off('Generated $successCount/${results.length} files successfully');
+    stdout.writeln(
+        'Generated $successCount/${results.length} files successfully');
 
-    // Print any errors
     final failures = results.where((r) => !r.success).toList();
     if (failures.isNotEmpty) {
-      Log.off('\nErrors:');
+      stderr.writeln('\nErrors:');
       for (final f in failures) {
-        Log.off('  - ${f.sourcePath} → ${f.targetPath}: ${f.errorMessage}');
+        stderr.writeln(
+            '  - ${f.sourcePath} → ${f.targetPath}: ${f.errorMessage}');
       }
       return 1;
     }
@@ -85,9 +91,9 @@ class QuicktypeCLI {
     return 0;
   }
 
-  /// Print CLI usage information
+  /// Print CLI usage information.
   static void _printUsage() {
-    Log.off('''
+    stdout.writeln('''
 Quicktype Dart - Generate types from schemas
 
 Usage:
@@ -102,23 +108,51 @@ Examples:
   quicktype                  Generate using quicktype.json
   quicktype -c custom.json   Generate using custom.json
 
-For more details: https://github.com/yourusername/quicktype_dart
+For more details: https://github.com/jake-dev-99/quicktype_dart
 ''');
   }
 
-  /// Print version information
-  static void _printVersion() {
-    Log.off('Quicktype Dart v$packageVersion');
-
+  /// Print version information.
+  static Future<void> _printVersion() async {
+    stdout.writeln('Quicktype Dart v$packageVersion');
     try {
-      final result = Process.runSync('quicktype', ['--version']);
+      final exe = await resolveQuicktypeExecutable();
+      final result = Process.runSync(exe, ['--version']);
       if (result.exitCode == 0) {
-        Log.off('Native quicktype: ${result.stdout.toString().trim()}');
+        stdout.writeln('Native quicktype: ${(result.stdout as String).trim()}');
       } else {
-        Log.off('Native quicktype: not available');
+        stdout.writeln('Native quicktype: exited ${result.exitCode}');
       }
-    } catch (_) {
-      Log.off('Native quicktype: not installed');
+    } on QuicktypeException {
+      stdout.writeln('Native quicktype: not installed');
+    } catch (e) {
+      stdout.writeln('Native quicktype: $e');
     }
   }
+
+  /// Wires the **root** logger's records (everything under
+  /// `Logger.root`, including our `Logger('quicktype')` tree and any
+  /// transitive `package:logging` consumers) to stdout/stderr so
+  /// library diagnostics (`Log.info` etc.) reach the terminal when run
+  /// as a CLI. Sets the root level to INFO on entry.
+  ///
+  /// Idempotent: re-runs in the same process (tests) cancel the
+  /// previous subscription before attaching a new one.
+  static void _installLogForwarder() {
+    Logger.root.level = Level.INFO;
+    _logSubscription?.cancel();
+    _logSubscription = Logger.root.onRecord.listen((record) {
+      // Process stdout/stderr are owned by the runtime; never close them.
+      if (record.level >= Level.WARNING) {
+        stderr.writeln('[${record.level.name}] ${record.message}');
+      } else {
+        stdout.writeln('[${record.level.name}] ${record.message}');
+      }
+    });
+  }
+
+  // ignore: cancel_subscriptions
+  // Subscription lives for the process lifetime; cancellation happens
+  // on re-entry (tests) via _installLogForwarder above.
+  static StreamSubscription<LogRecord>? _logSubscription;
 }

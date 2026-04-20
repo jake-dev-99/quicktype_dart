@@ -49,32 +49,24 @@ class SwiftRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (justTypes != null) m['just-types'] = justTypes.toString();
-    if (structOrClass != null) m['struct-or-class'] = structOrClass!.toString();
-    if (density != null) m['density'] = density!.toString();
-    if (initializers != null) m['initializers'] = initializers.toString();
-    if (codingKeys != null) m['coding-keys'] = codingKeys.toString();
-    if (codingKeysProtocol != null) {
-      m['coding-keys-protocol'] = codingKeysProtocol!;
-    }
-    if (accessLevel != null) m['access-level'] = accessLevel!.toString();
-    if (alamofire != null) m['alamofire'] = alamofire.toString();
-    if (supportLinux != null) m['support-linux'] = supportLinux.toString();
-    if (typePrefix != null) m['type-prefix'] = typePrefix!;
-    if (protocol != null) m['protocol'] = protocol!.toString();
-    if (acronymStyle != null) m['acronym-style'] = acronymStyle!.toString();
-    if (objectiveCSupport != null) {
-      m['objective-c-support'] = objectiveCSupport.toString();
-    }
-    if (optionalEnums != null) m['optional-enums'] = optionalEnums.toString();
-    if (sendable != null) m['sendable'] = sendable.toString();
-    if (swift5Support != null) m['swift-5-support'] = swift5Support.toString();
-    if (multiFileTarget != null) {
-      m['multi-file-dest'] = multiFileTarget.toString();
-    }
-    if (mutableProperties != null) {
-      m['mutable-properties'] = mutableProperties.toString();
-    }
+    putOpt(m, 'just-types', justTypes);
+    putOpt(m, 'struct-or-class', structOrClass);
+    putOpt(m, 'density', density);
+    putOpt(m, 'initializers', initializers);
+    putOpt(m, 'coding-keys', codingKeys);
+    putOpt(m, 'coding-keys-protocol', codingKeysProtocol);
+    putOpt(m, 'access-level', accessLevel);
+    putOpt(m, 'alamofire', alamofire);
+    putOpt(m, 'support-linux', supportLinux);
+    putOpt(m, 'type-prefix', typePrefix);
+    putOpt(m, 'protocol', protocol);
+    putOpt(m, 'acronym-style', acronymStyle);
+    putOpt(m, 'objective-c-support', objectiveCSupport);
+    putOpt(m, 'optional-enums', optionalEnums);
+    putOpt(m, 'sendable', sendable);
+    putOpt(m, 'swift-5-support', swift5Support);
+    putOpt(m, 'multi-file-dest', multiFileTarget);
+    putOpt(m, 'mutable-properties', mutableProperties);
     return m;
   }
 }

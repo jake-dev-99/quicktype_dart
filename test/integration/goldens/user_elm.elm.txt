@@ -1,0 +1,91 @@
+-- To decode the JSON data, add this file to your project, run
+--
+--     elm-package install NoRedInk/elm-decode-pipeline
+--
+-- add these imports
+--
+--     import Json.Decode exposing (decodeString)`);
+--     import QuickType exposing (user)
+--
+-- and you're off to the races with
+--
+--     decodeString user myJsonString
+
+module QuickType exposing
+    ( User
+    , userToString
+    , user
+    , Profile
+    )
+
+import Json.Decode as Jdec
+import Json.Decode.Pipeline as Jpipe
+import Json.Encode as Jenc
+import Dict exposing (Dict, map, toList)
+import Array exposing (Array, map)
+
+type alias User =
+    { id : Int
+    , name : String
+    , email : String
+    , roles : Array String
+    , profile : Profile
+    }
+
+type alias Profile =
+    { age : Int
+    , active : Bool
+    }
+
+-- decoders and encoders
+
+userToString : User -> String
+userToString r = Jenc.encode 0 (encodeUser r)
+
+user : Jdec.Decoder User
+user =
+    Jpipe.decode User
+        |> Jpipe.required "id" Jdec.int
+        |> Jpipe.required "name" Jdec.string
+        |> Jpipe.required "email" Jdec.string
+        |> Jpipe.required "roles" (Jdec.array Jdec.string)
+        |> Jpipe.required "profile" profile
+
+encodeUser : User -> Jenc.Value
+encodeUser x =
+    Jenc.object
+        [ ("id", Jenc.int x.id)
+        , ("name", Jenc.string x.name)
+        , ("email", Jenc.string x.email)
+        , ("roles", makeArrayEncoder Jenc.string x.roles)
+        , ("profile", encodeProfile x.profile)
+        ]
+
+profile : Jdec.Decoder Profile
+profile =
+    Jpipe.decode Profile
+        |> Jpipe.required "age" Jdec.int
+        |> Jpipe.required "active" Jdec.bool
+
+encodeProfile : Profile -> Jenc.Value
+encodeProfile x =
+    Jenc.object
+        [ ("age", Jenc.int x.age)
+        , ("active", Jenc.bool x.active)
+        ]
+
+--- encoder helpers
+
+makeArrayEncoder : (a -> Jenc.Value) -> Array a -> Jenc.Value
+makeArrayEncoder f arr =
+    Jenc.array (Array.map f arr)
+
+makeDictEncoder : (a -> Jenc.Value) -> Dict String a -> Jenc.Value
+makeDictEncoder f dict =
+    Jenc.object (toList (Dict.map (\k -> f) dict))
+
+makeNullableEncoder : (a -> Jenc.Value) -> Maybe a -> Jenc.Value
+makeNullableEncoder f m =
+    case m of
+    Just x -> f x
+    Nothing -> Jenc.null

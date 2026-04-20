@@ -1,0 +1,28 @@
+// To parse the JSON, install Klaxon and do:
+//
+//   val user = User.fromJson(jsonString)
+
+package quicktype
+
+import com.beust.klaxon.*
+
+private val klaxon = Klaxon()
+
+data class User (
+    val id: Long,
+    val name: String,
+    val email: String,
+    val roles: List<String>,
+    val profile: Profile
+) {
+    public fun toJson() = klaxon.toJsonString(this)
+
+    companion object {
+        public fun fromJson(json: String) = klaxon.parse<User>(json)
+    }
+}
+
+data class Profile (
+    val age: Long,
+    val active: Boolean
+)

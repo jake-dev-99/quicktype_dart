@@ -8,10 +8,10 @@
 /// web artifact.
 ///
 /// ```dart
-/// QuicktypeDart.setBundleSource(BundleSource.remote(
+/// QuicktypeDart.bundleSource = BundleSource.remote(
 ///   Uri.parse('https://cdn.example.com/quicktype_bundle.js'),
 ///   integrity: 'sha384-…',  // optional Subresource Integrity hash
-/// ));
+/// );
 ///
 /// // Subsequent calls use the remote bundle.
 /// await QuicktypeDart.generate(label: 'User', data: ..., target: TargetType.dart);
