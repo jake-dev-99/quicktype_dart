@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.6.0
+
+**Breaking-change release — dead code removal + strict mode.**
+Cleans up the API surface for the road to 1.0, tightens the contract
+around malformed configs, and removes an unused dependency.
+
+### Removed — breaking
+
+- **`SchemaValidator`** — exported but never used in any code path
+  since the 0.4.0 deprecation. Deleted. Re-introduce with a real
+  consumer if needed.
+- **`json_schema: ^5.2.1`** runtime dependency — only used by
+  `SchemaValidator`. Dropping it shrinks the transitive dep closure.
+
+### Changed — breaking
+
+- **Renderer-option coercion is now strict.** `TypeConfig.fromJson`
+  previously accepted any value and silently stringified unknown types
+  with a warning. Now non-`bool`/`String`/`null` values raise a
+  [ConfigException]. A typo like `use-freezed: 1` or
+  `part-name: [foo]` fails loud at config-load time instead of
+  producing mystery output at generate time.
+- **Label sanitization now appends a 6-char content hash** when any
+  character was substituted. `'User:Data'` and `'User-Data'` previously
+  both mapped to `'User_Data'` and silently overwrote each other's
+  temp files; they now become `'User_Data_<hash1>'` and
+  `'User_Data_<hash2>'` so they coexist. Alphanumeric labels pass
+  through unchanged.
+
+### Changed
+
+- `Quicktype.executeAll` no longer emits the `========================`
+  visual separator — presentation belongs to the CLI layer, not the
+  library.
+- `Quicktype.execute` uses `Log.info` for progress messages instead of
+  `Log.off`. `Log.off` remains for CLI-only always-visible output.
+- `_defaultTargets` flattened into a per-target helper
+  (`_detectFilesForTarget`) for readability.
+- Magic number `substring(0, 16)` in the native-bundle cache path is
+  now a named `_cacheKeyLength` constant with a comment explaining
+  the 64-bit entropy choice.
+- `QtShimBindings._lib` now has a docstring explaining why the field
+  exists (keeps the DynamicLibrary alive while function pointers are
+  in use).
+
 ## 0.5.0
 
 **Breaking-change release — de-singleton architecture.** Removes the

@@ -66,6 +66,11 @@ class QtShimBindings {
                 'qt_runtime_convert'),
         qtFree = _lib.lookupFunction<QtFreeNative, QtFree>('qt_free');
 
+  /// Retained handle to the opened native library. Not called into
+  /// directly — every function pointer is resolved once in the
+  /// constructor above — but keeping the library referenced here
+  /// prevents it from being collected while the function pointers are
+  /// still in use.
   // ignore: unused_field
   final DynamicLibrary _lib;
 

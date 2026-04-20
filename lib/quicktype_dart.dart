@@ -41,5 +41,4 @@ export 'src/quicktype.dart' show Quicktype, QuicktypeException;
 
 // Utilities
 export 'src/utils/logging.dart' show Log;
-export 'src/utils/validator.dart' show SchemaValidator;
 export 'src/utils/type_infer.dart' show inferLangType;
