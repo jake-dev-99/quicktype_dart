@@ -255,13 +255,15 @@ String? _findOnPath(String name) {
 /// disk.
 String _sanitizeLabel(String label) {
   final cleaned = label.replaceAll(RegExp(r'[^A-Za-z0-9_]'), '_');
-  final modified = cleaned != label || cleaned.isEmpty;
   final base = cleaned.isEmpty
       ? 'Generated'
       : RegExp(r'^[0-9]').hasMatch(cleaned)
           ? 'T_$cleaned'
           : cleaned;
-  if (!modified) return base;
+  // Compare against the final `base`, not just `cleaned`. The `T_`
+  // prefix counts as a modification too — otherwise `123` and `T_123`
+  // both land at `T_123` without a suffix and collide on disk.
+  if (base == label) return base;
   final hash =
       crypto.sha1.convert(utf8.encode(label)).toString().substring(0, 6);
   return '${base}_$hash';

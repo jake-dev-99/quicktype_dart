@@ -124,31 +124,22 @@ TargetType _resolveTarget(String name) {
 
 /// Coerces the raw `args:` map from `build.yaml` into the
 /// `Map<String, String>` shape quicktype-core's `rendererOptions`
-/// accepts. Bool → `'true'`/`'false'`; String passes through; null is
-/// skipped; other types are stringified via `toString()` with a warning.
+/// accepts. Delegates to [coerceRendererOptionsMap] so
+/// `quicktype.json` and `build.yaml` reject the same invalid shapes
+/// with the same error — no surprise that `build.yaml` silently
+/// accepts what `quicktype.json` rejects.
 Map<String, String> _coerceRendererOptions(
   dynamic rawArgs,
   TargetType targetType,
 ) {
   if (rawArgs is! Map) return const {};
-  final out = <String, String>{};
-  for (final entry in rawArgs.entries) {
-    final key = entry.key.toString();
-    final value = entry.value;
-    if (value == null) continue;
-    if (value is bool) {
-      out[key] = value.toString();
-    } else if (value is String) {
-      out[key] = value;
-    } else {
-      Log.warning(
-        'Renderer option "$key" for target ${targetType.name} has '
-            'unsupported value type ${value.runtimeType}; '
-            'coercing via toString().',
-        'QuicktypeBuilder',
-      );
-      out[key] = value.toString();
-    }
-  }
-  return out;
+  // YAML maps land as `Map<dynamic, dynamic>`; normalize keys to String
+  // before handing off to the shared coercer.
+  final normalized = <String, Object?>{
+    for (final entry in rawArgs.entries) entry.key.toString(): entry.value,
+  };
+  return coerceRendererOptionsMap(
+    normalized,
+    sectionLabel: '${targetType.name} builder args',
+  );
 }

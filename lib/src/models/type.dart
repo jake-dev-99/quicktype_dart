@@ -1,6 +1,7 @@
 import 'package:meta/meta.dart';
 
 import '../config.dart';
+import 'renderer_options.dart' show coerceRendererOptionsMap;
 
 /// Conventional output directories for common target languages, used when
 /// a [TypeConfig] doesn't specify an explicit `path`.
@@ -187,7 +188,10 @@ class TypeConfig {
       final path = json['path'] as String? ?? type.defaultPath ?? 'models/';
       final raw = json['args'];
       final rendererOptions = raw is Map<String, dynamic>
-          ? _coerceRendererOptions(raw)
+          ? coerceRendererOptionsMap(
+              raw,
+              sectionLabel: '${type.argName} target args',
+            )
           : const <String, String>{};
 
       return TypeConfig(
@@ -196,31 +200,6 @@ class TypeConfig {
       if (e is ConfigException) rethrow;
       throw ConfigException('Invalid type configuration', e);
     }
-  }
-
-  /// Validates raw `args:`-style values and normalizes them to the
-  /// `Map<String, String>` shape quicktype-core's renderer expects.
-  /// Accepts `bool`, `String`, or `null` (skipped); anything else throws
-  /// [ConfigException] so typos like `use-freezed: 1` or `part-name: []`
-  /// fail loud at config-load time instead of silently coercing via
-  /// `toString()` and producing mystery output.
-  static Map<String, String> _coerceRendererOptions(Map<String, dynamic> raw) {
-    final out = <String, String>{};
-    for (final entry in raw.entries) {
-      final v = entry.value;
-      if (v == null) continue;
-      if (v is bool) {
-        out[entry.key] = v.toString();
-      } else if (v is String) {
-        out[entry.key] = v;
-      } else {
-        throw ConfigException(
-          'Renderer option "${entry.key}" has unsupported value type '
-          '${v.runtimeType} (value: $v). Expected bool, String, or null.',
-        );
-      }
-    }
-    return out;
   }
 
   /// Round-trips to the JSON shape accepted by [TypeConfig.fromJson].
