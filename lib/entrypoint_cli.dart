@@ -140,7 +140,15 @@ For more details: https://github.com/jake-dev-99/quicktype_dart
   /// previous subscription before attaching a new one.
   static void _installLogForwarder() {
     Logger.root.level = Level.INFO;
-    _logSubscription?.cancel();
+    // Fire-and-forget: cancel() stops delivering records synchronously;
+    // the Future it returns just signals completion of any async cleanup,
+    // which doesn't block attaching the next listener.
+    unawaited(_logSubscription?.cancel());
+    // Subscription lives for the process lifetime (CLI is a short-lived
+    // binary); test re-entries cancel it via the unawaited() above.
+    // cancel_subscriptions fires on the .listen() site, not the field,
+    // so the ignore belongs here.
+    // ignore: cancel_subscriptions
     _logSubscription = Logger.root.onRecord.listen((record) {
       // Process stdout/stderr are owned by the runtime; never close them.
       if (record.level >= Level.WARNING) {
@@ -151,8 +159,5 @@ For more details: https://github.com/jake-dev-99/quicktype_dart
     });
   }
 
-  // ignore: cancel_subscriptions
-  // Subscription lives for the process lifetime; cancellation happens
-  // on re-entry (tests) via _installLogForwarder above.
   static StreamSubscription<LogRecord>? _logSubscription;
 }
