@@ -1,42 +1,4 @@
-// QTUser.h
-
-// To parse this JSON:
-//
-//   NSError *error;
-//   QTUser *user = [QTUser fromJSON:json encoding:NSUTF8Encoding error:&error];
-
-#import <Foundation/Foundation.h>
-
-@class QTUser;
-@class QTProfile;
-
-NS_ASSUME_NONNULL_BEGIN
-
-#pragma mark - Object interfaces
-
-@interface QTUser : NSObject
-@property (nonatomic, assign) NSInteger identifier;
-@property (nonatomic, copy)   NSString *name;
-@property (nonatomic, copy)   NSString *email;
-@property (nonatomic, copy)   NSArray<NSString *> *roles;
-@property (nonatomic, strong) QTProfile *profile;
-
-+ (_Nullable instancetype)fromJSON:(NSString *)json encoding:(NSStringEncoding)encoding error:(NSError *_Nullable *)error;
-+ (_Nullable instancetype)fromData:(NSData *)data error:(NSError *_Nullable *)error;
-- (NSString *_Nullable)toJSON:(NSStringEncoding)encoding error:(NSError *_Nullable *)error;
-- (NSData *_Nullable)toData:(NSError *_Nullable *)error;
-@end
-
-@interface QTProfile : NSObject
-@property (nonatomic, assign) NSInteger age;
-@property (nonatomic, assign) BOOL isActive;
-@end
-
-NS_ASSUME_NONNULL_END
-
-// QTUser.m
-
-#import "QTUser.h"
+#import "User.h"
 
 #define λ(decl, expr) (^(decl) { return (expr); })
 

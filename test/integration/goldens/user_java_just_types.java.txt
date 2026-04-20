@@ -1,5 +1,3 @@
-// User.java
-
 package io.quicktype;
 
 public class User {
@@ -23,19 +21,4 @@ public class User {
 
     public Profile getProfile() { return profile; }
     public void setProfile(Profile value) { this.profile = value; }
-}
-
-// Profile.java
-
-package io.quicktype;
-
-public class Profile {
-    private long age;
-    private boolean active;
-
-    public long getAge() { return age; }
-    public void setAge(long value) { this.age = value; }
-
-    public boolean getActive() { return active; }
-    public void setActive(boolean value) { this.active = value; }
 }

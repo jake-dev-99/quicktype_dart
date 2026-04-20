@@ -89,7 +89,10 @@ jobs:
         with:
           node-version: '20'
       - name: Install quicktype globally
-        run: npm install -g quicktype
+        # Pinned to the version whose Process-transport output the
+        # golden files were generated against. Bump here + regenerate
+        # goldens (GOLDEN=update) in the same commit when rolling.
+        run: npm install -g quicktype@23.2.0
       - run: flutter pub get
       - name: Integration tests
         run: dart test test/integration --tags=integration
@@ -132,7 +135,9 @@ jobs:
       - name: Install quicktype globally
         # build_runner's auto transport falls through to Process on CI
         # (FFI plugin isn't pre-built); needs `quicktype` on PATH.
-        run: npm install -g quicktype
+        # Pinned to the version example/lib/models/user.dart was
+        # generated against — bump here and regenerate in the same PR.
+        run: npm install -g quicktype@23.2.0
       - name: Install deps
         working-directory: example
         run: dart pub get

@@ -87,11 +87,10 @@ void main() {
       GoRendererOptions(justTypes: true),
     ),
     const _Case('user_rust', TargetType.rust, null),
-    const _Case(
-      'user_cpp_just_types',
-      TargetType.cpp,
-      CppRendererOptions(justTypes: true),
-    ),
+    // cpp intentionally absent: quicktype CLI emits
+    // "Error: Internal error: ." on inputs with nested objects for the
+    // C++ target (local + CI, both with and without --just-types).
+    // Tracked upstream; re-add a case when it's fixed there.
     // Remaining languages — quicktype-core defaults; we care about
     // regressing *any* shape, not just the opinionated ones.
     const _Case('user_c', TargetType.c, null),
@@ -123,11 +122,20 @@ void main() {
           _goldenDir,
           '${c.name}.${c.target.extensions.first.substring(1)}.txt',
         );
+        // Pin to Process transport so goldens stay deterministic
+        // across environments. FFI and Process produce textually
+        // different output for multi-file-output languages (Java,
+        // ObjC, C, C++) — FFI returns the concatenated in-memory
+        // render, while Process writes per-file via `--out`. CI has
+        // no FFI plugin build, so every CI run goes through Process;
+        // pinning avoids "green locally, red on CI" drift for
+        // developers who happen to have the native lib built.
         final actual = await QuicktypeDart.generateFromString(
           label: 'User',
           json: input,
           target: c.target,
           options: c.options,
+          transport: GenerateTransport.process,
         );
         _assertLooksLikeCode(actual, c.name);
         if (updateMode) {
