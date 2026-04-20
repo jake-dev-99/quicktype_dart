@@ -83,3 +83,4 @@ node_modules/
 # --- Claude Code local state --------------------------------------------
 # Per-project session state — lock files, local settings. Never shipped.
 .claude/
+coverage/
