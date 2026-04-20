@@ -141,6 +141,11 @@ For more details: https://github.com/jake-dev-99/quicktype_dart
   static void _installLogForwarder() {
     Logger.root.level = Level.INFO;
     _logSubscription?.cancel();
+    // Subscription lives for the process lifetime (CLI is a short-lived
+    // binary); test re-entries cancel it via the _logSubscription?.cancel()
+    // above. cancel_subscriptions fires on the .listen() site, not the
+    // field, so the ignore belongs here.
+    // ignore: cancel_subscriptions
     _logSubscription = Logger.root.onRecord.listen((record) {
       // Process stdout/stderr are owned by the runtime; never close them.
       if (record.level >= Level.WARNING) {
@@ -151,8 +156,5 @@ For more details: https://github.com/jake-dev-99/quicktype_dart
     });
   }
 
-  // ignore: cancel_subscriptions
-  // Subscription lives for the process lifetime; cancellation happens
-  // on re-entry (tests) via _installLogForwarder above.
   static StreamSubscription<LogRecord>? _logSubscription;
 }
