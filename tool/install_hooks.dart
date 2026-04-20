@@ -67,7 +67,14 @@ void main(List<String> args) {
   // Make executable on POSIX — Windows git handles bash hooks via
   // Git-for-Windows' bundled bash, so the mode bit is harmless there.
   if (!Platform.isWindows) {
-    Process.runSync('chmod', ['+x', hookPath]);
+    final chmod = Process.runSync('chmod', ['+x', hookPath]);
+    if (chmod.exitCode != 0) {
+      stderr.writeln(
+        'install_hooks: chmod +x $hookPath failed '
+        '(exit ${chmod.exitCode}): ${chmod.stderr}',
+      );
+      exit(1);
+    }
   }
   stdout.writeln('install_hooks: installed $hookPath');
   stdout.writeln('Runs `dart format --set-exit-if-changed` and `dart analyze` '
