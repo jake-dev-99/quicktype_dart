@@ -65,7 +65,7 @@ class _QuicktypeBuilder implements Builder {
         label: label,
         json: json,
         target: targetType,
-        options: _MapRendererOptions(rendererOptions),
+        options: RendererOptions.raw(rendererOptions),
       );
 
       final outputId = _outputAssetId(input, targetType);
@@ -82,18 +82,6 @@ class _QuicktypeBuilder implements Builder {
       rethrow;
     }
   }
-}
-
-/// Thin adapter that lets the builder pass an already-coerced
-/// `Map<String, String>` through the typed [options] parameter on
-/// [QuicktypeDart.generateFromString] without having to pick a
-/// specific `*RendererOptions` subclass per language.
-class _MapRendererOptions extends RendererOptions {
-  const _MapRendererOptions(this._map);
-  final Map<String, String> _map;
-
-  @override
-  Map<String, String> toRendererOptions() => _map;
 }
 
 /// Derives a PascalCase top-level type name from `foo_bar.qt.json`.

@@ -62,13 +62,32 @@ Map<String, String> coerceRendererOptionsMap(
 ///
 /// Null-valued fields are omitted from the serialized output, so any
 /// option you don't explicitly set inherits quicktype-core's default.
+///
+/// For programmatic callers that already have a raw `Map<String, String>`
+/// (e.g. the `build_runner` builder tunneling `args:` from YAML), use
+/// [RendererOptions.raw] instead of picking a language-specific subclass.
 abstract class RendererOptions {
   /// Subclass constructor hook. Concrete languages expose their own
   /// typed constructor (`DartRendererOptions`, etc.).
   const RendererOptions();
 
+  /// Wraps an already-built renderer-options map. Keys are
+  /// quicktype-core option names (kebab-case); values are stringified
+  /// (`'true'`/`'false'`/verbatim string). Use this when the map comes
+  /// from a source that already matches quicktype-core's shape.
+  const factory RendererOptions.raw(Map<String, String> options) =
+      _RawRendererOptions;
+
   /// Serializes this options instance to the `Map<String, String>` shape
   /// quicktype-core's `rendererOptions` accepts. Only non-null fields are
   /// included.
   Map<String, String> toRendererOptions();
+}
+
+class _RawRendererOptions extends RendererOptions {
+  const _RawRendererOptions(this._map);
+  final Map<String, String> _map;
+
+  @override
+  Map<String, String> toRendererOptions() => _map;
 }

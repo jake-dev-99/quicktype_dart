@@ -38,7 +38,3 @@ export 'src/models/enums.dart';
 // Config + orchestration
 export 'src/config.dart' show Config, ConfigException;
 export 'src/quicktype.dart' show Quicktype, QuicktypeException;
-
-// Utilities
-export 'src/utils/logging.dart' show Log;
-export 'src/utils/type_infer.dart' show inferLangType;
