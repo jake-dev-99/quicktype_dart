@@ -53,6 +53,21 @@ if(QT_EMBED_BUNDLE)
   set(QT_EMBED_PY  "${CMAKE_CURRENT_SOURCE_DIR}/shim/embed_bundle.py")
   set(QT_BUNDLE_C  "${CMAKE_CURRENT_BINARY_DIR}/bundle_data.c")
 
+  # Fail fast with a pointer to the regeneration script when the input
+  # files a fresh clone needs are missing. Without these checks, CMake
+  # runs the embed step and the user sees a cryptic Python error.
+  foreach(_qt_input "${QT_BUNDLE}" "${QT_PRELUDE}" "${QT_EMBED_PY}")
+    if(NOT EXISTS "${_qt_input}")
+      message(FATAL_ERROR
+        "quicktype_dart: required file not found: ${_qt_input}\n"
+        "Run `dart run tool/refresh_bundle.dart` from the package root to "
+        "regenerate, or pass -DQT_EMBED_BUNDLE=OFF to build against a "
+        "runtime-supplied bundle (see BundleSource.remote on the Dart "
+        "side)."
+      )
+    endif()
+  endforeach()
+
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
   add_custom_command(
     OUTPUT  "${QT_BUNDLE_C}"
