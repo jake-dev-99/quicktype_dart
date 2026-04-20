@@ -49,7 +49,10 @@ Future<String> generateFromString({
         rendererOptions: rendererOptions,
       );
     case GenerateTransport.auto:
-      throw StateError('unreachable');
+      // Unreachable: _resolveTransport() below converts `auto` to a
+      // concrete ffi/process value before this switch runs. The case
+      // is present only to make the switch exhaustive.
+      throw StateError('auto should have been resolved to ffi or process');
   }
 }
 
