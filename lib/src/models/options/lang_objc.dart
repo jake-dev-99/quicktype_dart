@@ -23,11 +23,11 @@ class ObjectiveCRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (justTypes != null) m['just-types'] = justTypes.toString();
-    if (classPrefix != null) m['class-prefix'] = classPrefix!;
-    if (features != null) m['features'] = features!.toString();
-    if (extraComments != null) m['extra-comments'] = extraComments.toString();
-    if (functions != null) m['functions'] = functions.toString();
+    putOpt(m, 'just-types', justTypes);
+    putOpt(m, 'class-prefix', classPrefix);
+    putOpt(m, 'features', features);
+    putOpt(m, 'extra-comments', extraComments);
+    putOpt(m, 'functions', functions);
     return m;
   }
 }

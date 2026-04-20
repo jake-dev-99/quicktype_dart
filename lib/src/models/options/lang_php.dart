@@ -23,11 +23,11 @@ class PHPRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (withGet != null) m['with-get'] = withGet.toString();
-    if (fastGet != null) m['fast-get'] = fastGet.toString();
-    if (withSet != null) m['with-set'] = withSet.toString();
-    if (withClosing != null) m['with-closing'] = withClosing.toString();
-    if (acronymStyle != null) m['acronym-style'] = acronymStyle!.toString();
+    putOpt(m, 'with-get', withGet);
+    putOpt(m, 'fast-get', fastGet);
+    putOpt(m, 'with-set', withSet);
+    putOpt(m, 'with-closing', withClosing);
+    putOpt(m, 'acronym-style', acronymStyle);
     return m;
   }
 }

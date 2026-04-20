@@ -27,17 +27,13 @@ class JavaRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (arrayType != null) m['array-type'] = arrayType!.toString();
-    if (justTypes != null) m['just-types'] = justTypes.toString();
-    if (datetimeProvider != null) {
-      m['datetime-provider'] = datetimeProvider!.toString();
-    }
-    if (acronymStyle != null) m['acronym-style'] = acronymStyle!.toString();
-    if (package != null) m['package'] = package!;
-    if (lombok != null) m['lombok'] = lombok.toString();
-    if (lombokCopyAnnotations != null) {
-      m['lombok-copy-annotations'] = lombokCopyAnnotations.toString();
-    }
+    putOpt(m, 'array-type', arrayType);
+    putOpt(m, 'just-types', justTypes);
+    putOpt(m, 'datetime-provider', datetimeProvider);
+    putOpt(m, 'acronym-style', acronymStyle);
+    putOpt(m, 'package', package);
+    putOpt(m, 'lombok', lombok);
+    putOpt(m, 'lombok-copy-annotations', lombokCopyAnnotations);
     return m;
   }
 }

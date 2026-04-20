@@ -39,23 +39,19 @@ class CppRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (justTypes != null) m['just-types'] = justTypes.toString();
-    if (wstring != null) m['wstring'] = wstring!.toString();
-    if (constStyle != null) m['const-style'] = constStyle!.toString();
-    if (enumType != null) m['enum-type'] = enumType!;
-    if (namespace != null) m['namespace'] = namespace!;
-    if (codeFormat != null) m['code-format'] = codeFormat!.toString();
-    if (includeStyle != null) m['include-style'] = includeStyle!.toString();
-    if (sourceStyle != null) m['source-style'] = sourceStyle!.toString();
-    if (boost != null) m['boost'] = boost.toString();
-    if (hideNullOptional != null) {
-      m['hide-null-optional'] = hideNullOptional.toString();
-    }
-    if (typeStyle != null) m['type-style'] = typeStyle!.toString();
-    if (memberStyle != null) m['member-style'] = memberStyle!.toString();
-    if (enumeratorStyle != null) {
-      m['enumerator-style'] = enumeratorStyle!.toString();
-    }
+    putOpt(m, 'just-types', justTypes);
+    putOpt(m, 'wstring', wstring);
+    putOpt(m, 'const-style', constStyle);
+    putOpt(m, 'enum-type', enumType);
+    putOpt(m, 'namespace', namespace);
+    putOpt(m, 'code-format', codeFormat);
+    putOpt(m, 'include-style', includeStyle);
+    putOpt(m, 'source-style', sourceStyle);
+    putOpt(m, 'boost', boost);
+    putOpt(m, 'hide-null-optional', hideNullOptional);
+    putOpt(m, 'type-style', typeStyle);
+    putOpt(m, 'member-style', memberStyle);
+    putOpt(m, 'enumerator-style', enumeratorStyle);
     return m;
   }
 }

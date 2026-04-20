@@ -34,19 +34,17 @@ class DartRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (nullSafety != null) m['null-safety'] = nullSafety.toString();
-    if (justTypes != null) m['just-types'] = justTypes.toString();
-    if (codersInClass != null) m['coders-in-class'] = codersInClass.toString();
-    if (fromMap != null) m['from-map'] = fromMap.toString();
-    if (requiredProps != null) m['required-props'] = requiredProps.toString();
-    if (finalProps != null) m['final-props'] = finalProps.toString();
-    if (copyWith != null) m['copy-with'] = copyWith.toString();
-    if (useFreezed != null) m['use-freezed'] = useFreezed.toString();
-    if (useHive != null) m['use-hive'] = useHive.toString();
-    if (useJsonAnnotation != null) {
-      m['use-json-annotation'] = useJsonAnnotation.toString();
-    }
-    if (partName != null) m['part-name'] = partName!;
+    putOpt(m, 'null-safety', nullSafety);
+    putOpt(m, 'just-types', justTypes);
+    putOpt(m, 'coders-in-class', codersInClass);
+    putOpt(m, 'from-map', fromMap);
+    putOpt(m, 'required-props', requiredProps);
+    putOpt(m, 'final-props', finalProps);
+    putOpt(m, 'copy-with', copyWith);
+    putOpt(m, 'use-freezed', useFreezed);
+    putOpt(m, 'use-hive', useHive);
+    putOpt(m, 'use-json-annotation', useJsonAnnotation);
+    putOpt(m, 'part-name', partName);
     return m;
   }
 }

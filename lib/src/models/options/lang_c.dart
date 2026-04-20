@@ -29,16 +29,14 @@ class CRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (printStyle != null) m['print-style'] = printStyle!.toString();
-    if (hashtableSize != null) m['hashtable-size'] = hashtableSize!;
-    if (typedefAlias != null) m['typedef-alias'] = typedefAlias!.toString();
-    if (sourceStyle != null) m['source-style'] = sourceStyle!.toString();
-    if (integerSize != null) m['integer-size'] = integerSize!.toString();
-    if (typeStyle != null) m['type-style'] = typeStyle!.toString();
-    if (memberStyle != null) m['member-style'] = memberStyle!.toString();
-    if (enumeratorStyle != null) {
-      m['enumerator-style'] = enumeratorStyle!.toString();
-    }
+    putOpt(m, 'print-style', printStyle);
+    putOpt(m, 'hashtable-size', hashtableSize);
+    putOpt(m, 'typedef-alias', typedefAlias);
+    putOpt(m, 'source-style', sourceStyle);
+    putOpt(m, 'integer-size', integerSize);
+    putOpt(m, 'type-style', typeStyle);
+    putOpt(m, 'member-style', memberStyle);
+    putOpt(m, 'enumerator-style', enumeratorStyle);
     return m;
   }
 }

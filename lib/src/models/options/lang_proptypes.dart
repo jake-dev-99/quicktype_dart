@@ -17,8 +17,8 @@ class PropTypesRendererOptions extends RendererOptions {
   @override
   Map<String, String> toRendererOptions() {
     final m = <String, String>{};
-    if (acronymStyle != null) m['acronym-style'] = acronymStyle!.toString();
-    if (converters != null) m['converters'] = converters!.toString();
+    putOpt(m, 'acronym-style', acronymStyle);
+    putOpt(m, 'converters', converters);
     return m;
   }
 }
