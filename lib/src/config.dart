@@ -40,7 +40,7 @@ class ConfigException implements Exception {
 /// Consumers usually reach [Config] through [Quicktype.new]:
 ///
 /// ```dart
-/// final quicktype = Quicktype(Config.loadOrDefaults('quicktype.json'));
+/// final quicktype = Quicktype(Config.loadOrDefaults(path: 'quicktype.json'));
 /// await quicktype.executeAll(await quicktype.buildCommandsFromConfig());
 /// ```
 ///
@@ -119,7 +119,17 @@ class Config {
 
   /// Convenience for the common "load from disk, fall back to defaults
   /// if absent or unparseable" flow used by the CLI.
-  factory Config.loadOrDefaults([String path = defaultConfigFile]) {
+  ///
+  /// With [strict] = `false` (the default), a missing or malformed file
+  /// logs a warning and silently falls back to [Config.defaults]. With
+  /// [strict] = `true`, a malformed file rethrows [ConfigException] so
+  /// the caller can surface the real parse error — useful for CLI
+  /// invocations where "silently ran with defaults" is surprising. A
+  /// missing file still falls back in both modes.
+  factory Config.loadOrDefaults({
+    String path = defaultConfigFile,
+    bool strict = false,
+  }) {
     final file = File(path);
     if (!file.existsSync()) {
       Log.info('Config file "$path" not found. Loading defaults...');
@@ -128,7 +138,8 @@ class Config {
     try {
       return Config.fromFile(path);
     } on ConfigException catch (e) {
-      Log.info('Failed to load config file "$path": $e. Using defaults.');
+      if (strict) rethrow;
+      Log.warning('Failed to load config file "$path": $e. Using defaults.');
       return Config.defaults();
     }
   }
@@ -155,12 +166,19 @@ class Config {
     final pattern = target.defaultPath;
     if (pattern == null) return configs;
     try {
-      final files = Glob(pattern).listSync();
-      for (final entity in files) {
+      for (final entity in Glob(pattern).listSync()) {
         configs.add(TypeConfig(path: entity.path, type: target));
       }
-    } catch (e) {
-      Log.warning('Could not detect files for ${target.name}: $e');
+    } on FormatException catch (e) {
+      Log.warning(
+        'Invalid glob pattern in DefaultPaths.${target.name} '
+        '("$pattern"): $e. Skipping ${target.name}.',
+      );
+    } on FileSystemException catch (e) {
+      Log.warning(
+        'Filesystem error expanding ${target.name} defaults '
+        '("$pattern"): $e. Skipping ${target.name}.',
+      );
     }
     return configs;
   }

@@ -70,7 +70,7 @@ class QuicktypeException implements Exception {
 /// instead — it skips the config layer entirely.
 ///
 /// ```dart
-/// final qt = Quicktype(Config.loadOrDefaults('quicktype.json'));
+/// final qt = Quicktype(Config.loadOrDefaults(path: 'quicktype.json'));
 /// final commands = await qt.buildCommandsFromConfig();
 /// final results = await qt.executeAll(commands);
 /// ```

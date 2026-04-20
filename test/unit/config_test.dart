@@ -105,13 +105,13 @@ void main() {
     final sandbox = _sandboxPerTest('qt_config_default_');
 
     test('returns defaults when the file is missing', () {
-      final cfg = Config.loadOrDefaults('${sandbox().path}/missing.json');
+      final cfg = Config.loadOrDefaults(path: '${sandbox().path}/missing.json');
       expect(cfg.sources, isNotEmpty);
     });
 
     test('returns defaults when the file is malformed', () {
       final f = File('${sandbox().path}/bad.json')..writeAsStringSync('[]');
-      final cfg = Config.loadOrDefaults(f.path);
+      final cfg = Config.loadOrDefaults(path: f.path);
       expect(cfg.sources, isNotEmpty);
     });
 
