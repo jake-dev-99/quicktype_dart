@@ -1,104 +1,106 @@
 import 'dart:io';
 
-import 'package:path/path.dart' as p;
-
 import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
-import 'package:quicktype_dart/src/models/type.dart';
-import 'logging.dart';
+import 'package:path/path.dart' as p;
+
 import '../config.dart';
+import '../models/type.dart';
 
-/// Handles file pattern matching and path resolution
+/// Expands config-declared paths into concrete source-file lists, filtered
+/// by the [TypeEnum.extensions] set of the declaring type.
+///
+/// Package-private. The Config/Quicktype orchestration layer is the only
+/// caller; end users reach for `QuicktypeDart.generate` or the build_runner
+/// builders instead.
 class FileResolver {
-  /// Finds all files matching a pattern
+  FileResolver._();
+
+  /// Returns the set of absolute file paths under [pattern] whose extension
+  /// is one of [extensions].
   ///
-  /// Handles glob patterns and directory traversal
+  /// [pattern] may be:
+  ///   * A specific file whose extension is already in [extensions] — the
+  ///     file is returned as-is if it exists.
+  ///   * A directory — every immediate child with a matching extension
+  ///     (via `{ext1,ext2}` brace expansion) is returned.
+  ///   * A glob — passed through; matches filtered against [extensions].
   ///
-  /// @param pattern File pattern to match (e.g., "*.json" or "/path/to/file.json")
-  /// @return List of matching file paths
+  /// [extensions] entries include the leading dot (e.g. `.json`,
+  /// `.schema.json`). At least one entry is required.
+  ///
+  /// Throws [ConfigException] if [extensions] is empty, if [pattern] has an
+  /// extension outside [extensions], or if the glob is malformed.
   static Set<String> getFiles(String pattern, Set<String> extensions) {
-    // Set to store the matched files (to avoid duplicates)
-    final matches = <String>{};
-    final validExtensions = extensions;
-    try {
-      pattern = p.canonicalize(pattern);
-      final String patternExtension = p.extension(pattern);
-      String searchExtensions = validExtensions.length > 1
-          ? validExtensions.toSet().toString()
-          : validExtensions.first;
-
-      // Sanity check the extensions list, and finalize which extensions to search
-      if (patternExtension.isEmpty) {
-        pattern = pattern.endsWith('*') ? pattern : '$pattern/*';
-      } else {
-        if (validExtensions.contains(patternExtension)) {
-          searchExtensions = patternExtension;
-        } else {
-          throw ConfigException(
-            'Invalid extension: $patternExtension',
-          );
-        }
-      }
-
-      // Build the list of matched files
-      Log.off('');
-      Log.off('Searching for $searchExtensions');
-      Log.off(pattern);
-      try {
-        final glob = Glob('$pattern$searchExtensions');
-        final files = glob.listSync().toList();
-        for (final file in files) {
-          if (file is File) {
-            final String fileExtension = p.extension(file.path, 2);
-            if (searchExtensions.contains(fileExtension)) {
-              matches.add(file.absolute.path);
-            }
-          }
-        }
-      } catch (e) {
-        Log.severe('Error: $e');
-      }
-
-      if (matches.isNotEmpty) {
-        int counter = 0;
-        for (final file in matches) {
-          counter++;
-          Log.info('     ($counter/${matches.length}): $file');
-        }
-      } else {
-        Log.info('     (0/0): No files found');
-      }
-      return matches;
-    } catch (e) {
-      throw ConfigException('Error resolving files for pattern: $pattern', e);
+    if (extensions.isEmpty) {
+      throw ConfigException(
+        'FileResolver.getFiles requires at least one extension; '
+        'got an empty set for pattern "$pattern".',
+      );
     }
+
+    final matchedExt = _longestEndsWithMatch(pattern, extensions);
+    final String globPattern;
+    if (matchedExt != null) {
+      globPattern = pattern;
+    } else if (p.extension(pattern).isNotEmpty) {
+      throw ConfigException(
+        'Invalid extension "${p.extension(pattern)}" in pattern "$pattern". '
+        'Allowed: ${extensions.join(", ")}.',
+      );
+    } else {
+      final prefix = pattern.endsWith('*') ? pattern : '$pattern/*';
+      final extAlt = extensions.length == 1
+          ? extensions.first
+          : '{${extensions.join(',')}}';
+      globPattern = '$prefix$extAlt';
+    }
+
+    final matches = <String>{};
+    try {
+      for (final entity in Glob(globPattern).listSync()) {
+        if (entity is! File) continue;
+        if (_longestEndsWithMatch(entity.path, extensions) != null) {
+          matches.add(entity.absolute.path);
+        }
+      }
+    } on FormatException catch (e) {
+      throw ConfigException(
+        'Invalid glob pattern "$globPattern": ${e.message}',
+        e,
+      );
+    }
+    return matches;
   }
 
-  /// Determines a target path based on source file and configuration
+  /// Derives the on-disk output path for a generated artifact.
   ///
-  /// @param sourcePath The source file path
-  /// @param targetConfig The target configuration
-  /// @param targetType The target Type type
-  /// @return The resolved target path
+  /// The result directory is [TypeConfig.path] when it already points at a
+  /// directory, or its parent when it points at a file. The file stem is
+  /// taken from [sourcePath]; the extension from [TargetType.extensions].
   static String resolveTargetPath(
     String sourcePath,
     TargetType targetType,
     TypeConfig targetConfig,
   ) {
     final sourceName = p.basenameWithoutExtension(sourcePath);
-
-    final targetPath = targetConfig.path;
-    final targetPathExt = p.extension(targetPath);
-
-    final targetExt =
-        targetType.extensions.first; // Default to the first extension value
+    final targetExt = targetType.extensions.first;
     final targetName = '$sourceName$targetExt';
 
-    // Make sure you're referencing a folder
-    String parentFolder = targetPath;
-    if (targetPathExt.isNotEmpty) {
-      parentFolder = p.dirname(targetPath);
+    final targetPath = targetConfig.path;
+    final parent = p.extension(targetPath).isEmpty
+        ? targetPath
+        : p.dirname(targetPath);
+    return p.join(parent, targetName);
+  }
+
+  static String? _longestEndsWithMatch(String path, Set<String> extensions) {
+    String? best;
+    for (final ext in extensions) {
+      if (path.endsWith(ext) && (best == null || ext.length > best.length)) {
+        best = ext;
+      }
     }
-    return p.join(parentFolder, targetName);
+    return best;
   }
 }
