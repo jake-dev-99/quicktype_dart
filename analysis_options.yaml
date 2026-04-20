@@ -33,6 +33,7 @@ linter:
     - prefer_final_in_for_each
     - prefer_final_locals
     - prefer_single_quotes
+    - public_member_api_docs
     - throw_in_finally
     - unawaited_futures
     - unnecessary_lambdas

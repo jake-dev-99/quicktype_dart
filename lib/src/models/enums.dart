@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 /// Typed enums used by the language-specific `*RendererOptions` classes
 /// (see `lib/src/models/options/lang_*.dart`) for options that accept a
 /// bounded set of values — e.g.

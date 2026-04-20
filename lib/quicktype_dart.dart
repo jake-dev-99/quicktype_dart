@@ -1,7 +1,7 @@
 /// Cross-platform type generation from JSON.
 ///
 /// Use [QuicktypeDart.generate] for runtime, in-memory JSON → code, or wire
-/// up the `build_runner` builders declared in [build.yaml] for build-time
+/// up the `build_runner` builders declared in `build.yaml` for build-time
 /// generation from `*.qt.json` files.
 ///
 /// ```dart

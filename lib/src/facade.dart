@@ -22,7 +22,19 @@ import 'models/type.dart';
 /// * [process] — require shelling out to the `quicktype` Node CLI.
 ///   Throws on Flutter Web (`dart:io` unavailable). Useful for native
 ///   dev tooling or environments where the FFI plugin isn't built.
-enum GenerateTransport { auto, ffi, process }
+enum GenerateTransport {
+  /// Default. Picks the best-available transport per platform (FFI on
+  /// native, web on browser, Process as the last-resort fallback).
+  auto,
+
+  /// Force the in-process QuickJS FFI runtime. Fastest after warm-up;
+  /// unavailable on web.
+  ffi,
+
+  /// Force the `quicktype` Node CLI subprocess. Unavailable on web;
+  /// requires `npm install -g quicktype` or the bundled tool/ setup.
+  process,
+}
 
 /// Entry point for ad-hoc, runtime JSON → typed-code conversion.
 ///
