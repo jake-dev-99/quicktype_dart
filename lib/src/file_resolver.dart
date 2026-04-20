@@ -4,8 +4,8 @@ import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
 import 'package:path/path.dart' as p;
 
-import '../config.dart';
-import '../models/type.dart';
+import 'config.dart';
+import 'models/type.dart';
 
 /// Expands config-declared paths into concrete source-file lists, filtered
 /// by the [TypeEnum.extensions] set of the declaring type.

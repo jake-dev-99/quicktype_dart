@@ -4,7 +4,7 @@ import 'package:args/args.dart';
 
 import 'src/config.dart';
 import 'src/quicktype.dart';
-import 'src/utils/logging.dart';
+import 'src/logging.dart';
 import 'src/version.dart';
 
 /// Entry point for the `quicktype_dart` CLI.

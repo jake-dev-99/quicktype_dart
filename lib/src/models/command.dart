@@ -3,7 +3,7 @@ import 'package:meta/meta.dart';
 import 'package:path/path.dart' as path;
 
 import '../internal/argv.dart';
-import '../utils/type_infer.dart';
+import 'type_infer.dart';
 import 'type.dart';
 
 /// A single quicktype invocation — one source file, one target file, plus any

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:quicktype_dart/src/config.dart';
 import 'package:quicktype_dart/src/models/type.dart';
-import 'package:quicktype_dart/src/utils/file_resolver.dart';
+import 'package:quicktype_dart/src/file_resolver.dart';
 import 'package:test/test.dart';
 
 void main() {

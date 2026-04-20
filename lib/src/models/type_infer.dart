@@ -1,6 +1,6 @@
 import 'package:path/path.dart' as p;
 
-import '../models/type.dart';
+import 'type.dart';
 
 /// Infers a [TypeEnum] value from a file path by extension.
 ///

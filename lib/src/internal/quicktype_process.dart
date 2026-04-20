@@ -16,8 +16,8 @@ import 'package:path/path.dart' as p;
 
 import '../facade.dart' show QuicktypeDart;
 import '../quicktype.dart' show QuicktypeException;
-import '../utils/paths.dart';
-import '../utils/shell.dart';
+import 'package_layout.dart';
+import 'shell.dart';
 
 /// Resolves the on-disk `quicktype` executable. Checks the bundled
 /// `tool/node_modules/.bin/quicktype` (independent of caller CWD) and
